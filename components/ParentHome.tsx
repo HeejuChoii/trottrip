@@ -40,9 +40,11 @@ export default function ParentHome(p: Props) {
   const [now, setNow] = useState<{ date: string; min: number } | null>(null);
   const [firstOpen, setFirstOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [askedId, setAskedId] = useState<string | null>(null);
   const kidH = kidHonorific(p.kidLabel);
 
   useEffect(() => {
+    setAskedId(new URLSearchParams(location.search).get("item")); // 물어보기에서 "일정에서 보기"로 온 경우
     const tick = () => setNow(clientNow());
     tick();
     const t = setInterval(tick, 30000);
@@ -77,6 +79,24 @@ export default function ParentHome(p: Props) {
     <div className="top"><Brand href={null} /><span style={{ fontSize: 16, color: "var(--sub)" }}>{fmtDateLongKo(p.concertDate)}</span></div>
   );
 
+  // 물어보기에서 "일정에서 보기"로 온 항목 (모든 화면 상단)
+  const askedCard = (() => {
+        const a = askedId ? items.find((i) => i.id === askedId) : undefined;
+        if (!a) return null;
+        const ap = a.place_id ? p.placeNames[a.place_id] : undefined;
+        return (
+          <section className="asked" aria-label="물어보신 일정">
+            <div className="k">물어보신 일정</div>
+            <div className="w">{fmtTimeKo(a.start)} · {mainTitle(a)}</div>
+            <div className="d">{ap ? `${ap.name} · ` : ""}{a.parent_text}</div>
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              {a.place_id && <Link className="actbtn" style={{ flex: 1, textAlign: "center" }} href={`/p/${token}/map?place=${encodeURIComponent(a.place_id)}&route=1`}>🧭 길찾기</Link>}
+              <button className="mini-btn" style={{ fontSize: 16, padding: "0 14px" }} onClick={() => { setAskedId(null); history.replaceState(null, "", location.pathname); }}>닫기</button>
+            </div>
+          </section>
+        );
+  })();
+
   // P4 귀가 안내
   if (returnMode && ret) {
     const left = toMin(ret.start) - minNow;
@@ -84,6 +104,7 @@ export default function ParentHome(p: Props) {
     return (
       <main className="shell pv">
         <div className="top"><Brand href={null} /><span style={{ fontSize: 16, color: "var(--sub)" }}>공연이 끝났어요</span></div>
+        {askedCard}
         <h1 className="h">집에 가실 시간이에요</h1>
         <div className="home">
           <div className="k">{ret.title}</div>
@@ -105,6 +126,7 @@ export default function ParentHome(p: Props) {
     return (
       <main className="shell pv">
         {header}
+        {askedCard}
         <h1 className="h">오늘 일정을 다 마치셨어요</h1>
         <p className="hello">조심히 들어가세요. {kidH}께도 알려 드렸어요.</p>
         <div className="mini">
@@ -131,6 +153,7 @@ export default function ParentHome(p: Props) {
             <button className="linkbtn" style={{ padding: "4px 0", fontSize: 15 }} onClick={() => setFirstOpen(false)}>알겠어요</button></div>
         </div>
       )}
+      {askedCard}
       {rel === "before" && (
         <div className="card" style={{ fontSize: 17, lineHeight: 1.5 }}>공연 날은 <b>{fmtDateLongKo(p.concertDate)}</b>이에요. 그날 이 화면을 열면 지금 할 일을 순서대로 알려 드려요.</div>
       )}

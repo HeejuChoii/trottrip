@@ -4,7 +4,8 @@ import Link from "next/link";
 import { hhmmNow, postJSON } from "@/lib/client";
 import { useSpeech } from "./useSpeech";
 
-type Msg = { role: "parent" | "ai"; text: string; place_id?: string | null; needs_check?: boolean; emergency?: boolean };
+type Action = { type: "schedule"; item_id: string; label: string } | { type: "map"; place_id: string; label: string };
+type Msg = { role: "parent" | "ai"; text: string; place_id?: string | null; needs_check?: boolean; emergency?: boolean; actions?: Action[] };
 const CHIPS = ["화장실 어디야?", "버스 몇 시야?", "입구가 어디야?", "근처 쉴 곳"];
 
 export default function ParentAsk({ token, kidH, history }: { token: string; kidH: string; history: Msg[] }) {
@@ -23,8 +24,8 @@ export default function ParentAsk({ token, kidH, history }: { token: string; kid
     setMsgs((m) => [...m, { role: "parent", text: q }]);
     setBusy(true);
     try {
-      const r = await postJSON<{ answer: string; place_id: string | null; needs_check: boolean; emergency: boolean }>(`/api/p/${token}/chat`, { q, now: hhmmNow() });
-      setMsgs((m) => [...m, { role: "ai", text: r.answer, place_id: r.place_id, needs_check: r.needs_check, emergency: r.emergency }]);
+      const r = await postJSON<{ answer: string; place_id: string | null; needs_check: boolean; emergency: boolean; actions?: Action[] }>(`/api/p/${token}/chat`, { q, now: hhmmNow() });
+      setMsgs((m) => [...m, { role: "ai", text: r.answer, place_id: r.place_id, needs_check: r.needs_check, emergency: r.emergency, actions: r.actions ?? [] }]);
     } catch (e) {
       setMsgs((m) => [...m, { role: "ai", text: e instanceof Error ? e.message : "잠시 후 다시 물어봐 주세요." }]);
     }
@@ -42,7 +43,15 @@ export default function ParentAsk({ token, kidH, history }: { token: string; kid
           : (
             <div key={i} className={`bub ai ${m.emergency ? "sos" : ""}`}>
               {m.text}
-              {m.place_id && <Link href={`/p/${token}/map?place=${encodeURIComponent(m.place_id)}`} className="mini-btn" style={{ display: "inline-block", marginTop: 8, fontSize: 16, textDecoration: "none" }}>지도에서 보기</Link>}
+              {m.actions && m.actions.length > 0 ? (
+                <span style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
+                  {m.actions.map((a, j) => (
+                    <Link key={j} className="actbtn" href={a.type === "map" ? `/p/${token}/map?place=${encodeURIComponent(a.place_id)}&route=1` : `/p/${token}?item=${encodeURIComponent(a.item_id)}`}>
+                      {a.type === "map" ? "🧭 " : "📋 "}{a.label}
+                    </Link>
+                  ))}
+                </span>
+              ) : m.place_id ? <Link href={`/p/${token}/map?place=${encodeURIComponent(m.place_id)}&route=1`} className="actbtn" style={{ marginTop: 10 }}>🧭 지도에서 길찾기</Link> : null}
               {m.needs_check !== undefined && !m.emergency && <small>{m.needs_check ? "공지에 없는 내용이라 지어내지 않았어요" : "오늘 일정과 공연장 안내를 보고 답했어요"}</small>}
             </div>
           ))}

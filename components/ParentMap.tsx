@@ -97,6 +97,12 @@ export default function ParentMap(p: Props) {
     );
   }
 
+  // 물어보기에서 "지도에서 길찾기"로 왔으면 바로 내 위치를 찾는다(권한은 휴대폰이 묻는다)
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get("route") === "1") locate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const t = target?.place;
   const nav = t && t.lat != null
     ? me
