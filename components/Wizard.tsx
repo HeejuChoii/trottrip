@@ -32,7 +32,7 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
     honorific: "어머니", age_band: "60s", walk: "15-30", rest_often: true, elevator_first: true,
     food: ["korean", "mild"], food_other: "", medicine_time: "", friends_fitness: "same",
   });
-  const [prefs, setPrefs] = useState<Prefs>({ goods: true, photo: true, artist_places: false, sightseeing: false });
+  const [prefs, setPrefs] = useState<Prefs>({ goods: true, photo: true, artist_places: false, fan_first: false, sightseeing: false });
   const [tr, setTr] = useState<Transport>({
     mode: "fan_bus", origin: "", companions: "friends", friends_count: 2,
     meet_place: "", meet_time: "", drop_point: "", return_time: "", return_place: "",
@@ -213,9 +213,20 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
             <div className="chips">
               <Chip tone="pk" on={prefs.goods} onClick={() => setPrefs({ ...prefs, goods: !prefs.goods })}>공식 굿즈 꼭 사기</Chip>
               <Chip tone="pk" on={prefs.photo} onClick={() => setPrefs({ ...prefs, photo: !prefs.photo })}>공연장 포토존</Chip>
-              <Chip tone="pu" on={prefs.artist_places} onClick={() => setPrefs({ ...prefs, artist_places: !prefs.artist_places })}>가수가 다녀간 곳</Chip>
+              <Chip tone="pu" on={prefs.artist_places} onClick={() => setPrefs({ ...prefs, artist_places: !prefs.artist_places, fan_first: prefs.artist_places ? false : prefs.fan_first })}>가수가 다녀간 곳</Chip>
               <Chip on={prefs.sightseeing} onClick={() => setPrefs({ ...prefs, sightseeing: !prefs.sightseeing })}>지역 관광</Chip>
-            </div></div>
+            </div>
+            {prefs.artist_places && (
+              <div style={{ marginTop: 10 }}>
+                <span className="lab">가수가 다녀간 곳은 얼마나 가고 싶으세요?</span>
+                <div className="chips">
+                  <Chip tone="pu" on={!prefs.fan_first} onClick={() => setPrefs({ ...prefs, fan_first: false })}>시간 나면 들르기</Chip>
+                  <Chip tone="pu" on={prefs.fan_first} onClick={() => setPrefs({ ...prefs, fan_first: true })}>꼭 가고 싶어요 (1순위)</Chip>
+                </div>
+                {prefs.fan_first && <p className="fine" style={{ textAlign: "left", margin: "6px 0 0" }}>굿즈·포토존보다 먼저 넣고, 걸어가기 멀면 택시를 안내해요.</p>}
+              </div>
+            )}
+          </div>
           <span className="lab" style={{ margin: "2px 0 -6px" }}>{city || "공연장"}까지 어떻게 가실까요?</span>
           <div className="row2">
             {([["fan_bus", "팬 모임 버스", "집결 장소·시간을 입력해 주세요"], ["train", "열차", "출발·도착 시각을 입력해 주세요"], ["shuttle", "공연 셔틀", "공지 링크나 시각을 넣어 주세요"], ["car", "자가용·택시", "공연장 주차 혼잡 주의"]] as const).map(([v, l, d]) => (

@@ -13,7 +13,7 @@ const concert: ConcertView = { ...SEED_CONCERTS[0], custom: false, gate_map: { B
 const base: PlanInput = {
   concert,
   parent: { honorific: "엄마", age_band: "60s", walk: "15-30", rest_often: true, elevator_first: true, food: ["korean", "mild"], food_other: "", medicine_time: "13:00", friends_fitness: "same" },
-  prefs: { goods: true, photo: true, artist_places: true, sightseeing: false },
+  prefs: { goods: true, photo: true, artist_places: true, fan_first: false, sightseeing: false },
   transport: { mode: "fan_bus", origin: "대구", companions: "friends", friends_count: 2, meet_place: "수성못", meet_time: "08:30", drop_point: "", return_time: "20:30", return_place: "동쪽 주차장", train_from: "", train_to: "", train_depart: "", train_arrive: "", train_return_depart: "", shuttle_info: "", stay: "day" },
   seat: "B구역 12열",
   places,
@@ -98,4 +98,41 @@ test("gate mapping & text helpers", () => {
   assert.equal(shareTitle("조카", ""), "조카가 보낸 공연 날 안내장");
   assert.equal(kidHonorific("딸"), "따님");
   assert.equal(expiryFor("2026-12-25"), "2026-12-26T14:59:00.000Z");
+});
+
+test("fan_first: 팬덤 장소를 1순위로, 멀면 택시, 시간 모자라도 굿즈부터 뺀다", () => {
+  const far = { ...places.find((p) => p.id === "ex_coex_fan1")!, walk_min_from_venue: 25 };
+  const ps = places.map((p) => (p.id === far.id ? far : p));
+  const plan = buildRulePlan({ ...base, places: ps, prefs: { ...base.prefs, fan_first: true } });
+  const fan = plan.items.filter((i) => i.title.startsWith("최애 장소"));
+  assert.ok(fan.some((i) => i.place_id === "ex_coex_fan1"), "25분 거리 팬덤 장소 포함");
+  assert.ok(fan.find((i) => i.place_id === "ex_coex_fan1")!.parent_text.includes("택시"));
+  assert.ok(!plan.extra_day?.place_ids.includes("ex_coex_fan1"));
+  // 늦게 도착: 굿즈가 먼저 빠지고 팬덤 장소는 남는다
+  const late = buildRulePlan({ ...base, places: ps, prefs: { ...base.prefs, fan_first: true }, transport: { ...base.transport, mode: "train", train_arrive: "12:00", train_to: "삼성역" } });
+  assert.ok(late.items.some((i) => i.place_id === "ex_coex_fan1"));
+  assert.ok(!late.items.some((i) => i.type === "goods"));
+  // fan_first가 아니면 25분 거리는 하루 더 카드로
+  const normal = buildRulePlan({ ...base, places: ps });
+  assert.ok(normal.extra_day?.place_ids.includes("ex_coex_fan1"));
+});
+
+test("카카오 식당: 안 매운 조건은 매운 메뉴만 빼고 '확인 필요'", () => {
+  const kk = (id: string, name: string, detail: string) => ({ ...places[0], id, name, category_detail: detail, origin: "kakao" as const, tags: ["korean"] as never, walk_min_from_venue: 3, source: "needs_check" as const });
+  const ps = [...places.filter((p) => p.category !== "restaurant"), kk("k1", "불타는 낙지", "음식점 > 한식 > 해물,생선 > 낙지"), kk("k2", "할매 국밥", "음식점 > 한식 > 국밥")];
+  const plan = buildRulePlan({ ...base, places: ps });
+  const meal = plan.items.find((i) => i.type === "meal")!;
+  assert.equal(meal.place_id, "k2");
+  assert.ok(meal.kid_note.includes("안 매운 메뉴 확인 필요"));
+});
+
+test("카카오 문서 → 장소 변환", async () => {
+  const { kakaoDocToPlace, walkMinFromDistance } = await import("../lib/kakao-local.ts");
+  const p = kakaoDocToPlace({ id: "123", place_name: "할매국밥", category_name: "음식점 > 한식 > 국밥", category_group_code: "FD6", phone: "02-1", address_name: "서울 강남구", road_address_name: "서울 강남구 영동대로", x: "127.06", y: "37.51", place_url: "http://place.map.kakao.com/123", distance: "240" });
+  assert.equal(p.id, "kk_123");
+  assert.equal(p.category, "restaurant");
+  assert.deepEqual([...p.tags].sort(), ["indoor", "korean", "quick"]);
+  assert.equal(p.walk_min_from_venue, walkMinFromDistance(240));
+  assert.equal(p.origin, "kakao");
+  assert.equal(p.source, "needs_check");
 });

@@ -38,7 +38,7 @@ export function createServer(opener: AgentOpener = openCrocheAgent, secret = pro
       res.end(JSON.stringify(body));
     };
     try {
-      if (req.method === "GET" && req.url === "/health") return send(200, { ok: true, open: pool.size });
+      if (req.method === "GET" && (req.url === "/health" || req.url === "/")) return send(200, { ok: true, service: "trottrip-agent", open: pool.size });
       if (req.method !== "POST" || req.url !== "/chat") return send(404, { error: "not_found" });
 
       let raw = "";

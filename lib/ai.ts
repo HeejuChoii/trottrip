@@ -57,6 +57,7 @@ function placesForPrompt(places: Place[]) {
   return places.map((p) => ({
     id: p.id, name: p.name, category: p.category, walk_min_from_venue: p.walk_min_from_venue,
     tags: p.tags, fan_type: p.fan_type, description: p.description_ko, source: p.source,
+    ...(p.category_detail ? { category_detail: p.category_detail } : {}),
   }));
 }
 
@@ -78,9 +79,13 @@ const PLAN_RULES = `규칙
 2. 장소는 PLACES의 id로만 고른다. 맞는 장소가 없으면 place_id는 null, source는 "needs_check"로 두고 parent_text에 "확인이 필요해요"를 쓴다. 장소 이름을 지어내지 않는다.
 3. 걷는 시간: parent.walk가 "15-30"이면 장소 간 도보 10분 이내 우선, 넘으면 택시 제안. "15-"이면 5분 이내.
 4. elevator_first면 elevator 태그가 있는 입구·동선을 고른다.
-5. 식사 조건(parent.food)과 tags가 맞는 식당만 고른다. tags가 비어 있는 식당은 조건을 확인할 수 없으므로 고르지 않는다.
+5. 식사 조건(parent.food)과 tags가 맞는 식당만 고른다. korean 조건이면 tags에 korean이 있어야 한다.
+   "안 매운 음식"(mild) 조건: tags에 mild가 있으면 우선. 없으면 category_detail과 이름이 매운 메뉴(마라, 짬뽕, 떡볶이, 낙지, 곱창 등)가 아닌 곳만 고르고, kid_note에 "안 매운 메뉴 확인 필요"를 쓴다.
 6. 시간이 모자라면 취향 항목(굿즈·포토)을 줄이고 parent_text에 "줄이 길면 건너뛰어도 돼요"를 쓴다. 취향 항목은 optional=true.
-7. 멀리 있는(도보 기준을 넘는) 팬덤 장소(fan_type≠none)는 당일에 넣지 않고 extra_day.place_ids에 넣는다. 없으면 extra_day는 null.
+7. 팬덤 장소(fan_type≠none):
+   - prefs.fan_first=true(꼭 가고 싶어요)면 1순위다. 도보 ${60}분 이내 팬덤 장소를 최대 2곳, 굿즈·포토존보다 먼저 시간을 배정한다. 도보 기준을 넘으면 parent_text에 택시를 타라고 쓴다. 시간이 모자라면 굿즈·포토존부터 줄이고 팬덤 장소는 마지막까지 지킨다(optional=false).
+   - prefs.artist_places만 true면 걸어갈 수 있는 1곳만 시간 나면 들르는 항목(optional=true)으로 넣는다.
+   - 당일에 넣지 못한 팬덤 장소는 extra_day.place_ids에 넣는다. 없으면 extra_day는 null.
 8. parent.medicine_time이 있으면 그 시각에 type "medicine" 항목을 넣는다.
 - 시각은 HH:MM 24시간. 항목 id는 i1, i2 … 순서.
 - parent_text는 50~70대 부모님이 읽는 문장: 한두 문장, 쉬운 말, 존댓말, 어디서 몇 분인지.

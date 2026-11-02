@@ -7,7 +7,7 @@ import type { Concert } from "@/lib/types";
 type Counts = Record<string, { count: number; synced_at: string | null }>;
 
 const EMPTY: Concert = {
-  id: "", concertrip_id: null, title: "", artist_display: "", color: "#087E72", city: "", venue_name: "",
+  id: "", concertrip_id: null, title: "", artist_display: "", color: "#087E72", city: "", venue_name: "", venue_key: null,
   venue_lat: null, venue_lng: null, date: "", start_time: "", est_end_time: null, notice_text: "",
   gate_map: {}, zone_image_url: null, official_map_url: null, info_desk_place_id: null, active: true,
 };
@@ -39,6 +39,7 @@ function ConcertForm({ initial, onDone }: { initial: Concert; onDone: () => void
       {row("상징색", <input type="color" value={c.color} onChange={(e) => S("color", e.target.value)} />)}
       {row("도시", <input className="inp sm" value={c.city} onChange={(e) => S("city", e.target.value)} />)}
       {row("공연장", <input className="inp sm" value={c.venue_name} onChange={(e) => S("venue_name", e.target.value)} />)}
+      {row("공연장 키", <input className="inp sm" value={c.venue_key ?? ""} onChange={(e) => S("venue_key", txt(e.target.value))} placeholder="coex, kintex-1 (같은 공연장끼리 장소 공유)" />)}
       {row("공연장 위도/경도", <span style={{ display: "flex", gap: 6 }}><input className="inp sm" value={c.venue_lat ?? ""} onChange={(e) => S("venue_lat", num(e.target.value))} /><input className="inp sm" value={c.venue_lng ?? ""} onChange={(e) => S("venue_lng", num(e.target.value))} /></span>)}
       {row("날짜", <input className="inp sm" type="date" value={c.date} onChange={(e) => S("date", e.target.value)} />)}
       {row("시작 / 종료 예상", <span style={{ display: "flex", gap: 6 }}><input className="inp sm" type="time" value={c.start_time} onChange={(e) => S("start_time", e.target.value)} /><input className="inp sm" type="time" value={c.est_end_time ?? ""} onChange={(e) => S("est_end_time", txt(e.target.value))} /></span>)}
@@ -99,7 +100,7 @@ export default function AdminConcerts({ concerts, counts }: { concerts: Concert[
               <td>{c.concertrip_id ?? <small>미입력</small>}</td>
               <td><small>{Object.keys(c.gate_map).length ? JSON.stringify(c.gate_map) : "공지 대기"}</small></td>
               <td><PlacesTools concert={c} count={counts[c.id]} /></td>
-              <td><button className="mini-btn" onClick={() => setEdit(c)}>수정</button></td>
+              <td style={{ whiteSpace: "nowrap" }}><button className="mini-btn" onClick={() => setEdit(c)}>수정</button> <a className="mini-btn" href={`/admin/places/${c.id}`} style={{ textDecoration: "none" }}>장소 관리</a></td>
             </tr>
           ))}
         </tbody>

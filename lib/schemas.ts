@@ -20,6 +20,7 @@ export const PrefsSchema = z.object({
   goods: z.boolean().default(false),
   photo: z.boolean().default(false),
   artist_places: z.boolean().default(false),
+  fan_first: z.boolean().default(false),
   sightseeing: z.boolean().default(false),
 });
 
@@ -67,6 +68,7 @@ export const ConcertAdminSchema = z.object({
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#087E72"),
   city: s(20),
   venue_name: z.string().trim().min(1).max(100),
+  venue_key: z.string().trim().max(40).regex(/^[a-z0-9\-]*$/, "공연장 키는 영문 소문자·숫자·-").nullable().default(null).transform((v) => v || null),
   venue_lat: z.number().nullable().default(null),
   venue_lng: z.number().nullable().default(null),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

@@ -31,6 +31,27 @@ export interface Place {
   source: PlaceSource;
   updated_at: string;
   concertrip_url: string;
+  /** 어디서 왔나. 없으면 concertrip */
+  origin?: PlaceOrigin;
+  /** 카카오 분류 원문 (예: "음식점 > 한식 > 국밥") */
+  category_detail?: string;
+  phone?: string;
+  /** 카카오맵 등 외부 상세 링크 */
+  link_url?: string;
+}
+
+/** 장소 출처: 콘서트립(팬덤 장소), 카카오 로컬(식당·카페), 운영자 입력, 공연 공지에서 추출, 웹 조사 */
+export const PLACE_ORIGINS = ["concertrip", "kakao", "manual", "notice", "research"] as const;
+export type PlaceOrigin = (typeof PLACE_ORIGINS)[number];
+
+/** 트롯트립이 직접 관리하는 장소. venue_key(공연장 공통) 또는 concert_id(그 공연만) 범위 */
+export interface TtPlaceRow {
+  id: string;
+  venue_key: string | null;
+  concert_id: string | null;
+  origin: Exclude<PlaceOrigin, "concertrip">;
+  data: Place;
+  updated_at: string;
 }
 
 export interface Concert {
@@ -41,6 +62,8 @@ export interface Concert {
   color: string;
   city: string;
   venue_name: string;
+  /** 같은 공연장 공연끼리 시설·식당·버스 장소를 같이 쓰는 키 (예: coex, kintex-1) */
+  venue_key: string | null;
   venue_lat: number | null;
   venue_lng: number | null;
   date: string; // YYYY-MM-DD (KST)
@@ -80,6 +103,8 @@ export interface Prefs {
   goods: boolean;
   photo: boolean;
   artist_places: boolean;
+  /** 가수가 다녀간 곳을 1순위로 (굿즈·포토존보다 먼저, 걷기 기준을 넘으면 택시) */
+  fan_first: boolean;
   sightseeing: boolean;
 }
 
