@@ -1,0 +1,30 @@
+# 트롯트립 물어보기 챗봇 서버 (Croche). Render → New → Blueprint로 이 파일을 불러온다.
+services:
+  - type: web
+    name: trottrip-agent
+    runtime: node
+    rootDir: agent
+    region: singapore          # 만든 뒤에는 못 바꿈
+    plan: starter              # 디스크는 유료 인스턴스에서만. 무료는 15분 후 잠듦
+    buildCommand: npm ci
+    startCommand: npm run start:prod
+    healthCheckPath: /health
+    disk:
+      name: agent-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: CROCHE_PROJECT_KEY
+        sync: false            # 값은 Render 대시보드에서 직접 입력
+      - key: CROCHE_SERVER_KEY
+        sync: false
+      - key: AGENT_SHARED_SECRET
+        sync: false            # Vercel의 AGENT_SHARED_SECRET와 같은 값
+      - key: CROCHE_MODEL
+        sync: false            # 선택. 비우면 Croche 프로젝트 기본 모델
+      - key: DATA_DIR
+        value: /data
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"

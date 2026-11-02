@@ -1,0 +1,24 @@
+{
+  "name": "trottrip-agent",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "트롯트립 물어보기 챗봇 서버 (Croche). Render에서 실행",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx watch --env-file=.env src/server.ts",
+    "start:prod": "tsx src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts"
+  },
+  "dependencies": {
+    "@h1r-ai/croche": "^0.5.5",
+    "tsx": "^4.23.15"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "^5.9.3"
+  }
+}
