@@ -1,0 +1,138 @@
+"use client";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { clientNow } from "@/lib/client";
+import { toMin } from "@/lib/time";
+import { kidHonorific } from "@/lib/text";
+import { CATEGORY_LABEL } from "@/lib/concertrip";
+import { BottomBar } from "./ParentHome";
+import type { Place, PlanItem } from "@/lib/types";
+
+const PIN: Record<string, { t: string; bg: string; fg: string }> = {
+  restaurant: { t: "밥", bg: "#45D9C5", fg: "#23313B" }, cafe: { t: "카페", bg: "#45D9C5", fg: "#23313B" },
+  rest: { t: "쉼", bg: "#087E72", fg: "#fff" }, goods: { t: "굿즈", bg: "#FF58AB", fg: "#fff" }, photo: { t: "사진", bg: "#FF58AB", fg: "#fff" },
+  toilet: { t: "WC", bg: "#fff", fg: "#23313B" }, elevator: { t: "EV", bg: "#8067E8", fg: "#fff" }, gate: { t: "입구", bg: "#087E72", fg: "#fff" },
+  bus_stop: { t: "버스", bg: "#23313B", fg: "#fff" }, info_desk: { t: "안내", bg: "#5E46C9", fg: "#fff" }, locker: { t: "보관", bg: "#fff", fg: "#23313B" },
+};
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+declare global { interface Window { kakao?: any } }
+
+interface Props {
+  token: string; items: PlanItem[]; done: string[]; concertDate: string; pins: Place[]; focus: string | null;
+  venue: { name: string; lat: number | null; lng: number | null }; kakaoKey: string; kidLabel: string;
+}
+
+export default function ParentMap(p: Props) {
+  const box = useRef<HTMLDivElement>(null);
+  const map = useRef<any>(null);
+  const meMarker = useRef<any>(null);
+  const [mapOk, setMapOk] = useState<boolean | null>(p.kakaoKey ? null : false);
+  const [me, setMe] = useState<{ lat: number; lng: number } | null>(null);
+  const [locErr, setLocErr] = useState("");
+
+  const target = useMemo(() => {
+    if (p.focus) {
+      const f = p.pins.find((x) => x.id === p.focus);
+      if (f) return { place: f, label: CATEGORY_LABEL[f.category] };
+    }
+    const { date, min } = clientNow();
+    const done = new Set(p.done);
+    const upcoming = [...p.items].sort((a, b) => toMin(a.start) - toMin(b.start))
+      .filter((i) => !done.has(i.id) && i.place_id && (date < p.concertDate || toMin(i.end) > min || i.type === "return"));
+    for (const i of upcoming) {
+      const pl = p.pins.find((x) => x.id === i.place_id);
+      if (pl) return { place: pl, label: i.title.split(" · ")[0] };
+    }
+    return null;
+  }, [p.focus, p.pins, p.items, p.done, p.concertDate]);
+
+  useEffect(() => {
+    if (!p.kakaoKey) return;
+    const init = () => window.kakao.maps.load(() => {
+      if (!box.current) return;
+      const k = window.kakao.maps;
+      const center = target?.place.lat != null ? new k.LatLng(target.place.lat, target.place.lng)
+        : p.venue.lat != null ? new k.LatLng(p.venue.lat, p.venue.lng) : p.pins[0] ? new k.LatLng(p.pins[0].lat, p.pins[0].lng) : new k.LatLng(37.5665, 126.978);
+      map.current = new k.Map(box.current, { center, level: 3 });
+      for (const pin of p.pins) {
+        const s = PIN[pin.category] ?? PIN.gate;
+        const isT = target?.place.id === pin.id;
+        const el = document.createElement("div");
+        el.textContent = s.t;
+        el.title = pin.name;
+        el.style.cssText = `background:${s.bg};color:${s.fg};border:2px solid ${isT ? "#C21F72" : "#23313B"};border-radius:999px;padding:${isT ? "8px 12px" : "4px 8px"};font:900 ${isT ? 16 : 13}px var(--f);box-shadow:0 2px 6px rgba(0,0,0,.25);white-space:nowrap`;
+        new k.CustomOverlay({ map: map.current, position: new k.LatLng(pin.lat, pin.lng), content: el, yAnchor: 0.5, zIndex: isT ? 3 : 1 });
+      }
+      setMapOk(true);
+    });
+    if (window.kakao?.maps) return init();
+    const s = document.createElement("script");
+    s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(p.kakaoKey)}&autoload=false`;
+    s.async = true;
+    s.onload = init;
+    s.onerror = () => setMapOk(false);
+    document.head.appendChild(s);
+  }, [p.kakaoKey, p.pins, p.venue, target]);
+
+  // 내 위치: 이 기기 화면에만 표시. 서버로 보내지 않는다.
+  function locate() {
+    if (!navigator.geolocation) return setLocErr("이 휴대폰에서는 위치를 볼 수 없어요.");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setMe(loc); setLocErr("");
+        if (map.current && window.kakao?.maps) {
+          const k = window.kakao.maps;
+          const el = document.createElement("div");
+          el.style.cssText = "width:18px;height:18px;border-radius:50%;background:#8067E8;border:3px solid #fff;box-shadow:0 0 0 2px #5E46C9";
+          el.title = "내 위치";
+          meMarker.current?.setMap(null);
+          meMarker.current = new k.CustomOverlay({ map: map.current, position: new k.LatLng(loc.lat, loc.lng), content: el, zIndex: 4 });
+          map.current.setCenter(new k.LatLng(loc.lat, loc.lng));
+        }
+      },
+      () => setLocErr("위치 권한이 꺼져 있어요. 지도만 보여 드릴게요."),
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
+
+  const t = target?.place;
+  const nav = t && t.lat != null
+    ? me
+      ? `https://map.kakao.com/link/by/walk/${encodeURIComponent("내 위치")},${me.lat},${me.lng}/${encodeURIComponent(t.name)},${t.lat},${t.lng}`
+      : `https://map.kakao.com/link/to/${encodeURIComponent(t.name)},${t.lat},${t.lng}`
+    : null;
+
+  return (
+    <main className="shell pv">
+      <div className="top"><Link className="back" href={`/p/${p.token}`} style={{ fontSize: 18 }}>← 일정으로</Link></div>
+      {t ? (
+        <div className="next" style={{ padding: "14px 16px" }}>
+          <div className="k">{p.focus ? "찾는 곳" : "다음 장소"}</div>
+          <div className="w" style={{ fontSize: 26 }}>{target!.label === CATEGORY_LABEL[t.category] ? t.name : `${target!.label}`}</div>
+          <div className="d" style={{ fontSize: 18 }}>{[t.walk_min_from_venue != null ? `공연장에서 걸어서 ${t.walk_min_from_venue}분` : null, t.description_ko || t.name].filter(Boolean).join(" · ")}</div>
+        </div>
+      ) : (
+        <div className="next" style={{ padding: "14px 16px" }}><div className="w" style={{ fontSize: 24 }}>{p.venue.name}</div><div className="d">다음 장소 정보가 없어요.</div></div>
+      )}
+      {p.kakaoKey && mapOk !== false && <div ref={box} className="mapbox" role="application" aria-label="오늘 쓰는 장소 지도" />}
+      {mapOk === false && (
+        <div className="mini" aria-label="오늘 쓰는 장소">
+          {p.pins.map((x) => (
+            <a key={x.id} className="mi" href={`https://map.kakao.com/link/to/${encodeURIComponent(x.name)},${x.lat},${x.lng}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", color: "inherit" }}>
+              <span>{CATEGORY_LABEL[x.category]} · {x.name}</span><b>{x.walk_min_from_venue != null ? `${x.walk_min_from_venue}분` : ""}</b>
+            </a>
+          ))}
+          {!p.pins.length && <p className="note">지도에 표시할 장소를 준비 중이에요.</p>}
+        </div>
+      )}
+      {mapOk && <div className="legend2"><span>밥 식당</span><span>쉼 쉼터</span><span>굿즈 부스</span><span>EV 엘리베이터</span><span>WC 화장실</span><span>버스</span></div>}
+      <button className="bigbtn line" onClick={locate} style={{ fontSize: 19 }}>내 위치 보기</button>
+      {locErr && <p className="note">{locErr}</p>}
+      {nav && <a className="cta" href={nav} target="_blank" rel="noopener noreferrer">카카오맵으로 길 안내 보기</a>}
+      <p className="note">내 위치는 이 휴대폰에서만 보여요. {kidHonorific(p.kidLabel)}께 보내지 않아요.</p>
+      <BottomBar token={p.token} />
+    </main>
+  );
+}

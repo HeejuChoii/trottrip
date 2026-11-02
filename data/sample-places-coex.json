@@ -1,0 +1,20 @@
+{
+  "_note": "개발·데모용 예시 데이터입니다. 실제 장소가 아니며, 실제 데이터는 콘서트립에서 불러옵니다. /admin에서 코엑스 공연에 업로드해 동작을 확인할 수 있어요.",
+  "places": [
+    { "id": "ex_coex_meal1", "name": "(예시) 순한 한식당", "category": "restaurant", "lat": 37.5121, "lng": 127.0598, "walk_min_from_venue": 4, "tags": ["korean", "mild", "indoor", "elevator", "seating"], "fan_type": "none", "description_ko": "D홀 입구에서 지하 1층 식당가로 4분", "source": "needs_check" },
+    { "id": "ex_coex_meal2", "name": "(예시) 국밥집", "category": "restaurant", "lat": 37.5118, "lng": 127.0601, "walk_min_from_venue": 6, "tags": ["korean", "mild", "quick", "indoor"], "fan_type": "none", "description_ko": "식당가 안쪽, 빨리 나오는 메뉴", "source": "needs_check" },
+    { "id": "ex_coex_meal3", "name": "(예시) 해물 칼국수", "category": "restaurant", "lat": 37.5116, "lng": 127.0592, "walk_min_from_venue": 8, "tags": ["korean", "seafood", "indoor"], "fan_type": "none", "description_ko": "식당가 동쪽 끝", "source": "needs_check" },
+    { "id": "ex_coex_rest1", "name": "(예시) 실내 쉼터", "category": "rest", "lat": 37.5128, "lng": 127.0583, "walk_min_from_venue": 2, "tags": ["indoor", "seating", "elevator"], "fan_type": "none", "description_ko": "D홀 로비 2층 의자", "source": "needs_check" },
+    { "id": "ex_coex_goods", "name": "(예시) 공식 MD 부스", "category": "goods", "lat": 37.5124, "lng": 127.0580, "walk_min_from_venue": 2, "tags": ["indoor"], "fan_type": "official", "description_ko": "D홀 앞 실내 부스 1층", "source": "needs_check" },
+    { "id": "ex_coex_photo", "name": "(예시) 공연 포토존", "category": "photo", "lat": 37.5127, "lng": 127.0586, "walk_min_from_venue": 1, "tags": ["indoor"], "fan_type": "official", "description_ko": "D홀 입구 옆 대형 현수막 앞", "source": "needs_check" },
+    { "id": "ex_coex_gate3", "name": "(예시) 3번 입구", "category": "gate", "lat": 37.5125, "lng": 127.0589, "walk_min_from_venue": 0, "tags": ["elevator", "accessible"], "fan_type": "none", "description_ko": "엘리베이터 바로 옆 입구", "source": "needs_check" },
+    { "id": "ex_coex_gate1", "name": "(예시) 1번 입구", "category": "gate", "lat": 37.5129, "lng": 127.0579, "walk_min_from_venue": 0, "tags": [], "fan_type": "none", "description_ko": "계단 있는 정문", "source": "needs_check" },
+    { "id": "ex_coex_ev", "name": "(예시) D홀 엘리베이터", "category": "elevator", "lat": 37.5125, "lng": 127.0590, "walk_min_from_venue": 0, "tags": ["elevator", "accessible"], "fan_type": "none", "description_ko": "3번 입구 오른쪽", "source": "needs_check" },
+    { "id": "ex_coex_wc", "name": "(예시) 화장실", "category": "toilet", "lat": 37.5124, "lng": 127.0591, "walk_min_from_venue": 1, "tags": ["accessible"], "fan_type": "none", "description_ko": "엘리베이터 옆, 2층에도 있어요", "source": "needs_check" },
+    { "id": "ex_coex_locker", "name": "(예시) 물품 보관함", "category": "locker", "lat": 37.5129, "lng": 127.0578, "walk_min_from_venue": 1, "tags": [], "fan_type": "none", "description_ko": "1번 입구 옆", "source": "needs_check" },
+    { "id": "ex_coex_info", "name": "(예시) 1번 입구 앞 안내소", "category": "info_desk", "lat": 37.5130, "lng": 127.0579, "walk_min_from_venue": 1, "tags": [], "fan_type": "none", "description_ko": "1번 입구 바로 앞", "source": "needs_check" },
+    { "id": "ex_coex_bus", "name": "(예시) 동쪽 주차장 버스 승하차", "category": "bus_stop", "lat": 37.5132, "lng": 127.0605, "walk_min_from_venue": 5, "tags": [], "fan_type": "none", "description_ko": "3번 입구로 나와서 왼쪽으로 5분", "source": "needs_check" },
+    { "id": "ex_coex_fan1", "name": "(예시) 가수가 다녀간 카페", "category": "cafe", "lat": 37.5101, "lng": 127.0620, "walk_min_from_venue": 25, "tags": ["indoor", "seating"], "fan_type": "artist_visited", "description_ko": "방송 촬영 때 들렀던 곳", "evidence_urls": ["https://example.com/source1"], "source": "needs_check" },
+    { "id": "ex_coex_sight", "name": "(예시) 별마당 도서관", "category": "sight", "lat": 37.5101, "lng": 127.0598, "walk_min_from_venue": 7, "tags": ["indoor", "elevator", "seating"], "fan_type": "fan_made", "description_ko": "팬들이 단체 사진을 찍는 곳", "source": "needs_check" }
+  ]
+}
