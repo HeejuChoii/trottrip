@@ -6,7 +6,10 @@
 - Supabase(Postgres) — 미설정 시 로컬 개발용 `.data/db.json`
 - Claude API(`@anthropic-ai/sdk`, 구조화 출력) — 미설정 시 규칙 기반 일정·답변
 - 카카오 JS SDK(공유·지도) — 미설정 시 링크 복사·Web Share·장소 목록으로 대체
-- 장소 원본은 콘서트립. `lib/concertrip.ts` 어댑터가 PRD 5.3 형태로 바꿔 `places_cache`에 캐시
+- 장소는 두 곳에서 와서 합쳐진다 (`lib/db.ts#getPlaces`)
+  - 콘서트립: 팬덤 장소(가수 방문·팬 명소·공식). `lib/concertrip.ts` 어댑터 → `places_cache`
+  - 트롯트립 직접(`tt_places`): 카카오 로컬 식당·카페, 운영자 입력 시설·버스 승하차, 공연 공지 AI 정리(MD 부스·포토존·게이트·셔틀), 웹 조사. `/admin` → 공연 행의 "장소 관리"
+  - 공연장 공통 장소는 `venue_key`(예: coex, kintex-1)로 같은 공연장 공연끼리 공유, 공지 장소는 그 공연에만
 
 ## 실행
 
@@ -44,13 +47,14 @@ npm test                     # 일정 엔진·어댑터 테스트
 | `NEXT_PUBLIC_KAKAO_JS_KEY` | 카카오 공유·지도. 카카오 디벨로퍼스에 배포 도메인 등록 |
 | `CONCERTRIP_API_URL`, `CONCERTRIP_API_TOKEN` | 콘서트립 공개 읽기 API (`GET {URL}/concerts/{id}/places`) |
 | `ADMIN_PASSWORD` | `/admin` 비밀번호 |
+| `KAKAO_REST_API_KEY` | 카카오 로컬 API(주변 식당·카페 불러오기, 좌표 찾기). 카카오 디벨로퍼스 같은 앱의 REST API 키 |
 | `NEXT_PUBLIC_SITE_URL` | 배포 주소 (OG·공유 링크 절대경로) |
 | `AGENT_URL` | Render 챗봇 서버 주소 (예: `https://trottrip-agent.onrender.com`). 비우면 챗봇은 Claude → 규칙 기반 |
 | `AGENT_SHARED_SECRET` | Render와 같은 비밀값. Vercel이 요청에 서명하고 Render가 검증 |
 
 ## Supabase
 
-`supabase/migrations/0001_init.sql` → `supabase/seed.sql` 순서로 SQL 에디터에서 실행. RLS를 켜고 정책을 두지 않아 anon 키로는 접근할 수 없고, 서버만 service role 키로 접근합니다.
+`supabase/migrations/0001_init.sql` → `0002_tt_places.sql` → `supabase/seed.sql` 순서로(이미 0001·seed를 실행했다면 0002만) SQL 에디터에서 실행. RLS를 켜고 정책을 두지 않아 anon 키로는 접근할 수 없고, 서버만 service role 키로 접근합니다.
 
 ## 일정 생성 (F5)
 
@@ -70,7 +74,7 @@ npm test                     # 일정 엔진·어댑터 테스트
 - 사용자 ID = 안내장(trip) ID. 저장 경로 `/data/users/<trip_id>/`
 - 도구 `venue find|schedule|gate`: 장소는 매 턴 context에 넣지 않고 도구로 가까운 1~2곳만 찾는다(토큰 절약, 목록에 없으면 빈 결과)
 - 근거가 없으면 마커 `:unknown:` → Vercel이 "확인이 필요해요. ○○ 안내소에 물어보세요 + 자녀 번호"로 바꾼다
-- 상한: 안내장당 하루 60회, 서버 전체 시간당 800회, 한 턴 도구 4회, 동시 인스턴스 100개(15분 미사용 시 닫음)
+- 상한: 안내장당 하루 60회, 서버 전체 시간당 800회, 한 턴 도구 반복 5회, 동시 인스턴스 100개(15분 미사용 시 닫음)
 
 ```bash
 cd agent && npm install
