@@ -192,6 +192,8 @@ export interface ChatContext {
   infoDeskName: string | null;
   nowMin: number;
   history: ChatRow[];
+  /** 부모님이 완료한 항목 id */
+  done?: Set<string>;
 }
 
 export interface ChatAnswer { answer: string; needs_check: boolean; place_id: string | null }
@@ -223,7 +225,7 @@ CONCERT
 ${contextBlock(input)}
 
 SCHEDULE
-${JSON.stringify(plan.items)}
+${JSON.stringify(plan.items.map((i) => ({ ...i, done: !!ctx.done?.has(i.id) })))}
 
 PLACES
 ${JSON.stringify(placesForPrompt(input.places))}`,
@@ -280,8 +282,8 @@ export function rulesAnswer(q: string, ctx: ChatContext): ChatAnswer {
       return { answer: `${meal.start}에 ${p?.name ?? meal.title}에서 드시면 돼요. ${meal.parent_text}`, needs_check: false, place_id: meal.place_id };
     }
   }
-  if (/지금|뭐 해|다음/.test(q)) {
-    const next = plan.items.find((i) => toMin(i.end) > ctx.nowMin);
+  if (/지금|뭐 해|다음|어디 가|남았|뭐 하/.test(q)) {
+    const next = plan.items.find((i) => !ctx.done?.has(i.id) && toMin(i.end) > ctx.nowMin);
     if (next) return { answer: `지금은 ${next.title} 시간이에요. ${next.parent_text}`, needs_check: false, place_id: next.place_id };
   }
   return { answer: unknownAnswer(ctx), needs_check: true, place_id: null };

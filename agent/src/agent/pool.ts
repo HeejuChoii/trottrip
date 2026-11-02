@@ -64,7 +64,7 @@ export class AgentPool {
       await this.sweep(0);
       if (this.entries.size >= this.opts.maxOpen) throw new LimitError("지금 사용자가 많아요. 잠시 후 다시 물어봐 주세요.", "pool_full");
     }
-    const state: TurnState = { req: null, placeIds: [] };
+    const state: TurnState = { req: null, placeIds: [], actions: [] };
     e = { handle: this.opener(userId, state), state, queue: Promise.resolve(), lastUsed: this.now(), busy: 0 };
     this.entries.set(userId, e);
     e.handle.catch(() => this.entries.delete(userId)); // 열기 실패 시 다음 요청에서 다시 연다(자동 재시도 루프 없음)
@@ -81,6 +81,7 @@ export class AgentPool {
       const handle = await e.handle;
       e.state.req = req;
       e.state.placeIds = [];
+      e.state.actions = [];
       try {
         const r = await handle.ask(req.q, context, req.message_id);
         if (r.status !== "completed" || !r.text) throw new Error(r.error || `turn ${r.status}`);
@@ -89,7 +90,13 @@ export class AgentPool {
         const ids = new Set(req.places.map((p) => p.id));
         const placeId = e.state.placeIds.find((id) => ids.has(id) && s.text.includes(req.places.find((p) => p.id === id)!.name)) ?? e.state.placeIds.find((id) => ids.has(id)) ?? null;
         const unknown = markers.includes("unknown");
-        return { text: s.text, needs_check: unknown, place_id: unknown ? null : placeId };
+        const actions = unknown ? [] : [...e.state.actions];
+        // 장소를 찾아 안내했는데 지도 버튼을 안 띄웠으면 하나 붙여 준다
+        if (!unknown && placeId && !actions.some((a) => a.type === "map")) {
+          const p = req.places.find((x) => x.id === placeId)!;
+          actions.push({ type: "map", place_id: placeId, label: `지도에서 길찾기 · ${p.name}` });
+        }
+        return { text: s.text, needs_check: unknown, place_id: unknown ? null : placeId, actions };
       } finally {
         e.state.req = null;
         e.lastUsed = this.now();

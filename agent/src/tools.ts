@@ -1,5 +1,5 @@
 // 챗봇 도구가 실제로 하는 일(순수 함수). Croche와 무관하게 테스트할 수 있다.
-import type { AgentItem, AgentPlace, ChatRequest } from "./protocol.ts";
+import type { AgentItem, AgentPlace, ChatAction, ChatRequest } from "./protocol.ts";
 
 export const CATEGORIES = [
   "restaurant", "cafe", "rest", "goods", "photo", "toilet", "elevator",
@@ -36,7 +36,7 @@ export function schedule(req: Pick<ChatRequest, "items" | "now">) {
   const now = toMin(req.now);
   const remaining = req.items
     .filter((i: AgentItem) => !i.done && (isNaN(now) || toMin(i.end) > now || i.type === "return"))
-    .map((i) => ({ start: i.start, end: i.end, title: i.title, what_to_do: i.parent_text, place_id: i.place_id }));
+    .map((i) => ({ id: i.id, start: i.start, end: i.end, title: i.title, what_to_do: i.parent_text, place_id: i.place_id }));
   return { now: req.now, current: remaining[0] ?? null, remaining };
 }
 
@@ -57,4 +57,19 @@ export function stripMarkers(text: string): { text: string; markers: string[] } 
   const markers: string[] = [];
   const out = text.replace(/[:：]\s*([a-z_]+)\s*[:：]/gi, (_m, name: string) => { markers.push(name.toLowerCase()); return ""; });
   return { text: out.replace(/[ \t]{2,}/g, " ").replace(/\s+([.,!?])/g, "$1").trim(), markers };
+}
+
+/** 버튼 추가. 목록에 있는 id만, 같은 버튼은 한 번만, 최대 3개 */
+export function addAction(actions: ChatAction[], req: Pick<ChatRequest, "items" | "places">, type: "schedule" | "map", id: string): { shown: boolean; reason?: string } {
+  if (actions.length >= 3) return { shown: false, reason: "버튼은 3개까지예요" };
+  if (type === "schedule") {
+    const it = req.items.find((i) => i.id === id);
+    if (!it) return { shown: false, reason: `일정에 없는 item-id예요: ${id}. venue schedule로 id를 확인하세요` };
+    if (!actions.some((a) => a.type === "schedule" && a.item_id === id)) actions.push({ type: "schedule", item_id: id, label: `일정에서 보기 · ${it.title.split(" · ")[0]}` });
+    return { shown: true };
+  }
+  const p = req.places.find((x) => x.id === id);
+  if (!p) return { shown: false, reason: `장소 목록에 없는 place-id예요: ${id}. venue find로 id를 확인하세요` };
+  if (!actions.some((a) => a.type === "map" && a.place_id === id)) actions.push({ type: "map", place_id: id, label: `지도에서 길찾기 · ${p.name}` });
+  return { shown: true };
 }

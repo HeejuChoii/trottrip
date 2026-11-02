@@ -7,8 +7,8 @@ type Json = Awaited<ReturnType<ToolHandler>>;
 /** 도구 결과를 JSON 값으로(undefined 필드 제거) */
 const json = (v: unknown) => JSON.parse(JSON.stringify(v)) as Json;
 import { FileStorage } from "@h1r-ai/croche/node";
-import type { ChatRequest } from "../protocol.ts";
-import { CATEGORIES, findPlaces, gateInfo, schedule } from "../tools.ts";
+import type { ChatAction, ChatRequest } from "../protocol.ts";
+import { addAction, CATEGORIES, findPlaces, gateInfo, schedule } from "../tools.ts";
 
 export interface AgentHandle {
   /** 한 번 묻고 최종 답을 받는다 */
@@ -19,7 +19,8 @@ export interface AgentHandle {
 /** 지금 처리 중인 요청 자료. 도구 handler가 읽는다(사용자별로 직렬화되므로 안전) */
 export interface TurnState {
   req: ChatRequest | null;
-  placeIds: string[]; // 이번 턴에 도구가 돌려준 장소 id (지도 버튼용)
+  placeIds: string[]; // 이번 턴에 도구가 돌려준 장소 id
+  actions: ChatAction[]; // 이번 턴에 띄울 버튼
 }
 
 export type AgentOpener = (userId: string, state: TurnState) => Promise<AgentHandle>;
@@ -40,6 +41,12 @@ export const INSTRUCTIONS = `너는 트롯트립의 "물어보기" 안내 도우
 - 사실은 오직 도구 결과와 이번 턴의 context(공연·좌석·일정)에서만 가져온다.
 - 장소(화장실, 엘리베이터, 쉼터, 식당, 굿즈 부스, 입구, 안내소, 물품 보관, 버스 승하차 등)를 물으면 반드시 venue find로 찾는다.
 - 일정·지금 할 일·버스 시각은 venue schedule, 좌석·입구는 venue gate로 확인한다.
+
+버튼 (말만 하지 말고 화면으로 데려간다)
+- 일정 항목을 안내했으면(지금 할 일, 다음 갈 곳, 입장, 귀가 버스 등) screen show-schedule로 그 항목의 "일정에서 보기" 버튼을 띄운다.
+- 가야 할 장소를 안내했으면 screen show-map으로 그 장소의 "지도에서 길찾기" 버튼을 띄운다. 지도에서 내 위치와 길 안내를 볼 수 있다.
+- 예: "공연 1시간 남았는데 어디 가야 해?" → venue schedule로 지금 할 일을 확인 → 두세 문장으로 안내 → show-schedule(그 항목) + show-map(그 항목의 장소).
+- id는 도구 결과에 나온 것만 쓴다. 버튼을 띄웠으면 답에 "아래 버튼을 누르시면 …" 정도로 짧게 알려 준다.
 - 도구 결과가 비어 있거나 근거가 없으면 절대 지어내지 않는다(사인회, 메뉴, 가격, 셔틀 시간표 등). 이때는 답 끝에 :unknown: 을 붙인다.
 - 몸이 아프다, 어지럽다, 숨이 차다 같은 말에는 첫 문장을 "119에 전화하시고 가까운 안전요원에게 알리세요."로 한다.
 
@@ -68,6 +75,23 @@ const venueTool: ToolDeclaration = {
   ],
 };
 
+const screenTool: ToolDeclaration = {
+  name: "screen",
+  summary: "답 아래에 부모님이 누를 버튼을 띄운다. 누르면 일정 화면이나 지도(내 위치·길 안내)로 이동한다.",
+  commands: [
+    {
+      key: "show_schedule", name: "show-schedule",
+      summary: "안내한 일정 항목의 '일정에서 보기' 버튼을 띄운다.",
+      flags: [{ name: "item-id", arg: "itemId", type: "string", required: true, description: "venue schedule 결과의 id" }],
+    },
+    {
+      key: "show_map", name: "show-map",
+      summary: "안내한 장소의 '지도에서 길찾기' 버튼을 띄운다.",
+      flags: [{ name: "place-id", arg: "placeId", type: "string", required: true, description: "venue find 또는 schedule 결과의 place_id" }],
+    },
+  ],
+};
+
 function handlers(state: TurnState): Record<string, ToolHandler> {
   return {
     venue: (inv) => {
@@ -81,6 +105,14 @@ function handlers(state: TurnState): Record<string, ToolHandler> {
       if (inv.key === "schedule") return json(schedule(req));
       if (inv.key === "gate") return json(gateInfo(req));
       return { status: "rejected", reason: "알 수 없는 동작" };
+    },
+    screen: (inv) => {
+      const req = state.req;
+      if (!req) return { status: "rejected", reason: "지금 처리 중인 질문이 없어요" };
+      const r = inv.key === "show_schedule" ? addAction(state.actions, req, "schedule", String(inv.args.itemId ?? ""))
+        : inv.key === "show_map" ? addAction(state.actions, req, "map", String(inv.args.placeId ?? ""))
+        : { shown: false, reason: "알 수 없는 동작" };
+      return json(r.shown ? { shown: true } : { status: "rejected", reason: r.reason ?? "" });
     },
   };
 }
@@ -102,8 +134,8 @@ export const openCrocheAgent: AgentOpener = async (userId, state) => {
       defaultLanguage: "ko",
       instructions: INSTRUCTIONS,
       markerGuide: MARKER_GUIDE,
-      tools: [venueTool],
-      maxIterations: 4, // 한 턴 도구 호출 상한 (비용 보호)
+      tools: [venueTool, screenTool],
+      maxIterations: 5, // 한 턴 도구 호출 반복 상한 (비용 보호): 확인 1~2회 + 버튼 1회
       maxOutputTokens: 400,
       memory: { policy: MEMORY_POLICY },
     },
