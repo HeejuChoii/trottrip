@@ -12,7 +12,7 @@ const { places } = parsePlacesUpload(readFileSync(new URL("../data/sample-places
 const concert: ConcertView = { ...SEED_CONCERTS[0], custom: false, gate_map: { B: "3번 입구" } };
 const base: PlanInput = {
   concert,
-  parent: { honorific: "엄마", age_band: "60s", walk: "15-30", rest_often: true, elevator_first: true, food: ["korean", "mild"], food_other: "", medicine_time: "13:00", friends_fitness: "same" },
+  parent: { honorific: "엄마", age_band: "60s", walk: "15-30", steps_usual: 0, rest_often: true, near_toilet: false, elevator_first: true, food: ["korean", "mild"], food_other: "", medicine_time: "13:00", friends_fitness: "same" },
   prefs: { goods: true, photo: true, artist_places: true, fan_first: false, sightseeing: false },
   transport: { mode: "fan_bus", origin: "대구", companions: "friends", friends_count: 2, meet_place: "수성못", meet_time: "08:30", drop_point: "", return_time: "20:30", return_place: "동쪽 주차장", train_from: "", train_to: "", train_depart: "", train_arrive: "", train_return_depart: "", shuttle_info: "", stay: "day" },
   seat: "B구역 12열",
@@ -135,4 +135,30 @@ test("카카오 문서 → 장소 변환", async () => {
   assert.equal(p.walk_min_from_venue, walkMinFromDistance(240));
   assert.equal(p.origin, "kakao");
   assert.equal(p.source, "needs_check");
+});
+
+test("평가 검사기가 규칙 위반을 잡는다", async () => {
+  const { checkPlan, runEval } = await import("../lib/eval.ts");
+  const plan = buildRulePlan(base);
+  assert.deepEqual(checkPlan(plan, base), []);
+  const bad = structuredClone(plan);
+  bad.items.find((i) => i.type === "meal")!.place_id = "없는장소";
+  bad.items.find((i) => i.type === "goods")!.end = "17:30";
+  const v = checkPlan(bad, base);
+  assert.ok(v.some((x) => x.includes("목록 밖")));
+  assert.ok(v.some((x) => x.includes("입장 시각 지남")));
+  const r = await runEval(concert, places, (input) => buildRulePlan(input));
+  assert.equal(r.passed, r.total);
+});
+
+test("걸음 수는 코드로 계산하고 덜 걷게 바꾸면 줄어든다", async () => {
+  const { estimateSteps } = await import("../lib/steps.ts");
+  const { lessWalkInput } = await import("../lib/planner.ts");
+  const ps = places.map((p) => (p.id === "ex_coex_fan1" ? { ...p, walk_min_from_venue: 25 } : p));
+  const inp = { ...base, places: ps, parent: { ...base.parent, walk: "30+" as const }, prefs: { ...base.prefs, artist_places: true } };
+  const a = estimateSteps(buildRulePlan(inp), ps, inp.parent);
+  const b = estimateSteps(buildRulePlan(lessWalkInput(inp)), ps, inp.parent);
+  assert.ok(a.steps > 0 && a.steps % 100 === 0);
+  assert.ok(b.steps < a.steps, `${b.steps} < ${a.steps}`);
+  assert.match(a.line, /^오늘 예상 약 [\d,]+보 · 서 있는 시간 약/);
 });

@@ -5,7 +5,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
-import type { ChatRow, Concert, EventType, Place, Trip, TripEvent, TtPlaceRow } from "./types.ts";
+import type { ChatRow, Concert, EventType, Place, Plan, Trip, TripEvent, TtPlaceRow } from "./types.ts";
 import { SEED_CONCERTS, SEED_TT_PLACES } from "./seed.ts";
 
 interface LocalDB {
@@ -15,7 +15,11 @@ interface LocalDB {
   trip_events: TripEvent[];
   chats: ChatRow[];
   tt_places?: TtPlaceRow[];
+  plan_cache?: { hash: string; plan: Plan; created_at: string }[];
+  api_usage?: UsageRow[];
 }
+
+export interface UsageRow { id: string; kind: string; model: string; input_tokens: number; output_tokens: number; cost_usd: number; created_at: string }
 
 let sb: SupabaseClient | null = null;
 function supa(): SupabaseClient | null {
@@ -273,4 +277,40 @@ export async function listChats(tripId: string): Promise<ChatRow[]> {
   const s = supa();
   if (s) return must(await s.from("chats").select("*").eq("trip_id", tripId).order("created_at")) as ChatRow[];
   return (await local()).chats.filter((c) => c.trip_id === tripId).sort((a, b) => a.created_at.localeCompare(b.created_at));
+}
+
+// ---------- plan_cache (같은 입력이면 같은 일정) ----------
+export async function getCachedPlan(hash: string): Promise<Plan | null> {
+  const s = supa();
+  if (s) return ((must(await s.from("plan_cache").select("plan").eq("hash", hash).maybeSingle()) as { plan: Plan } | null)?.plan) ?? null;
+  return (await local()).plan_cache?.find((r) => r.hash === hash)?.plan ?? null;
+}
+
+export async function setCachedPlan(hash: string, plan: Plan): Promise<void> {
+  const row = { hash, plan, created_at: new Date().toISOString() };
+  const s = supa();
+  if (s) { must(await s.from("plan_cache").upsert(row)); return; }
+  const db = await local();
+  db.plan_cache = (db.plan_cache ?? []).filter((r) => r.hash !== hash).concat(row);
+  await flush();
+}
+
+// ---------- api_usage ----------
+export async function addUsage(u: Omit<UsageRow, "id" | "created_at">): Promise<void> {
+  const row: UsageRow = { ...u, id: randomUUID(), created_at: new Date().toISOString() };
+  const s = supa();
+  if (s) { must(await s.from("api_usage").insert(row)); return; }
+  const db = await local();
+  (db.api_usage ??= []).push(row);
+  await flush();
+}
+
+export async function listUsage(): Promise<UsageRow[]> {
+  const s = supa();
+  if (s) return must(await s.from("api_usage").select("*").order("created_at")) as UsageRow[];
+  return (await local()).api_usage ?? [];
+}
+
+export async function sumUsage(): Promise<number> {
+  return (await listUsage()).reduce((a, r) => a + Number(r.cost_usd), 0);
 }

@@ -10,6 +10,7 @@ import { isHHMM, nowKST, toHHMM, toMin } from "@/lib/time";
 import { bad, body, ok } from "@/lib/http";
 
 export const maxDuration = 60;
+const CHAT_LIMIT = Number(process.env.CHAT_LIMIT_PER_TRIP ?? 30);
 
 /** Croche를 못 쓸 때도 같은 버튼을 띄운다: 장소 → 지도, 일정 질문 → 지금/관련 항목 */
 function fallbackActions(q: string, loaded: LoadedTrip, placeId: string | null, nowMin: number, done: Set<string>): ChatAction[] {
@@ -38,6 +39,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   const { trip, concert, places, input } = loaded;
 
   const history = await listChats(trip.id);
+  // trip당 물어보기 30회 (PRD 9장 예산)
+  if (history.filter((h) => h.role === "parent").length >= CHAT_LIMIT) {
+    const kh = kidHonorific(trip.kid_label);
+    return ok({ answer: `오늘은 물어보기를 많이 쓰셨어요. 가까운 안내소에 물어보시거나${trip.kid_phone ? ` ${kh}(${trip.kid_phone})께` : ` ${kh}께`} 전화해 주세요.`, place_id: null, needs_check: true, emergency: false, actions: [] });
+  }
   await addChat(trip.id, "parent", q);
   const emergency = isEmergency(q);
   const nowMin = b.now && isHHMM(b.now) ? toMin(b.now) : nowKST().min;

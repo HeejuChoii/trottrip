@@ -6,11 +6,13 @@ const s = (max = 100) => z.string().trim().max(max).default("");
 
 export const ParentSchema = z.object({
   honorific: s(20).transform((v) => v || "부모님"),
-  age_band: z.enum(["50s", "60s", "70+"]).default("60s"),
+  age_band: z.enum(["40s", "50s", "60s", "70+"]).default("60s"),
   walk: z.enum(["30+", "15-30", "15-"]).default("15-30"),
+  steps_usual: z.number().int().refine((v) => [0, 5000, 10000, 15000].includes(v)).default(0),
   rest_often: z.boolean().default(false),
+  near_toilet: z.boolean().default(false),
   elevator_first: z.boolean().default(false),
-  food: z.array(z.enum(["korean", "mild", "seafood", "quick"])).default([]),
+  food: z.array(z.enum(["korean", "mild", "seafood", "quick", "any"])).default([]),
   food_other: s(60),
   medicine_time: hhmm,
   friends_fitness: z.enum(["same", "better"]).default("same"),
@@ -27,7 +29,7 @@ export const PrefsSchema = z.object({
 export const TransportSchema = z.object({
   mode: z.enum(["fan_bus", "train", "shuttle", "car"]).default("fan_bus"),
   origin: s(60),
-  companions: z.enum(["alone", "friends", "fan_bus"]).default("alone"),
+  companions: z.enum(["alone", "friends", "fan_bus", "family"]).default("alone"),
   friends_count: z.number().int().min(0).max(50).default(0),
   meet_place: s(60), meet_time: hhmm, drop_point: s(60), return_time: hhmm, return_place: s(60),
   train_from: s(40), train_to: s(40), train_depart: hhmm, train_arrive: hhmm, train_return_depart: hhmm,
@@ -81,3 +83,15 @@ export const ConcertAdminSchema = z.object({
   info_desk_place_id: z.string().max(100).nullable().default(null),
   active: z.boolean().default(true),
 });
+
+export const TicketSchema = z.object({
+  vendor: s(30),
+  pickup: z.enum(["", "mobile", "onsite", "paper"]).default(""),
+  booker_name: s(20),
+  id_check: z.boolean().default(true),
+  bus_car: s(20),
+  bus_seat: s(20),
+  note: s(200),
+});
+
+export const EMPTY_TICKET = TicketSchema.parse({});

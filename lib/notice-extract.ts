@@ -5,6 +5,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import { MODEL, aiEnabled } from "./ai.ts";
+import { recordUsage } from "./usage.ts";
 
 const NoticePlace = z.object({
   name: z.string().describe("짧은 이름. 예: 공식 MD 부스, 포토존, 3번 게이트, 퀸즈스마일 셔틀 하차"),
@@ -39,6 +40,7 @@ export async function extractNotice(text: string, concertTitle: string, venue: s
 - 굿즈 부스는 goods, 포토존·포토월은 photo, 게이트·입구는 gate.`,
     messages: [{ role: "user", content: `공지 원문:\n"""\n${text.slice(0, 20000)}\n"""` }],
   });
+  await recordUsage("notice", MODEL, res.usage);
   if (res.stop_reason === "refusal" || !res.parsed_output) throw new Error("공지를 정리하지 못했어요");
   return res.parsed_output;
 }

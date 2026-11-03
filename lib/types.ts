@@ -87,15 +87,21 @@ export interface CustomConcert {
 
 export type WalkLevel = "30+" | "15-30" | "15-";
 
+/** 부모님 여행 스타일 (v1.1: 아픈 사람처럼 묻지 않는다) */
 export interface ParentProfile {
   honorific: string; // 어머니/아버지/두 분/직접
-  age_band: "50s" | "60s" | "70+";
+  age_band: "40s" | "50s" | "60s" | "70+";
+  /** 걷기 스타일: 30+ 많이 걸어도 좋아요 / 15-30 적당히 / 15- 여유롭게(택시·쉬는 시간 넉넉히) */
   walk: WalkLevel;
-  rest_often: boolean;
-  elevator_first: boolean;
-  food: string[]; // korean, mild, seafood, quick
+  /** 평소 하루 걸음 수(선택). 0 = 모름 */
+  steps_usual: number;
+  food: string[]; // korean, mild(덜 매운), seafood, quick, any
   food_other: string;
+  // ↓ 더 챙겨 드릴 것(선택)
+  elevator_first: boolean;
   medicine_time: string; // HH:MM or ""
+  rest_often: boolean;
+  near_toilet: boolean;
   friends_fitness: "same" | "better";
 }
 
@@ -113,7 +119,7 @@ export type TransportMode = "fan_bus" | "train" | "shuttle" | "car";
 export interface Transport {
   mode: TransportMode;
   origin: string;
-  companions: "alone" | "friends" | "fan_bus";
+  companions: "alone" | "friends" | "fan_bus" | "family";
   friends_count: number;
   // 팬 모임 버스
   meet_place: string;
@@ -158,6 +164,10 @@ export interface Plan {
   extra_day: { title: string; place_ids: string[] } | null;
   general?: boolean; // 장소 없이 만든 "일반 일정"
   generated_by?: "ai" | "rules";
+  /** 규칙 기반으로 만든 이유 (AI 실패·예산 소진 등). 자녀 화면에 짧게 보여 준다 */
+  fallback_reason?: string;
+  /** 덜 걷게 바꾼 일정 */
+  less_walk?: boolean;
 }
 
 export interface Trip {
@@ -179,6 +189,20 @@ export interface Trip {
   marketing_opt_in: boolean;
   expires_at: string;
   created_at: string;
+  /** F19 자녀 준비 체크리스트: 항목 id → 체크 여부 */
+  checklist: Record<string, boolean>;
+  /** F20 티켓·예약 정보 */
+  ticket: TicketInfo;
+}
+
+export interface TicketInfo {
+  vendor: string; // 예매처 (티켓링크, 예스24 등)
+  pickup: "" | "mobile" | "onsite" | "paper"; // 모바일 티켓 / 현장 수령 / 종이 티켓
+  booker_name: string; // 예매자 이름(본인 확인용, 선택)
+  id_check: boolean; // 신분증 확인 필요
+  bus_car: string; // 귀가 버스 호차
+  bus_seat: string;
+  note: string;
 }
 
 export const EVENT_TYPES = [

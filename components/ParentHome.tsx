@@ -18,6 +18,9 @@ interface Props {
   done: string[];
   opened: boolean;
   placeNames: Record<string, { name: string; walk: number | null }>;
+  stepsLine: string;
+  kit: string[];
+  concertLine: string; // "코엑스 D홀 · 오후 5시 시작"
 }
 
 export function BottomBar({ token }: { token: string }) {
@@ -41,6 +44,7 @@ export default function ParentHome(p: Props) {
   const [firstOpen, setFirstOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [askedId, setAskedId] = useState<string | null>(null);
+  const [preview, setPreview] = useState(false); // 공연 전: 표지(P0) 대신 당일 화면 미리 보기
   const kidH = kidHonorific(p.kidLabel);
 
   useEffect(() => {
@@ -76,8 +80,45 @@ export default function ParentHome(p: Props) {
   }
 
   const header = (
-    <div className="top"><Brand href={null} /><span style={{ fontSize: 16, color: "var(--sub)" }}>{fmtDateLongKo(p.concertDate)}</span></div>
+    <>
+      <div className="top"><Brand href={null} /><span style={{ fontSize: 16, color: "var(--sub)" }}>{fmtDateLongKo(p.concertDate)}</span></div>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ fontSize: 16, color: "var(--sub)" }}>👟 {p.stepsLine.split(" · ")[0]}</span>
+        <Link href={`/p/${token}/ticket`} className="mini-btn" style={{ fontSize: 17, padding: "10px 14px", textDecoration: "none" }}>🎫 내 티켓</Link>
+      </div>
+    </>
   );
+
+  // F18 P0 안내장 표지: 공연 날 전에는 이 화면이 첫 화면
+  if (rel === "before" && !preview && !askedId) {
+    const glance = items.filter((i) => ["arrive", "meal", "goods", "enter", "return"].includes(i.type)).slice(0, 5);
+    return (
+      <main className="shell pv">
+        <div className="top"><Brand href={null} /></div>
+        <p className="hello">{p.honorific}, {kidH}이 보낸 공연 날 안내장이에요</p>
+        <section className="next pk">
+          <div className="k">{fmtDateLongKo(p.concertDate)}</div>
+          <div className="w">{p.concertTitle}</div>
+          <div className="d">{p.concertLine}</div>
+        </section>
+        <div className="card">
+          <b style={{ fontSize: 19 }}>하루 한눈에</b>
+          <div className="mini" style={{ marginTop: 8 }}>
+            {glance.map((i) => <div key={i.id} className="mi"><span>{mainTitle(i)}</span><b>{fmtShort(i.start)}</b></div>)}
+          </div>
+        </div>
+        <div className="card" style={{ fontSize: 18, lineHeight: 1.5 }}>
+          <b>👟 얼마나 움직이세요?</b><br />{p.stepsLine.replace(/^오늘 /, "")}
+        </div>
+        <div className="card" style={{ fontSize: 18, lineHeight: 1.6 }}>
+          <b>🎒 챙기실 것</b><br />{p.kit.join(" · ")}
+        </div>
+        <div className="ai"><p style={{ marginTop: 0 }}>공연 날 이 링크를 열면 <b>지금 할 일</b>을 하나씩 알려 드려요. 앱 설치는 필요 없어요.</p></div>
+        <Link href={`/p/${token}/ticket`} className="bigbtn line">🎫 내 티켓 보기</Link>
+        <button className="bigbtn pk" style={{ fontSize: 19, padding: 14 }} onClick={() => setPreview(true)}>공연 날 화면 미리 보기</button>
+      </main>
+    );
+  }
 
   // 물어보기에서 "일정에서 보기"로 온 항목 (모든 화면 상단)
   const askedCard = (() => {
@@ -162,7 +203,7 @@ export default function ParentHome(p: Props) {
         <div className="w">{mainTitle(cur)}</div>
         <div className="d">
           {curPlace ? `${curPlace.name} · ` : ""}{cur.parent_text}
-          {cur.walk_min != null && cur.walk_min > 0 ? ` 걸어서 ${cur.walk_min}분.` : ""}
+          {cur.walk_min != null && cur.walk_min > 0 && !/택시/.test(cur.parent_text) ? ` 걸어서 ${cur.walk_min}분.` : ""}
         </div>
         <span className="when">{started ? `${fmtTimeKo(cur.end)}까지` : `${fmtTimeKo(cur.start)}부터`}</span>
       </section>

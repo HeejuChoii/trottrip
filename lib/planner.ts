@@ -81,6 +81,7 @@ export function candidates(cat: PlaceCategory, input: PlanInput, extraPrefer: st
   const prefer = [...extraPrefer];
   if (input.parent.elevator_first) prefer.push("elevator", "accessible");
   if (input.parent.rest_often) prefer.push("seating");
+  if (input.parent.near_toilet) prefer.push("accessible");
   let list = input.places.filter((p) => p.category === cat && withinWalk(p, max));
   if (cat === "restaurant") {
     list = list.filter((p) => restaurantMatches(p, input.parent));
@@ -347,10 +348,10 @@ export function buildRulePlan(input: PlanInput): Plan {
 
   const sorted = items.sort((a, b) => toMin(a.start) - toMin(b.start) || ITEM_TYPES.indexOf(a.type) - ITEM_TYPES.indexOf(b.type));
   const summaryBits = [
-    maxWalk <= 10 ? "무리 없는 이동" : "여유 있는 동선",
+    maxWalk <= 5 ? "여유로운 동선" : maxWalk <= 10 ? "적당히 걷는 동선" : "많이 걸어도 좋은 동선",
     prefs.goods && sorted.some((i) => i.type === "goods") ? "굿즈 시간 확보" : null,
     parent.elevator_first ? "엘리베이터 우선" : null,
-    transport.companions === "friends" && transport.friends_count ? `친구 ${transport.friends_count}분 포함` : transport.companions === "fan_bus" ? "팬 모임 버스" : null,
+    transport.companions === "friends" && transport.friends_count ? `친구 ${transport.friends_count}분 포함` : transport.companions === "fan_bus" ? "팬 모임 버스" : transport.companions === "family" ? "3대 가족 나들이" : null,
   ].filter(Boolean);
   return {
     title: `${who}의 〈${shortTitle(concert.title)}〉 ${concert.city || ""} 여행`.replace(/\s+여행$/, " 여행").replace(/\s{2,}/g, " "),
@@ -503,3 +504,45 @@ export function rulesReplan(plan: Plan, input: PlanInput, reason: ChangeReason, 
   const newItems = [...kept, ...out].sort((a, b) => toMin(a.start) - toMin(b.start));
   return { plan: { ...plan, items: newItems }, message, changes };
 }
+
+// ---------- AI가 고를 칸별 후보 (코드가 조건을 거른 뒤 최대 4곳) ----------
+export function fanCandidates(input: PlanInput): Place[] {
+  const { prefs } = input;
+  if (!prefs.artist_places) return [];
+  const maxWalk = maxWalkFor(input.parent.walk);
+  return input.places
+    .filter((p) => p.fan_type !== "none" && !["restaurant", "goods", "photo"].includes(p.category) && p.walk_min_from_venue !== null)
+    .filter((p) => p.walk_min_from_venue! <= (prefs.fan_first ? FAN_FIRST_MAX_MIN : maxWalk))
+    .sort((a, b) => (a.fan_type === "artist_visited" ? 0 : 1) - (b.fan_type === "artist_visited" ? 0 : 1) || a.walk_min_from_venue! - b.walk_min_from_venue!);
+}
+
+export function slotCandidates(plan: Plan, input: PlanInput): Record<string, Place[]> {
+  const out: Record<string, Place[]> = {};
+  const byId = new Map(input.places.map((p) => [p.id, p]));
+  for (const it of plan.items) {
+    let list: Place[] = [];
+    if (it.type === "meal") list = candidates("restaurant", input);
+    else if (it.type === "rest") list = [...candidates("rest", input, ["indoor", "seating"]), ...candidates("cafe", input, ["seating"])];
+    else if (it.type === "goods") list = candidates("goods", input, ["indoor"]);
+    else if (it.type === "photo" && it.title.startsWith("최애 장소")) list = fanCandidates(input);
+    else if (it.type === "photo") list = candidates("photo", input);
+    else if (it.type === "enter") list = candidates("gate", input);
+    else if ((it.type === "arrive" && input.transport.mode === "fan_bus") || (it.type === "return" && input.transport.mode === "fan_bus")) list = candidates("bus_stop", input);
+    const cur = it.place_id ? byId.get(it.place_id) : undefined;
+    const top = list.slice(0, 4);
+    if (cur && !top.some((p) => p.id === cur.id)) top.unshift(cur);
+    if (top.length) out[it.id] = top;
+  }
+  return out;
+}
+
+/** F17 "덜 걷게 바꾸기": 걷기 스타일 한 단계 여유롭게, 포토존·'시간 나면' 팬덤 장소 빼기 */
+export function lessWalkInput(input: PlanInput): PlanInput {
+  const walk: ParentProfile["walk"] = input.parent.walk === "30+" ? "15-30" : "15-";
+  return {
+    ...input,
+    parent: { ...input.parent, walk, rest_often: true },
+    prefs: { ...input.prefs, photo: false, artist_places: input.prefs.fan_first ? input.prefs.artist_places : false },
+  };
+}
+

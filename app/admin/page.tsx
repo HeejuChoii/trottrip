@@ -1,10 +1,13 @@
 import { isAdmin } from "@/lib/admin";
 import { listConcerts, placeCounts, storageMode } from "@/lib/db";
 import { computeMetrics } from "@/lib/metrics";
+import { listUsage } from "@/lib/db";
+import { budgetUsd } from "@/lib/usage";
 import { aiEnabled, MODEL } from "@/lib/ai";
 import { concertripConfigured } from "@/lib/concertrip";
 import AdminLogin from "@/components/admin/AdminLogin";
 import AdminConcerts from "@/components/admin/AdminConcerts";
+import AdminEval from "@/components/admin/AdminEval";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "운영자 · 트롯트립", robots: { index: false, follow: false } };
@@ -12,7 +15,11 @@ export const metadata = { title: "운영자 · 트롯트립", robots: { index: f
 // A1 운영자 화면 (F15)
 export default async function Page() {
   if (!(await isAdmin())) return <AdminLogin configured={!!process.env.ADMIN_PASSWORD} />;
-  const [m, concerts, counts] = await Promise.all([computeMetrics(), listConcerts(false), placeCounts()]);
+  const [m, concerts, counts, usage] = await Promise.all([computeMetrics(), listConcerts(false), placeCounts(), listUsage().catch(() => [])]);
+  const spent = usage.reduce((a, r) => a + Number(r.cost_usd), 0);
+  const byKind = Object.entries(usage.reduce<Record<string, { n: number; usd: number }>>((acc, r) => {
+    const k = `${r.kind} · ${r.model}`; (acc[k] ??= { n: 0, usd: 0 }); acc[k].n++; acc[k].usd += Number(r.cost_usd); return acc;
+  }, {}));
   return (
     <main className="admin">
       <div className="top"><span className="brand">트롯<i>트립</i> 운영자</span><AdminLogin logout /></div>
@@ -22,6 +29,13 @@ export default async function Page() {
         콘서트립 API: <b>{concertripConfigured() ? "연결됨" : "미설정(JSON 업로드 사용)"}</b> ·
         카카오: <b>{process.env.NEXT_PUBLIC_KAKAO_JS_KEY ? "설정됨" : "미설정(링크 복사로 대체)"}</b>
       </p>
+
+      <div className="card" style={{ fontSize: 14, lineHeight: 1.7 }}>
+        <b>Claude API 누적 사용량</b> ${spent.toFixed(2)} / 예산 ${budgetUsd()} ({Math.round((spent / budgetUsd()) * 100)}%)
+        {spent >= budgetUsd() && <span className="err"> · 예산 소진: 새 일정은 규칙 기반으로 만들어요</span>}<br />
+        <small>{byKind.map(([k, v]) => `${k}: ${v.n}회 $${v.usd.toFixed(3)}`).join(" · ") || "아직 호출 없음"}</small><br />
+        <small>Croche 챗봇 비용은 Croche Studio에서 확인하세요.</small>
+      </div>
 
       <h2 className="h" style={{ fontSize: 20 }}>해커톤 지표</h2>
       <div className="tblwrap"><table>
@@ -48,6 +62,8 @@ export default async function Page() {
           </table></div>
         </div>
       </div>
+
+      <AdminEval />
 
       <h2 className="h" style={{ fontSize: 20 }}>공연 · 콘서트립 장소</h2>
       <AdminConcerts concerts={concerts} counts={counts} />

@@ -6,6 +6,7 @@ import { captureSrc, clientId, ls, postJSON, ss, track } from "@/lib/client";
 import { fmtDateKo, fmtTimeKo, toMin, toHHMM } from "@/lib/time";
 import type { Concert, ParentProfile, Prefs, Transport } from "@/lib/types";
 import { shortTitle } from "@/lib/planner";
+import { eunNeun } from "@/lib/text";
 
 type C = Concert & { place_count: number };
 
@@ -23,14 +24,17 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [err, setErr] = useState("");
+  // 요구사항 정제: 입력이 모호하면 일정을 만들기 전에 한 가지만 되묻는다(F5)
+  const [clarify, setClarify] = useState<null | { key: "drop_point" | "return_time" | "train_arrive"; q: string; hint: string; fallback: string }>(null);
+  const [clarified, setClarified] = useState(false);
   const [concertId, setConcertId] = useState<string | null>(concerts[0]?.id ?? null);
   const [custom, setCustom] = useState({ title: "", venue_name: "", date: "", start_time: "" });
   const [useCustom, setUseCustom] = useState(concerts.length === 0);
   const [seat, setSeat] = useState("");
   const [honorCustom, setHonorCustom] = useState(false);
   const [parent, setParent] = useState<ParentProfile>({
-    honorific: "어머니", age_band: "60s", walk: "15-30", rest_often: true, elevator_first: true,
-    food: ["korean", "mild"], food_other: "", medicine_time: "", friends_fitness: "same",
+    honorific: "어머니", age_band: "60s", walk: "15-30", steps_usual: 0, rest_often: false, near_toilet: false, elevator_first: false,
+    food: ["korean"], food_other: "", medicine_time: "", friends_fitness: "same",
   });
   const [prefs, setPrefs] = useState<Prefs>({ goods: true, photo: true, artist_places: false, fan_first: false, sightseeing: false });
   const [tr, setTr] = useState<Transport>({
@@ -61,7 +65,17 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
     setErr(""); setStep(2); scrollTo(0, 0);
   }
 
+  function needClarify(): typeof clarify {
+    if (tr.mode === "fan_bus" && !tr.drop_point.trim()) return { key: "drop_point", q: "팬 모임 버스는 어디에 내려 드리나요?", hint: "예: 코엑스 동문 앞", fallback: "공연장 앞" };
+    if (tr.mode === "fan_bus" && !tr.return_time) return { key: "return_time", q: "귀가 버스는 몇 시에 출발하나요?", hint: "", fallback: "" };
+    if (tr.mode === "train" && !tr.train_arrive) return { key: "train_arrive", q: "열차는 몇 시에 도착하나요?", hint: "", fallback: "" };
+    return null;
+  }
+
   async function submit() {
+    const c = clarified ? null : needClarify();
+    if (c) { setClarify(c); setClarified(true); scrollTo(0, 0); return; }
+    setClarify(null);
     setErr(""); setStep(4); scrollTo(0, 0);
     const consent = JSON.parse(ss.get("tt_consent") || "{}");
     try {
@@ -77,6 +91,23 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
       setErr(e instanceof Error ? e.message : "일정을 만들지 못했어요. 입력을 확인하고 다시 눌러 주세요.");
       setStep(3);
     }
+  }
+
+  if (clarify) {
+    const isTime = clarify.key !== "drop_point";
+    const val = tr[clarify.key];
+    return (
+      <main className="shell">
+        <div className="top"><button className="back" onClick={() => { setClarify(null); setClarified(false); }}>← 이전</button><Prog n={3} /></div>
+        <h1 className="h">하나만 더 여쭤볼게요</h1>
+        <div className="card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <b style={{ fontSize: 17 }}>{clarify.q}</b>
+          <input className="inp" type={isTime ? "time" : "text"} value={val} placeholder={clarify.hint} onChange={(e) => T({ [clarify.key]: e.target.value } as Partial<Transport>)} />
+          <p className="fine" style={{ textAlign: "left", margin: 0 }}>{isTime ? "모르시면 공연이 끝나고 30분 뒤로 잡아 둘게요." : `모르시면 "${clarify.fallback}"으로 잡아 둘게요.`}</p>
+        </div>
+        <button className="cta" onClick={submit}>{val ? "이대로 만들기" : "모르겠어요, 그냥 만들기"}</button>
+      </main>
+    );
   }
 
   if (step === 4) {
@@ -140,7 +171,8 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
               <div className="chips">
                 <Chip on={tr.companions === "alone"} onClick={() => T({ companions: "alone" })}>혼자</Chip>
                 <Chip on={tr.companions === "friends"} onClick={() => T({ companions: "friends" })}>친구분과</Chip>
-                <Chip on={tr.companions === "fan_bus"} onClick={() => T({ companions: "fan_bus", mode: "fan_bus" })} tone="pu">팬 모임 버스</Chip>
+                <Chip on={tr.companions === "fan_bus"} onClick={() => T({ companions: "fan_bus", mode: "fan_bus" })} tone="pu">지역 팬 모임 버스</Chip>
+                <Chip on={tr.companions === "family"} onClick={() => T({ companions: "family" })}>자녀·손주와 함께 (3대)</Chip>
               </div>
               {tr.companions === "friends" && (
                 <div className="fld"><span>친구 몇 분?</span>
@@ -159,7 +191,8 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
       {step === 2 && (
         <>
           <div className="top"><button className="back" onClick={() => setStep(1)}>← 이전</button><Prog n={2} /></div>
-          <h1 className="h">{who}에 대해 알려 주세요</h1>
+          <h1 className="h">{who}{eunNeun(who)} 어떻게 여행하세요?</h1>
+          <p className="lead">{who}께 꼭 맞는 하루를 짜 드릴게요.</p>
           <div className="card"><span className="lab">호칭</span>
             <div className="chips">
               {HONORIFICS.map((h) => <Chip key={h} on={!honorCustom && parent.honorific === h} onClick={() => { setHonorCustom(false); P({ honorific: h }); }}>{h}</Chip>)}
@@ -169,38 +202,40 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
           </div>
           <div className="card"><span className="lab">연세</span>
             <div className="chips">
-              {([["50s", "50대"], ["60s", "60대"], ["70+", "70대 이상"]] as const).map(([v, l]) => <Chip key={v} on={parent.age_band === v} onClick={() => P({ age_band: v })}>{l}</Chip>)}
+              {([["40s", "40대"], ["50s", "50대"], ["60s", "60대"], ["70+", "70대 이상"]] as const).map(([v, l]) => <Chip key={v} on={parent.age_band === v} onClick={() => P({ age_band: v })}>{l}</Chip>)}
             </div></div>
-          <div className="card"><span className="lab">한 번에 걸으실 수 있는 시간</span>
+          <div className="card"><span className="lab">걷기 스타일</span>
             <div className="chips">
-              {([["30+", "30분 이상"], ["15-30", "15~30분"], ["15-", "15분 이하"]] as const).map(([v, l]) => <Chip key={v} on={parent.walk === v} onClick={() => P({ walk: v })}>{l}</Chip>)}
+              {([["30+", "많이 걸어도 좋아요"], ["15-30", "적당히"], ["15-", "여유롭게 (택시·쉬는 시간 넉넉히)"]] as const).map(([v, l]) => <Chip key={v} on={parent.walk === v} onClick={() => P({ walk: v })}>{l}</Chip>)}
             </div></div>
-          <div className="card"><span className="lab">쉬는 시간</span>
+          <div className="card"><span className="lab">평소 하루에 몇 보 정도 걸으세요? (선택)</span>
             <div className="chips">
-              <Chip on={parent.rest_often} onClick={() => P({ rest_often: true })}>자주 앉아 쉬셔야 해요</Chip>
-              <Chip on={!parent.rest_often} onClick={() => P({ rest_often: false })}>괜찮으세요</Chip>
-            </div></div>
-          <div className="card"><span className="lab">계단</span>
-            <div className="chips">
-              <Chip on={parent.elevator_first} onClick={() => P({ elevator_first: true })}>엘리베이터 우선</Chip>
-              <Chip on={!parent.elevator_first} onClick={() => P({ elevator_first: false })}>계단도 괜찮아요</Chip>
-            </div></div>
+              {([[5000, "5천 보"], [10000, "1만 보"], [15000, "1만5천 보 이상"], [0, "잘 모르겠어요"]] as const).map(([v, l]) => <Chip key={v} on={parent.steps_usual === v} onClick={() => P({ steps_usual: v })}>{l}</Chip>)}
+            </div>
+            <p className="fine" style={{ textAlign: "left", margin: "6px 0 0" }}>공연 날 예상 걸음 수를 평소와 비교해 알려 드려요.</p></div>
           <div className="card"><span className="lab">식사 (여러 개 고를 수 있어요)</span>
             <div className="chips">
-              {([["korean", "한식"], ["mild", "안 매운 음식"], ["seafood", "해산물 OK"], ["quick", "빨리 드시는 편"]] as const).map(([v, l]) => <Chip key={v} on={parent.food.includes(v)} onClick={() => toggleFood(v)}>{l}</Chip>)}
+              {([["korean", "한식"], ["mild", "덜 매운 음식"], ["seafood", "해산물 좋아함"], ["quick", "빨리 드시는 편"], ["any", "아무거나 좋아함"]] as const).map(([v, l]) => <Chip key={v} on={parent.food.includes(v)} onClick={() => toggleFood(v)}>{l}</Chip>)}
             </div>
-            <input className="inp" style={{ marginTop: 8 }} value={parent.food_other} onChange={(e) => P({ food_other: e.target.value })} placeholder="기타 (예: 밀가루 못 드세요)" />
-          </div>
-          <div className="card"><span className="lab">약 드시는 시간 (선택)</span>
-            <input className="inp" type="time" value={parent.medicine_time} onChange={(e) => P({ medicine_time: e.target.value })} />
+            <input className="inp" style={{ marginTop: 8 }} value={parent.food_other} onChange={(e) => P({ food_other: e.target.value })} placeholder="기타 (예: 밀가루 음식은 안 드세요)" />
           </div>
           {tr.companions !== "alone" && (
-            <div className="card"><span className="lab">함께 가시는 분들도 비슷하세요?</span>
+            <div className="card"><span className="lab">함께 가시는 분들과 걷는 속도는?</span>
               <div className="chips">
-                <Chip on={parent.friends_fitness === "same"} onClick={() => P({ friends_fitness: "same" })}>네, 비슷해요</Chip>
-                <Chip on={parent.friends_fitness === "better"} onClick={() => P({ friends_fitness: "better" })}>더 잘 걸으세요</Chip>
+                <Chip on={parent.friends_fitness === "same"} onClick={() => P({ friends_fitness: "same" })}>비슷해요</Chip>
+                <Chip on={parent.friends_fitness === "better"} onClick={() => P({ friends_fitness: "better" })}>함께 가는 분들이 더 잘 걸어요</Chip>
               </div></div>
           )}
+          <details className="card">
+            <summary style={{ fontWeight: 700, fontSize: 15, cursor: "pointer" }}>더 챙겨 드릴 것 (선택)</summary>
+            <div className="chips" style={{ marginTop: 10 }}>
+              <Chip on={parent.elevator_first} onClick={() => P({ elevator_first: !parent.elevator_first })}>계단보다 엘리베이터가 편하세요</Chip>
+              <Chip on={parent.rest_often} onClick={() => P({ rest_often: !parent.rest_often })}>중간중간 앉아서 쉬기</Chip>
+              <Chip on={parent.near_toilet} onClick={() => P({ near_toilet: !parent.near_toilet })}>화장실 가까이</Chip>
+            </div>
+            <span className="lab" style={{ marginTop: 10 }}>약 드시는 시간</span>
+            <input className="inp" type="time" value={parent.medicine_time} onChange={(e) => P({ medicine_time: e.target.value })} />
+          </details>
           <button className="cta" onClick={() => { if (!parent.honorific.trim()) P({ honorific: "부모님" }); setStep(3); scrollTo(0, 0); }}>다음</button>
         </>
       )}

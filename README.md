@@ -1,6 +1,6 @@
 # 트롯트립 (TrotTrip)
 
-자녀가 공연과 부모님 정보를 넣으면, AI가 콘서트 하루를 짜서 링크 하나로 부모님께 보내 드리는 모바일 웹앱 (PRD v1.0 MVP).
+자녀가 공연과 부모님 정보를 넣으면, AI가 콘서트 하루를 짜서 링크 하나로 부모님께 보내 드리는 모바일 웹앱 (PRD v1.1).
 
 - Next.js 15 (App Router) + TypeScript + Tailwind 4
 - Supabase(Postgres) — 미설정 시 로컬 개발용 `.data/db.json`
@@ -42,7 +42,10 @@ npm test                     # 일정 엔진·어댑터 테스트
 | 이름 | 용도 |
 |---|---|
 | `ANTHROPIC_API_KEY` | 일정 생성·재생성·챗봇. 없으면 규칙 기반 |
-| `ANTHROPIC_MODEL` | 선택. 기본 `claude-opus-5-5` |
+| `ANTHROPIC_MODEL` | 선택. 일정 생성용 상위 모델, 기본 `claude-opus-5-5` |
+| `ANTHROPIC_SMALL_MODEL` | 선택. 챗봇 대체·이유 분류, 기본 `claude-haiku-5-5` |
+| `ANTHROPIC_BUDGET_USD` | 예산(기본 45). 넘으면 새 일정은 규칙 기반, `/admin`에 누적 사용량 |
+| `CHAT_LIMIT_PER_TRIP` | 안내장당 물어보기 횟수(기본 30) |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` | DB. **Vercel 배포 시 필수**(파일 저장소는 서버리스에서 유지되지 않음) |
 | `NEXT_PUBLIC_KAKAO_JS_KEY` | 카카오 공유·지도. 카카오 디벨로퍼스에 배포 도메인 등록 |
 | `CONCERTRIP_API_URL`, `CONCERTRIP_API_TOKEN` | 콘서트립 공개 읽기 API (`GET {URL}/concerts/{id}/places`) |
@@ -54,11 +57,25 @@ npm test                     # 일정 엔진·어댑터 테스트
 
 ## Supabase
 
-`supabase/migrations/0001_init.sql` → `0002_tt_places.sql` → `supabase/seed.sql` 순서로(이미 0001·seed를 실행했다면 0002만) SQL 에디터에서 실행. RLS를 켜고 정책을 두지 않아 anon 키로는 접근할 수 없고, 서버만 service role 키로 접근합니다.
+`supabase/migrations/0001_init.sql` → `0002_tt_places.sql` → `0003_v1_1.sql` → `supabase/seed.sql` 순서로(이미 실행한 것은 건너뛰기) SQL 에디터에서 실행. RLS를 켜고 정책을 두지 않아 anon 키로는 접근할 수 없고, 서버만 service role 키로 접근합니다.
 
-## 일정 생성 (F5)
+## 일정 생성 (F5, v1.1)
 
-`lib/ai.ts` → Claude 구조화 출력(zod 스키마) → `lib/planner.ts#validatePlan`(스키마·시각·place_id 존재 확인) → 실패 시 1회 재시도 → 그래도 실패하면 규칙 기반 `buildRulePlan`. 장소가 없는 공연(직접 입력·장소 미등록)은 "일반 일정"으로 만듭니다. 거절(refusal) 대비로 서버 측 `fallbacks: "default"`를 켰습니다.
+결과 일관성을 위해 역할을 나눴다.
+
+1. `lib/planner.ts#buildRulePlan` — 시각·순서·칸(slot), 칸마다 조건에 맞는 후보 장소(최대 4곳)를 **코드**가 정한다.
+2. `lib/ai.ts#generatePlan` — AI(상위 모델 1회)는 후보 중 장소를 고르고 문장만 쓴다. 후보 밖 id·중복이면 1회 재시도, 그래도 실패하면 규칙 기반 일정.
+3. 입력 해시(`plan_cache`)로 같은 입력이면 같은 일정. 걸음 수(`lib/steps.ts`)와 준비 체크리스트(`lib/checklist.ts`)도 코드.
+4. 평가 세트: `npm run eval`(규칙 엔진) 또는 `/admin` "평가 실행"(AI 포함). 시나리오 10개, 목록 밖 장소·입장 시각 지남·도보 한도·식사 조건·겹침·일관성 검사 (`lib/eval.ts`).
+
+| 실패 상황 | 대응 |
+|---|---|
+| 공연 장소 데이터 없음 | 일반 일정 + "장소 정보를 준비 중이에요" |
+| 게이트·MD 공지 전 | needs_check 표시, 공지 등록 시 갱신 |
+| AI 응답 실패·형식 오류 | 1회 재시도 후 규칙 기반 일정 |
+| 시간이 모자람 | 취향 항목부터 줄이고 "줄이 길면 건너뛰어도 돼요" |
+| 챗봇이 모르는 질문 | "확인이 필요해요" + 안내소, 지어내지 않음 |
+| API 예산 소진 | 규칙 기반 일정(자녀 화면에 이유 표시), 캐시된 일정은 그대로 |
 
 ## 물어보기 챗봇 (Croche, `agent/`)
 
