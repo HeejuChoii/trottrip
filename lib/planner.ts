@@ -546,3 +546,43 @@ export function lessWalkInput(input: PlanInput): PlanInput {
   };
 }
 
+
+// ---------- "왜 여기?" (코드가 장소 태그·거리·조건에서만 만든다) ----------
+const TAG_WHY: Record<string, string> = {
+  korean: "한식", mild: "덜 매운 메뉴", seafood: "해산물", quick: "빨리 나와요", indoor: "실내",
+  elevator: "엘리베이터", seating: "앉을 곳", accessible: "턱 없는 길",
+};
+
+export function whyFor(it: PlanItem, p: Place | undefined, input: PlanInput): string {
+  if (!p) {
+    if (it.type === "show" || it.type === "medicine") return "";
+    if (it.type === "enter" && gateForSeat(input.seat, input.concert.gate_map)) return `${input.seat} 좌석 입구 · 공연 ${ENTER_BEFORE_MIN}분 전 입장`;
+    return it.type === "arrive" || it.type === "return" ? "자녀가 입력한 이동 정보" : "장소 정보 준비 중";
+  }
+  const bits: string[] = [];
+  const parent = input.parent;
+  if (it.type === "meal") {
+    for (const t of ["korean", "mild", "quick", "seafood"] as const) {
+      if ((p.tags as string[]).includes(t) && (parent.food.includes(t) || (t === "quick" && parent.food.includes("quick")))) bits.push(TAG_WHY[t]);
+    }
+    if (parent.food.includes("mild") && !(p.tags as string[]).includes("mild")) bits.push("매운 메뉴 아님(확인 필요)");
+  }
+  if (it.type === "enter" && parent.elevator_first && (p.tags as string[]).includes("elevator")) bits.push("엘리베이터 바로 옆 입구");
+  if (it.type === "enter" && gateForSeat(input.seat, input.concert.gate_map)) bits.push(`${input.seat} 좌석 입구`);
+  if (it.type === "rest") for (const t of ["indoor", "seating", "elevator"] as const) if ((p.tags as string[]).includes(t)) bits.push(TAG_WHY[t]);
+  if (p.fan_type === "artist_visited") bits.push("가수가 다녀간 곳");
+  else if (p.fan_type === "fan_made") bits.push("팬들이 찾는 곳");
+  else if (p.fan_type === "official" && (it.type === "goods" || it.type === "photo")) bits.push("공식");
+  if (it.type === "goods" && (p.tags as string[]).includes("indoor")) bits.push("실내 부스");
+  if (p.walk_min_from_venue != null) {
+    const max = maxWalkFor(parent.walk);
+    bits.push(p.walk_min_from_venue > max ? `공연장에서 ${p.walk_min_from_venue}분이라 택시` : `공연장에서 걸어서 ${p.walk_min_from_venue}분`);
+  }
+  if (p.source === "verified") bits.push("공식·현장 확인");
+  return [...new Set(bits)].slice(0, 4).join(" · ");
+}
+
+export function annotateWhy(plan: Plan, input: PlanInput): Plan {
+  const byId = new Map(input.places.map((p) => [p.id, p]));
+  return { ...plan, items: plan.items.map((it) => ({ ...it, why: whyFor(it, it.place_id ? byId.get(it.place_id) : undefined, input) })) };
+}

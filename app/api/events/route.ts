@@ -3,8 +3,8 @@ import { addEvent, getTripBy } from "@/lib/db";
 import { bad, body, ok } from "@/lib/http";
 import type { EventType } from "@/lib/types";
 
-const PARENT_TYPES: EventType[] = ["parent_open", "done", "boarded"];
-const KID_TYPES: EventType[] = ["share_kakao", "share_email", "share_copy", "intent"];
+const PARENT_TYPES: EventType[] = ["parent_open", "done", "boarded", "feedback"];
+const KID_TYPES: EventType[] = ["share_kakao", "share_email", "share_copy", "intent", "survey"];
 
 export async function POST(req: Request) {
   const b = await body<{ type?: EventType; token?: string; item_id?: string; payload?: Record<string, unknown> }>(req);

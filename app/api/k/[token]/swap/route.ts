@@ -1,6 +1,6 @@
 // POST /api/k/{token}/swap — "다른 식당으로 바꾸기": 같은 조건의 장소 중 다음 후보로
 import { updateTrip } from "@/lib/db";
-import { candidates } from "@/lib/planner";
+import { annotateWhy, candidates } from "@/lib/planner";
 import { loadTrip } from "@/lib/trip";
 import { bad, body, ok } from "@/lib/http";
 import type { PlaceCategory } from "@/lib/types";
@@ -32,7 +32,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
     parent_text: `${next.description_ko || next.name}.${it.type === "meal" ? " 붐비기 전에 드세요." : ""}`,
     source: next.source,
   };
-  const newPlan = { ...plan, items: plan.items.map((i) => (i.id === it.id ? updated : i)) };
+  const newPlan = annotateWhy({ ...plan, items: plan.items.map((i) => (i.id === it.id ? updated : i)) }, loaded.input);
   await updateTrip(loaded.trip.id, { plan: newPlan, plan_version: loaded.trip.plan_version + 1 });
   return ok({ plan: newPlan });
 }

@@ -155,7 +155,12 @@ export interface PlanItem {
   kid_note: string;
   source: PlaceSource | "needs_check";
   optional?: boolean;
+  /** "왜 여기?" 한 줄. 장소 태그·거리·조건에서 코드가 만든다(AI가 쓰지 않음) */
+  why?: string;
 }
+
+/** 일정이 만들어진 단계 기록 (자녀 화면 "AI가 이렇게 짰어요", 발표 시연용) */
+export interface TraceStep { step: string; detail: string }
 
 export interface Plan {
   title: string;
@@ -168,6 +173,7 @@ export interface Plan {
   fallback_reason?: string;
   /** 덜 걷게 바꾼 일정 */
   less_walk?: boolean;
+  trace?: TraceStep[];
 }
 
 export interface Trip {
@@ -208,6 +214,8 @@ export interface TicketInfo {
 export const EVENT_TYPES = [
   "start", "parent_open", "done", "change", "chat", "boarded",
   "share_kakao", "share_email", "share_copy", "intent",
+  // v1.2: 수요 근거(자녀 걱정 1문항, 부모님 만족도), 덜 걷게 바꾸기, 평가 세트 결과
+  "survey", "feedback", "less_walk", "eval",
 ] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 

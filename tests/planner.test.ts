@@ -162,3 +162,14 @@ test("걸음 수는 코드로 계산하고 덜 걷게 바꾸면 줄어든다", a
   assert.ok(b.steps < a.steps, `${b.steps} < ${a.steps}`);
   assert.match(a.line, /^오늘 예상 약 [\d,]+보 · 서 있는 시간 약/);
 });
+
+test("왜 여기? 는 장소 태그·거리에서만 만든다", async () => {
+  const { annotateWhy } = await import("../lib/planner.ts");
+  const plan = annotateWhy(buildRulePlan(base), base);
+  const meal = plan.items.find((i) => i.type === "meal")!;
+  assert.match(meal.why!, /한식/);
+  assert.match(meal.why!, /덜 매운 메뉴/);
+  assert.match(meal.why!, /걸어서 \d+분/);
+  const enter = plan.items.find((i) => i.type === "enter")!;
+  assert.match(enter.why!, /엘리베이터/);
+});

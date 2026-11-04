@@ -27,6 +27,12 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
   // 요구사항 정제: 입력이 모호하면 일정을 만들기 전에 한 가지만 되묻는다(F5)
   const [clarify, setClarify] = useState<null | { key: "drop_point" | "return_time" | "train_arrive"; q: string; hint: string; fallback: string }>(null);
   const [clarified, setClarified] = useState(false);
+  const [loadStage, setLoadStage] = useState(0);
+  useEffect(() => {
+    if (step !== 4) { setLoadStage(0); return; }
+    const t = setInterval(() => setLoadStage((x) => Math.min(x + 1, 4)), 2200);
+    return () => clearInterval(t);
+  }, [step]);
   const [concertId, setConcertId] = useState<string | null>(concerts[0]?.id ?? null);
   const [custom, setCustom] = useState({ title: "", venue_name: "", date: "", start_time: "" });
   const [useCustom, setUseCustom] = useState(concerts.length === 0);
@@ -119,10 +125,13 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
           <div className="spin" aria-hidden="true" />
           <h1 className="h" style={{ fontSize: 22 }}>{who}께 맞는 하루를<br />짜고 있어요</h1>
           <div className="steps">
-            <div className="ok">공연 시작 {fmtTimeKo(startTime)} 기준으로 역산</div>
-            <div className="ok">{parent.walk === "15-" ? "걸어서 5분" : parent.walk === "15-30" ? "걸어서 10분" : "걸어서 15분"} 이내 장소만</div>
-            {prefs.goods && <div className="ok">굿즈 줄 대기 시간 넉넉히 확보</div>}
-            <div>{isNaN(S) ? "입장 전" : `${toHHMM(S - 40)} 입장 전`} 앉아서 쉴 곳 찾는 중</div>
+            {[
+              `① 입력 정리 · ${fmtTimeKo(startTime)} 공연, ${parent.walk === "15-" ? "여유로운" : parent.walk === "15-30" ? "적당한" : "넉넉한"} 걷기`,
+              `② 시간 역산 · ${isNaN(S) ? "입장" : `${toHHMM(S - 40)} 입장`}부터 거꾸로 배치`,
+              `③ 후보 거르기 · ${parent.walk === "15-" ? "걸어서 5분" : parent.walk === "15-30" ? "걸어서 10분" : "걸어서 15분"} 이내${parent.food.length ? " · 식성에 맞는 식당" : ""}`,
+              "④ AI가 장소를 고르고 안내 문장을 써요",
+              "⑤ 규칙 검사 · 목록 밖 장소·시각 겹침 확인",
+            ].map((t, i) => <div key={i} className={i < loadStage ? "ok" : ""} style={{ opacity: i <= loadStage ? 1 : 0.45 }}>{t}</div>)}
           </div>
           <p className="fine">15초 정도 걸려요.</p>
         </div>
