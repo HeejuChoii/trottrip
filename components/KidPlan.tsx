@@ -11,7 +11,8 @@ import type { ConcertView, ParentProfile, Place, Plan, PlanItem, Prefs, TicketIn
 import { estimateSteps, fmtMin } from "@/lib/steps";
 import { buildChecklist } from "@/lib/checklist";
 
-const SWAPPABLE = new Set(["meal", "rest", "goods", "photo"]);
+// 포토존·굿즈 부스는 보통 한 곳뿐이라 바꾸기 버튼을 두지 않는다
+const SWAPPABLE = new Set(["meal", "rest"]);
 const SWAP_LABEL: Record<string, string> = { meal: "다른 식당으로 바꾸기", rest: "다른 쉼터로", goods: "다른 부스로", photo: "다른 포토존으로" };
 
 interface Props {

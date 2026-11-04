@@ -14,7 +14,7 @@ import { getCachedPlan, setCachedPlan } from "./db.ts";
 import { budgetLeft, recordUsage } from "./usage.ts";
 import { toHHMM, toMin } from "./time.ts";
 import { CATEGORY_LABEL } from "./concertrip.ts";
-import { tipsFor } from "./text.ts";
+import { cleanNote, tipsFor } from "./text.ts";
 import { buildPilgrimPlan, PILGRIM_REV } from "./pilgrim.ts";
 import { geocode, kakaoConfigured } from "./kakao-local.ts";
 import venueMock from "../data/venue-mock.json" with { type: "json" };
@@ -71,7 +71,9 @@ function contextBlock(input: PlanInput) {
       seat, gate_for_seat: gateForSeat(seat, concert.gate_map),
     },
     parent: { ...parent, max_walk_between_places_min: maxWalkFor(parent.walk) },
-    prefs, transport,
+    prefs,
+    // 숙소 링크 주소는 AI에 넘기지 않고(문장에 그대로 옮겨 적지 않게), 혼자·가족이면 친구 수를 0으로
+    transport: { ...transport, stay_link: transport.stay_link ? "있음" : "", friends_count: transport.companions === "friends" ? transport.friends_count : 0 },
   });
 }
 
@@ -82,6 +84,8 @@ const REFINE_RULES = `규칙
 - elevator_first면 elevator 태그가 있는 입구·동선을 고른다. near_toilet이면 화장실이 가까운 쉼터를 고른다.
 - 고른 장소의 walk_min_from_venue가 parent.max_walk_between_places_min보다 크면 parent_text에 택시를 타라고 쓴다.
 - optional 칸(굿즈·포토존)의 parent_text에는 "줄이 길면 건너뛰어도 돼요"를 넣는다.
+- kid_note·parent_text에는 영어 필드명(near_toilet 등)·태그 이름(mild 등)·URL을 쓰지 않는다. 한국어로만 쓴다.
+- companions가 "friends"가 아니면 친구·일행 이야기를 쓰지 않는다.
 - 문장은 50~70대 부모님이 읽는다: 한두 문장, 쉬운 말, 존댓말. 아프거나 약한 사람처럼 쓰지 않는다("편하게", "여유 있게" 같은 말 사용).`;
 
 // ---------- F5 일정 생성 ----------
@@ -225,7 +229,7 @@ async function refineWithAI(skeleton: Plan, input: PlanInput, candsOverride?: Re
       const items = skeleton.items.map((it) => {
         const r = byId.get(it.id)!;
         const p = r.place_id ? places.get(r.place_id) : undefined;
-        let text = r.parent_text || it.parent_text;
+        let text = cleanNote(r.parent_text || it.parent_text);
         if (p && p.walk_min_from_venue != null && p.walk_min_from_venue > maxWalk && !/택시/.test(text)) text += " 걸어가기 멀어서 택시를 타세요.";
         return {
           ...it, // 시각·종류·optional은 코드 값 그대로
@@ -235,7 +239,7 @@ async function refineWithAI(skeleton: Plan, input: PlanInput, candsOverride?: Re
           title: r.title || it.title,
           parent_text: text,
           done_label: r.done_label || it.done_label,
-          kid_note: r.kid_note || it.kid_note,
+          kid_note: cleanNote(r.kid_note || it.kid_note),
         } as PlanItem;
       });
       return { ...skeleton, title: input.concert.pilgrim ? skeleton.title : out.title || skeleton.title, summary: out.summary || skeleton.summary, items, generated_by: "ai" };
