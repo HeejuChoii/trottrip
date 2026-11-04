@@ -379,6 +379,7 @@ export function buildRulePlan(input: PlanInput): Plan {
     items.push(...buildDayTwo({
       transport, parent, places: input.places, used,
       spots: input.places.filter((p) => p.fan_type !== "none" && !["goods", "photo"].includes(p.category)),
+      sights: input.places.filter((p) => p.category === "sight" && p.fan_type === "none"),
       base: { name: stayName, lat: input.stayLL?.lat ?? concert.venue_lat, lng: input.stayLL?.lng ?? concert.venue_lng }, stationLL: input.stationLL,
       stayName, stayUrl: /^https?:\/\//.test(q) ? q : `https://map.kakao.com/link/search/${encodeURIComponent(q)}`,
     }, nid));
@@ -642,6 +643,9 @@ export function whyFor(it: PlanItem, p: Place | undefined, input: PlanInput): st
   if (it.type === "enter" && parent.elevator_first && (p.tags as string[]).includes("elevator")) bits.push("엘리베이터 바로 옆 입구");
   if (it.type === "enter" && gateForSeat(input.seat, input.concert.gate_map)) bits.push(`${input.seat} 좌석 입구`);
   if (it.type === "rest") for (const t of ["indoor", "seating", "elevator"] as const) if ((p.tags as string[]).includes(t)) bits.push(TAG_WHY[t]);
+  const liked = (p.likes ?? []).filter((l) => (parent.likes ?? []).includes(l));
+  if (liked.length) bits.push(`${liked.join("·")} 좋아하셔서`);
+  else if (p.category === "sight" && p.fan_type === "none") bits.push("근처 가볼 만한 곳");
   if (p.fan_type === "artist_visited") bits.push("가수가 다녀간 곳");
   else if (p.fan_type === "fan_made") bits.push("팬들이 찾는 곳");
   else if (p.fan_type === "official" && (it.type === "goods" || it.type === "photo")) bits.push("공식");

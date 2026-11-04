@@ -69,7 +69,7 @@ export default function Wizard({ concerts, artists = [], courses = [], initialMo
   const [honorCustom, setHonorCustom] = useState(false);
   const [parent, setParent] = useState<ParentProfile>({
     honorific: "어머니", age_band: "60s", walk: "15-30", steps_usual: 0, rest_often: false, near_toilet: false, elevator_first: false,
-    food: ["korean"], food_other: "", medicine_time: "", friends_fitness: "same",
+    food: ["korean"], food_other: "", medicine_time: "", friends_fitness: "same", likes: [],
   });
   const [prefs, setPrefs] = useState<Prefs>({ goods: true, photo: true, artist_places: false, fan_first: false, sightseeing: false });
   const [tr, setTr] = useState<Transport>({
@@ -330,6 +330,12 @@ export default function Wizard({ concerts, artists = [], courses = [], initialMo
             </div>
             <input className="inp" style={{ marginTop: 8 }} value={parent.food_other} onChange={(e) => P({ food_other: e.target.value })} placeholder="기타 (예: 밀가루 음식은 안 드세요)" />
           </div>
+          <div className="card"><span className="lab">좋아하시는 것 (여러 개 · 1박이면 둘째 날 가볼 곳을 골라 드려요)</span>
+            <div className="chips">
+              {(["전시", "산책", "시장", "역사", "바다", "카페", "실내"] as const).map((v) => (
+                <Chip key={v} on={(parent.likes ?? []).includes(v)} onClick={() => P({ likes: (parent.likes ?? []).includes(v) ? (parent.likes ?? []).filter((x) => x !== v) : [...(parent.likes ?? []), v] })}>{v === "실내" ? "실내가 편해요" : v}</Chip>
+              ))}
+            </div></div>
           {tr.companions !== "alone" && (
             <div className="card"><span className="lab">함께 가시는 분들과 걷는 속도는?</span>
               <div className="chips">

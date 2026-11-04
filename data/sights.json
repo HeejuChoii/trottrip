@@ -1,0 +1,357 @@
+{
+ "_note": "공연장·역 근처 가볼 만한 곳(1박 둘째 날 추천용). 좌표는 근사값, 운영자 확인 필요.",
+ "sights": [
+  {
+   "id": "sg_museum",
+   "name": "국립중앙박물관",
+   "region": "서울 용산",
+   "lat": 37.524,
+   "lng": 126.9803,
+   "likes": [
+    "전시",
+    "역사",
+    "실내"
+   ],
+   "description_ko": "교과서 속 유물을 실내에서 편하게 둘러봐요(무료)"
+  },
+  {
+   "id": "sg_seoullo",
+   "name": "서울로7017",
+   "region": "서울역",
+   "lat": 37.5567,
+   "lng": 126.9706,
+   "likes": [
+    "산책"
+   ],
+   "description_ko": "서울역 바로 옆 하늘 산책길, 걷기 편해요"
+  },
+  {
+   "id": "sg_namdaemun",
+   "name": "남대문시장",
+   "region": "서울 중구",
+   "lat": 37.5592,
+   "lng": 126.9775,
+   "likes": [
+    "시장"
+   ],
+   "description_ko": "서울역에서 가까운 큰 전통시장, 갈치조림 골목"
+  },
+  {
+   "id": "sg_deoksugung",
+   "name": "덕수궁 돌담길",
+   "region": "서울 중구",
+   "lat": 37.5658,
+   "lng": 126.9751,
+   "likes": [
+    "역사",
+    "산책"
+   ],
+   "description_ko": "궁궐과 돌담길을 천천히 걸어요"
+  },
+  {
+   "id": "sg_sema",
+   "name": "서울시립미술관 서소문본관",
+   "region": "서울 중구",
+   "lat": 37.564,
+   "lng": 126.9736,
+   "likes": [
+    "전시",
+    "실내"
+   ],
+   "description_ko": "덕수궁 옆 미술관, 무료 전시가 많아요"
+  },
+  {
+   "id": "sg_seokchon",
+   "name": "석촌호수 산책길",
+   "region": "서울 송파",
+   "lat": 37.5097,
+   "lng": 127.1037,
+   "likes": [
+    "산책"
+   ],
+   "description_ko": "호수 한 바퀴 평지 산책길"
+  },
+  {
+   "id": "sg_olpark",
+   "name": "올림픽공원 나홀로나무",
+   "region": "서울 송파",
+   "lat": 37.5207,
+   "lng": 127.1215,
+   "likes": [
+    "산책"
+   ],
+   "description_ko": "넓은 잔디와 나홀로나무 포토 명소"
+  },
+  {
+   "id": "sg_baekje",
+   "name": "한성백제박물관",
+   "region": "서울 송파",
+   "lat": 37.5195,
+   "lng": 127.1197,
+   "likes": [
+    "전시",
+    "역사",
+    "실내"
+   ],
+   "description_ko": "올림픽공원 안 무료 박물관"
+  },
+  {
+   "id": "sg_bongeunsa",
+   "name": "봉은사",
+   "region": "서울 강남",
+   "lat": 37.5154,
+   "lng": 127.0573,
+   "likes": [
+    "역사",
+    "산책"
+   ],
+   "description_ko": "코엑스 건너편 천년 고찰, 조용히 걷기 좋아요"
+  },
+  {
+   "id": "sg_starfield",
+   "name": "별마당도서관",
+   "region": "서울 강남",
+   "lat": 37.51,
+   "lng": 127.0601,
+   "likes": [
+    "실내",
+    "카페"
+   ],
+   "description_ko": "코엑스몰 안 큰 서가, 앉아 쉬기 좋아요"
+  },
+  {
+   "id": "gy_lakepark",
+   "name": "일산호수공원",
+   "region": "고양 일산",
+   "lat": 37.6567,
+   "lng": 126.766,
+   "likes": [
+    "산책"
+   ],
+   "description_ko": "킨텍스 근처 큰 호수공원, 평지 산책길"
+  },
+  {
+   "id": "gy_aram",
+   "name": "고양아람누리 아람미술관",
+   "region": "고양 일산",
+   "lat": 37.6656,
+   "lng": 126.7739,
+   "likes": [
+    "전시",
+    "실내"
+   ],
+   "description_ko": "정발산역 앞 미술관"
+  },
+  {
+   "id": "sg_gyeongin",
+   "name": "항동 푸른수목원",
+   "region": "서울 구로",
+   "lat": 37.4787,
+   "lng": 126.8233,
+   "likes": [
+    "산책"
+   ],
+   "description_ko": "고척돔에서 가까운 서울 첫 시립수목원"
+  },
+  {
+   "id": "dg_kimkwangseok",
+   "name": "김광석 다시그리기길",
+   "region": "대구 중구",
+   "lat": 35.8601,
+   "lng": 128.6068,
+   "likes": [
+    "산책"
+   ],
+   "description_ko": "벽화와 노래가 있는 골목길"
+  },
+  {
+   "id": "dg_seomun",
+   "name": "서문시장",
+   "region": "대구 중구",
+   "lat": 35.869,
+   "lng": 128.58,
+   "likes": [
+    "시장"
+   ],
+   "description_ko": "대구 대표 전통시장, 납작만두·칼국수"
+  },
+  {
+   "id": "dg_cheongna",
+   "name": "청라언덕·근대골목",
+   "region": "대구 중구",
+   "lat": 35.8668,
+   "lng": 128.5878,
+   "likes": [
+    "역사",
+    "산책"
+   ],
+   "description_ko": "선교사 주택과 근대 골목 투어"
+  },
+  {
+   "id": "dg_art",
+   "name": "대구미술관",
+   "region": "대구 수성",
+   "lat": 35.8236,
+   "lng": 128.6412,
+   "likes": [
+    "전시",
+    "실내"
+   ],
+   "description_ko": "넓고 한적한 시립미술관"
+  },
+  {
+   "id": "gj_acc",
+   "name": "국립아시아문화전당",
+   "region": "광주 동구",
+   "lat": 35.1468,
+   "lng": 126.9205,
+   "likes": [
+    "전시",
+    "실내"
+   ],
+   "description_ko": "무료 전시가 많은 복합문화공간"
+  },
+  {
+   "id": "gj_yangnim",
+   "name": "양림동 역사문화마을",
+   "region": "광주 남구",
+   "lat": 35.1395,
+   "lng": 126.9142,
+   "likes": [
+    "역사",
+    "산책"
+   ],
+   "description_ko": "근대 건축과 골목 산책"
+  },
+  {
+   "id": "gj_songjeong",
+   "name": "1913송정역시장",
+   "region": "광주 광산",
+   "lat": 35.138,
+   "lng": 126.7915,
+   "likes": [
+    "시장"
+   ],
+   "description_ko": "광주송정역 바로 앞 먹거리 시장"
+  },
+  {
+   "id": "bs_haeundae",
+   "name": "해운대 해변",
+   "region": "부산 해운대",
+   "lat": 35.1587,
+   "lng": 129.1604,
+   "likes": [
+    "바다",
+    "산책"
+   ],
+   "description_ko": "벡스코에서 가까운 해변 산책"
+  },
+  {
+   "id": "bs_dongbaek",
+   "name": "동백섬 누리마루",
+   "region": "부산 해운대",
+   "lat": 35.153,
+   "lng": 129.152,
+   "likes": [
+    "바다",
+    "산책"
+   ],
+   "description_ko": "해운대 끝 평지 해안 산책로"
+  },
+  {
+   "id": "bs_art",
+   "name": "부산시립미술관",
+   "region": "부산 해운대",
+   "lat": 35.1665,
+   "lng": 129.1371,
+   "likes": [
+    "전시",
+    "실내"
+   ],
+   "description_ko": "벡스코 바로 옆 미술관"
+  },
+  {
+   "id": "bs_gukje",
+   "name": "국제시장·BIFF광장",
+   "region": "부산 중구",
+   "lat": 35.0985,
+   "lng": 129.0281,
+   "likes": [
+    "시장"
+   ],
+   "description_ko": "부산역에서 가까운 시장과 씨앗호떡"
+  },
+  {
+   "id": "bs_gamcheon",
+   "name": "감천문화마을",
+   "region": "부산 사하",
+   "lat": 35.0975,
+   "lng": 129.0106,
+   "likes": [
+    "산책",
+    "역사"
+   ],
+   "description_ko": "알록달록 산비탈 마을"
+  },
+  {
+   "id": "dj_hanbit",
+   "name": "엑스포과학공원 한빛탑",
+   "region": "대전 유성",
+   "lat": 36.3765,
+   "lng": 127.3878,
+   "likes": [
+    "산책",
+    "전시"
+   ],
+   "description_ko": "컨벤션센터 옆 한빛탑과 갑천 산책"
+  },
+  {
+   "id": "dj_art",
+   "name": "대전시립미술관",
+   "region": "대전 서구",
+   "lat": 36.3712,
+   "lng": 127.3864,
+   "likes": [
+    "전시",
+    "실내"
+   ],
+   "description_ko": "엑스포공원 옆 미술관"
+  },
+  {
+   "id": "dj_sungsimdang",
+   "name": "성심당 본점",
+   "region": "대전 중구",
+   "lat": 36.3276,
+   "lng": 127.4273,
+   "likes": [
+    "카페",
+    "시장"
+   ],
+   "description_ko": "대전역에서 가까운 빵집, 튀김소보로"
+  },
+  {
+   "id": "ic_eurwangni",
+   "name": "을왕리 해수욕장",
+   "region": "인천 중구",
+   "lat": 37.4475,
+   "lng": 126.3727,
+   "likes": [
+    "바다",
+    "산책"
+   ],
+   "description_ko": "인스파이어에서 가까운 서해 바다"
+  },
+  {
+   "id": "ic_paradise",
+   "name": "파라다이스시티 아트 스페이스",
+   "region": "인천 중구",
+   "lat": 37.438,
+   "lng": 126.456,
+   "likes": [
+    "전시",
+    "실내"
+   ],
+   "description_ko": "영종도 리조트 안 미술관"
+  }
+ ]
+}

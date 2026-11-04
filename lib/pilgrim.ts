@@ -353,6 +353,7 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
     const rest = nearestOrder(sch.last, fan.filter((p) => !usedIds.has(p.id) && p.category !== "restaurant"));
     items.push(...buildDayTwo({
       transport: t, parent, places: [...fan.filter((p) => p.category === "restaurant"), ...others], used: usedIds, spots: rest,
+      sights: input.places.filter((p) => p.category === "sight" && p.origin !== "concertrip"),
       base: { name: stay, lat: input.stayLL?.lat ?? sch.last.lat, lng: input.stayLL?.lng ?? sch.last.lng }, stationLL: input.stationLL, stayName: stay, stayUrl: stayLink(t),
     }, nid).map((it) => it.type === "photo" ? { ...it, title: it.title.replace("최애 장소", `${view.artist_display} 스팟`) } : it));
   }
