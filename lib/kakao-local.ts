@@ -52,6 +52,11 @@ export function walkMinFromDistance(m: number): number {
 export function tagsFromCategory(category: string, group: string): PlaceTag[] {
   const t = new Set<PlaceTag>(["indoor"]);
   if (/한식/.test(category)) t.add("korean");
+  if (/중식|중국/.test(category)) t.add("chinese");
+  if (/일식|초밥|돈까스|우동|라멘|일본/.test(category)) t.add("japanese");
+  if (/양식|이탈리안|피자|파스타|스테이크|햄버거|패밀리레스토랑|프랑스/.test(category)) t.add("western");
+  if (/분식|김밥|떡볶이/.test(category)) t.add("snack");
+  if (/아시아|베트남|태국|인도/.test(category)) t.add("asian");
   if (SEAFOOD_RE.test(category)) t.add("seafood");
   if (group === "FD6" && QUICK_RE.test(category)) t.add("quick");
   return [...t];

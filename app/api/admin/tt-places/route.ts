@@ -6,6 +6,7 @@ import { isAdmin } from "@/lib/admin";
 import { deleteTtPlace, getConcert, listTtPlaces, replaceTtPlacesByOrigin, upsertConcert, upsertTtPlaces } from "@/lib/db";
 import { geocode, importNearby, kakaoConfigured, walkMinFromDistance } from "@/lib/kakao-local";
 import { extractNotice, NoticeSchema } from "@/lib/notice-extract";
+import { labelSpice } from "@/lib/label-ai";
 import { bad, body, ok } from "@/lib/http";
 import research from "@/data/venue-research.json";
 import { PLACE_CATEGORIES, PLACE_TAGS, FAN_TYPES, type Concert, type Place, type TtPlaceRow } from "@/lib/types";
@@ -62,9 +63,19 @@ export async function POST(req: Request) {
         if (concert.venue_lat == null || concert.venue_lng == null) return bad("공연장 위도·경도를 먼저 넣어 주세요");
         const radius = Math.min(Math.max(Number(b.radius) || 800, 200), 2000);
         const places = await importNearby(concert.venue_lat, concert.venue_lng, radius);
+        const labels = await labelSpice(places);
+        for (const p of places) { const l = labels.get(p.id); if (l) { p.ai_spice = l.spice; p.ai_note = l.note; } }
         const now = new Date().toISOString();
         await replaceTtPlacesByOrigin(concert.venue_key, "kakao", places.map((p) => ({ id: p.id, venue_key: concert.venue_key, concert_id: null, origin: "kakao" as const, data: p, updated_at: now })));
-        return ok({ count: places.length, restaurants: places.filter((p) => p.category === "restaurant").length, cafes: places.filter((p) => p.category === "cafe").length });
+        return ok({ count: places.length, restaurants: places.filter((p) => p.category === "restaurant").length, cafes: places.filter((p) => p.category === "cafe").length, labeled: labels.size });
+      }
+      case "label_spice": {
+        if (!concert) return bad("공연을 찾을 수 없어요", 404);
+        const rows = (await listTtPlaces({ venue_key: concert.venue_key, concert_id: concert.id })).filter((r) => r.data.category === "restaurant");
+        const labels = await labelSpice(rows.map((r) => r.data));
+        const changed = rows.filter((r) => labels.has(r.id)).map((r) => ({ ...r, data: { ...r.data, ai_spice: labels.get(r.id)!.spice, ai_note: labels.get(r.id)!.note }, updated_at: new Date().toISOString() }));
+        await upsertTtPlaces(changed);
+        return ok({ labeled: changed.length });
       }
       case "upsert": {
         if (!concert) return bad("공연을 찾을 수 없어요", 404);
@@ -102,7 +113,8 @@ export async function POST(req: Request) {
         const gate_map = { ...concert.gate_map };
         for (const g of e.gate_map) if (g.zone.trim() && g.gate.trim()) gate_map[g.zone.trim()] = g.gate.trim();
         const notice = [e.summary, e.md_hours ? `MD 부스: ${e.md_hours}` : "", e.entry_start ? `입장 시작: ${e.entry_start}` : ""].filter(Boolean).join("\n");
-        await upsertConcert({ ...concert, gate_map, notice_text: notice || concert.notice_text });
+        // 공연장 공통(팬 정리글·시설 정보)으로 저장할 때는 그 공연의 게이트·공지 문구를 건드리지 않는다
+        if (b.scope !== "venue") await upsertConcert({ ...concert, gate_map, notice_text: notice || concert.notice_text });
         const near = concert.venue_lat != null && concert.venue_lng != null ? { lat: concert.venue_lat, lng: concert.venue_lng } : undefined;
         const rows: TtPlaceRow[] = [];
         for (const np of e.places) {
@@ -111,10 +123,11 @@ export async function POST(req: Request) {
             const g = await geocode(np.location_query, near).catch(() => null);
             if (g && (g.distance_m == null || g.distance_m < 3000)) { lat = g.lat; lng = g.lng; address = g.address; }
           }
-          rows.push(toRow(concert, "concert", "notice", PlaceInput.parse({
+          rows.push(toRow(concert, b.scope === "venue" && concert.venue_key ? "venue" : "concert", "notice", PlaceInput.parse({
             name: np.name, category: np.category, description_ko: [np.description_ko, np.hours ? `운영 ${np.hours}` : ""].filter(Boolean).join(" · "),
             lat, lng, address, evidence_urls: typeof b.source_url === "string" && /^https?:\/\//.test(b.source_url) ? [b.source_url] : [],
-            source: "verified",
+            // 공식 공지면 확인됨, 팬 정리글(공연장 공통으로 저장)이면 확인 전
+            source: b.scope === "venue" ? "needs_check" : "verified",
           })));
         }
         await upsertTtPlaces(rows);

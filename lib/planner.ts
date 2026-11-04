@@ -4,7 +4,7 @@
 import type {
   ConcertView, ParentProfile, Place, PlaceCategory, Plan, PlanItem, Prefs, Transport,
 } from "./types.ts";
-import { ITEM_TYPES } from "./types.ts";
+import { CUISINE_TAGS, ITEM_TYPES } from "./types.ts";
 import { isHHMM, toHHMM, toMin } from "./time.ts";
 
 export interface PlanInput {
@@ -64,14 +64,19 @@ export function isSpicyByName(p: Place): boolean {
 
 /** 안 매운 조건을 태그로 확인한 게 아니라 추정한 경우 */
 export function mildUnverified(p: Place, parent: ParentProfile): boolean {
-  return parent.food.includes("mild") && !(p.tags as string[]).includes("mild");
+  return parent.food.includes("mild") && !(p.tags as string[]).includes("mild") && p.ai_spice !== "mild";
 }
 
 export function restaurantMatches(p: Place, parent: ParentProfile): boolean {
   if (p.category !== "restaurant") return false;
   const tags = p.tags as string[];
-  if (parent.food.includes("korean") && !tags.includes("korean")) return false;
-  if (parent.food.includes("mild") && !tags.includes("mild") && (isSpicyByName(p) || (!p.category_detail && p.origin !== "kakao"))) return false;
+  // 종류(한식·중식·일식·양식·분식)를 고르셨으면 그중 하나에 맞는 곳만
+  const wantCuisine = parent.food.filter((f) => (CUISINE_TAGS as readonly string[]).includes(f));
+  if (wantCuisine.length && !wantCuisine.some((c) => tags.includes(c))) return false;
+  if (parent.food.includes("mild")) {
+    if (p.ai_spice === "spicy") return false; // AI 추정으로 대표 메뉴가 매운 곳은 뺀다
+    if (!tags.includes("mild") && p.ai_spice !== "mild" && (isSpicyByName(p) || (!p.category_detail && p.origin !== "kakao"))) return false;
+  }
   if (!parent.food.includes("seafood") && tags.includes("seafood") && !tags.includes("korean")) return false;
   return true;
 }
@@ -87,6 +92,7 @@ export function candidates(cat: PlaceCategory, input: PlanInput, extraPrefer: st
     list = list.filter((p) => restaurantMatches(p, input.parent));
     if (input.parent.food.includes("quick")) prefer.push("quick");
     if (input.parent.food.includes("mild")) prefer.push("mild"); // 확인된 곳 우선
+    if (input.parent.food.includes("mild")) list = [...list].sort((a, b) => (b.ai_spice === "mild" ? 1 : 0) - (a.ai_spice === "mild" ? 1 : 0));
   }
   if (cat === "gate" && input.parent.elevator_first) {
     const ev = list.filter((p) => (p.tags as string[]).includes("elevator"));
@@ -549,6 +555,7 @@ export function lessWalkInput(input: PlanInput): PlanInput {
 
 // ---------- "왜 여기?" (코드가 장소 태그·거리·조건에서만 만든다) ----------
 const TAG_WHY: Record<string, string> = {
+  chinese: "중식", japanese: "일식", western: "양식", snack: "분식", asian: "아시아 음식",
   korean: "한식", mild: "덜 매운 메뉴", seafood: "해산물", quick: "빨리 나와요", indoor: "실내",
   elevator: "엘리베이터", seating: "앉을 곳", accessible: "턱 없는 길",
 };
@@ -562,10 +569,10 @@ export function whyFor(it: PlanItem, p: Place | undefined, input: PlanInput): st
   const bits: string[] = [];
   const parent = input.parent;
   if (it.type === "meal") {
-    for (const t of ["korean", "mild", "quick", "seafood"] as const) {
-      if ((p.tags as string[]).includes(t) && (parent.food.includes(t) || (t === "quick" && parent.food.includes("quick")))) bits.push(TAG_WHY[t]);
+    for (const t of ["korean", "chinese", "japanese", "western", "snack", "mild", "quick", "seafood"] as const) {
+      if ((p.tags as string[]).includes(t) && parent.food.includes(t)) bits.push(TAG_WHY[t]);
     }
-    if (parent.food.includes("mild") && !(p.tags as string[]).includes("mild")) bits.push("매운 메뉴 아님(확인 필요)");
+    if (parent.food.includes("mild") && !(p.tags as string[]).includes("mild")) bits.push(p.ai_spice === "mild" ? "AI 추정: 덜 매운 메뉴 많음" : "매운 메뉴 아님(확인 필요)");
   }
   if (it.type === "enter" && parent.elevator_first && (p.tags as string[]).includes("elevator")) bits.push("엘리베이터 바로 옆 입구");
   if (it.type === "enter" && gateForSeat(input.seat, input.concert.gate_map)) bits.push(`${input.seat} 좌석 입구`);

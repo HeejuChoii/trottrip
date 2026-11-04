@@ -155,6 +155,7 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
                   <b>{c.title}</b>
                   <small>{c.city ? `${c.city} ` : ""}{c.venue_name} · {fmtDateKo(c.date)} {fmtTimeKo(c.start_time)}</small>
                   {c.place_count === 0 && <span className="tag in">장소 정보 준비 중</span>}
+                  {c.ticket_url && <a href={c.ticket_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="tag ok" style={{ marginLeft: 4, textDecoration: "none" }}>예매처 보기 ↗</a>}
                 </div>
               </div>
             </button>
@@ -224,7 +225,7 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
             <p className="fine" style={{ textAlign: "left", margin: "6px 0 0" }}>공연 날 예상 걸음 수를 평소와 비교해 알려 드려요.</p></div>
           <div className="card"><span className="lab">식사 (여러 개 고를 수 있어요)</span>
             <div className="chips">
-              {([["korean", "한식"], ["mild", "덜 매운 음식"], ["seafood", "해산물 좋아함"], ["quick", "빨리 드시는 편"], ["any", "아무거나 좋아함"]] as const).map(([v, l]) => <Chip key={v} on={parent.food.includes(v)} onClick={() => toggleFood(v)}>{l}</Chip>)}
+              {([["korean", "한식"], ["chinese", "중식"], ["japanese", "일식"], ["western", "양식"], ["snack", "분식"], ["mild", "덜 매운 음식"], ["seafood", "해산물 좋아함"], ["quick", "빨리 드시는 편"], ["any", "아무거나 좋아함"]] as const).map(([v, l]) => <Chip key={v} on={parent.food.includes(v)} onClick={() => toggleFood(v)}>{l}</Chip>)}
             </div>
             <input className="inp" style={{ marginTop: 8 }} value={parent.food_other} onChange={(e) => P({ food_other: e.target.value })} placeholder="기타 (예: 밀가루 음식은 안 드세요)" />
           </div>
@@ -298,6 +299,9 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
           )}
           {tr.mode === "shuttle" && (
             <div className="card"><span className="lab">셔틀 공지 링크 또는 시각</span>
+              {concert?.shuttle_url
+                ? <a className="actbtn" style={{ marginBottom: 8 }} href={concert.shuttle_url} target="_blank" rel="noopener noreferrer">🚌 이 공연 셔틀 예약하러 가기 ↗</a>
+                : <p className="fine" style={{ textAlign: "left", margin: "0 0 8px" }}>공연 셔틀은 <a href="https://www.kakaomobility.com/service-kakaot/shuttle" target="_blank" rel="noopener noreferrer">카카오 T 셔틀</a> · <a href="https://queenssmile.co.kr" target="_blank" rel="noopener noreferrer">퀸즈스마일</a> · 버스타다 앱에서 공연명으로 찾아보세요.</p>}
               <textarea className="inp" rows={2} value={tr.shuttle_info} onChange={(e) => T({ shuttle_info: e.target.value })} placeholder="공지가 아직 없으면 비워 두세요" /></div>
           )}
           <div className="card"><span className="lab">숙박</span>

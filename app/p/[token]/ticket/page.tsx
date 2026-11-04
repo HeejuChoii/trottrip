@@ -45,6 +45,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
         {t.vendor && <><br />예매처: {t.vendor}</>}
         {t.id_check && <><br /><b>신분증을 꼭 챙기세요.</b>{t.booker_name ? ` 예매자: ${t.booker_name}` : ""}</>}
       </div>
+      {concert.ticket_url && <a className="actbtn" href={concert.ticket_url} target="_blank" rel="noopener noreferrer">📄 예매처 공지 보기</a>}
 
       {ret && (
         <div className="card" style={{ fontSize: 18, lineHeight: 1.6 }}>

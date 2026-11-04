@@ -7,7 +7,7 @@ import { PLACE_CATEGORIES, PLACE_TAGS, type Concert, type Place, type PlaceCateg
 import type { NoticeExtract } from "@/lib/notice-extract";
 
 const ORIGIN_LABEL: Record<string, string> = { concertrip: "콘서트립", kakao: "카카오", manual: "직접 입력", notice: "공지", research: "웹 조사" };
-const TAG_LABEL: Record<PlaceTag, string> = { korean: "한식", mild: "안 매움", seafood: "해산물", quick: "빨리", indoor: "실내", elevator: "엘리베이터", seating: "앉을 곳", accessible: "무장애" };
+const TAG_LABEL: Record<PlaceTag, string> = { korean: "한식", chinese: "중식", japanese: "일식", western: "양식", snack: "분식", asian: "아시아", mild: "안 매움", seafood: "해산물", quick: "빨리", indoor: "실내", elevator: "엘리베이터", seating: "앉을 곳", accessible: "무장애" };
 
 type Form = { id?: string; scope: "venue" | "concert"; name: string; category: PlaceCategory; description_ko: string; walk: string; lat: string; lng: string; address: string; tags: PlaceTag[]; fan_type: Place["fan_type"]; evidence: string; source: Place["source"] };
 const emptyForm = (scope: "venue" | "concert"): Form => ({ scope, name: "", category: "toilet", description_ko: "", walk: "", lat: "", lng: "", address: "", tags: [], fan_type: "none", evidence: "", source: "needs_check" });
@@ -21,6 +21,7 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { c
   const [filter, setFilter] = useState<string>("all");
   const [notice, setNotice] = useState("");
   const [noticeUrl, setNoticeUrl] = useState("");
+  const [noticeScope, setNoticeScope] = useState<"concert" | "venue">("concert");
   const [ex, setEx] = useState<NoticeExtract | null>(null);
 
   async function run<T>(key: string, data: Record<string, unknown>, done?: (r: T) => string) {
@@ -80,10 +81,11 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { c
       <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(330px, 1fr))" }}>
         <div className="card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <b>① 주변 식당·카페 불러오기 (카카오 로컬)</b>
-          <small style={{ color: "var(--sub)", lineHeight: 1.5 }}>공연장 반경에서 가까운 식당 최대 45곳·카페 15곳. 다시 누르면 카카오 장소만 새로 바꿔요(직접 고친 장소는 그대로). 평점은 카카오 공식 API에 없어서 받지 않아요. &quot;안 매운 음식&quot;은 메뉴 분류로 추정하고 &quot;확인 필요&quot;로 표시돼요.</small>
+          <small style={{ color: "var(--sub)", lineHeight: 1.5 }}>공연장 반경에서 가까운 식당 최대 45곳·카페 15곳. 다시 누르면 카카오 장소만 새로 바꿔요(직접 고친 장소는 그대로). 한식·중식·일식·양식·분식은 카카오 분류로 붙이고, 맵기는 AI가 이름·분류로 추정해요(메뉴판은 카카오가 API로 주지 않아요). 평점은 받지 않아요.</small>
           <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
             반경 <select className="inp sm" value={radius} onChange={(e) => setRadius(Number(e.target.value))}>{[500, 800, 1200, 2000].map((r) => <option key={r} value={r}>{r}m</option>)}</select>
-            <button className="mini-btn" disabled={!kakao || !!busy} onClick={() => run<{ restaurants: number; cafes: number }>("kakao", { action: "kakao_import", radius }, (r) => `식당 ${r.restaurants}곳, 카페 ${r.cafes}곳 불러왔어요`)}>{busy === "kakao" ? "불러오는 중…" : "불러오기"}</button>
+            <button className="mini-btn" disabled={!kakao || !!busy} onClick={() => run<{ restaurants: number; cafes: number; labeled: number }>("kakao", { action: "kakao_import", radius }, (r) => `식당 ${r.restaurants}곳, 카페 ${r.cafes}곳 불러왔어요 · AI 맵기 라벨 ${r.labeled}곳`)}>{busy === "kakao" ? "불러오는 중…" : "불러오기"}</button>
+            <button className="mini-btn" disabled={!ai || !!busy} onClick={() => run<{ labeled: number }>("label", { action: "label_spice" }, (r) => `AI 맵기 라벨 ${r.labeled}곳`)}>{busy === "label" ? "라벨 다는 중…" : "AI 맵기 라벨 다시 달기"}</button>
           </span>
           {!kakao && <small className="err">KAKAO_REST_API_KEY 환경변수가 필요해요</small>}
         </div>
@@ -95,10 +97,14 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { c
         </div>
 
         <div className="card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <b>② 공연 공지 붙여 넣기 → AI 정리</b>
+          <b>② 공지·팬 정리글 붙여 넣기 → AI 정리</b>
           <small style={{ color: "var(--sub)", lineHeight: 1.5 }}>예매처·소속사 SNS·팬카페의 MD 부스, 포토존, 게이트, 셔틀 승하차 공지를 그대로 붙여 넣으세요. 정리 결과를 확인한 뒤에만 저장돼요.</small>
           <textarea className="inp" rows={5} value={notice} onChange={(e) => setNotice(e.target.value)} placeholder="공지 원문" />
           <input className="inp sm" value={noticeUrl} onChange={(e) => setNoticeUrl(e.target.value)} placeholder="공지 링크(근거로 저장)" />
+          <span className="chips">
+            <button type="button" className="chip" aria-pressed={noticeScope === "concert"} onClick={() => setNoticeScope("concert")}>이 공연 공지 (게이트·MD·셔틀)</button>
+            <button type="button" className="chip" aria-pressed={noticeScope === "venue"} onClick={() => setNoticeScope("venue")}>공연장 시설·팬 꿀팁 (공통, 확인 전)</button>
+          </span>
           <button className="mini-btn" disabled={!ai || !!busy || notice.length < 20} onClick={async () => { const r = await run<{ extract: NoticeExtract }>("ex", { action: "notice_extract", text: notice }); if (r) setEx(r.extract); }}>{busy === "ex" ? "정리 중…" : "정리하기"}</button>
           {!ai && <small className="err">ANTHROPIC_API_KEY가 필요해요</small>}
         </div>
@@ -121,7 +127,7 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { c
           {ex.unclear.length > 0 && <p className="err" style={{ fontSize: 13 }}>확인 필요: {ex.unclear.join(" / ")}</p>}
           <span style={{ display: "flex", gap: 8 }}>
             <button className="mini-btn" onClick={() => setEx(null)}>취소</button>
-            <button className="mini-btn" style={{ background: "var(--deep)", color: "#fff" }} disabled={!!busy} onClick={async () => { const r = await run<{ places: number }>("apply", { action: "notice_apply", extract: ex, source_url: noticeUrl }, (r) => `공지 반영: 장소 ${r.places}곳, 게이트·공지 문구 저장`); if (r) { setEx(null); setNotice(""); } }}>저장</button>
+            <button className="mini-btn" style={{ background: "var(--deep)", color: "#fff" }} disabled={!!busy} onClick={async () => { const r = await run<{ places: number }>("apply", { action: "notice_apply", extract: ex, source_url: noticeUrl, scope: noticeScope }, (r) => `공지 반영: 장소 ${r.places}곳, 게이트·공지 문구 저장`); if (r) { setEx(null); setNotice(""); } }}>저장</button>
           </span>
         </div>
       )}
@@ -157,7 +163,7 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { c
         </select>
       </div>
       <div className="tblwrap"><table>
-        <thead><tr><th>출처</th><th>종류</th><th>이름</th><th>도보</th><th>태그</th><th>설명</th><th>확인</th><th></th></tr></thead>
+        <thead><tr><th>출처</th><th>종류</th><th>이름</th><th>도보</th><th>태그</th><th>AI 맵기</th><th>설명</th><th>확인</th><th></th></tr></thead>
         <tbody>{shown.map((p) => {
           const own = p.origin !== "concertrip";
           return (
@@ -166,7 +172,8 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { c
               <td>{CATEGORY_LABEL[p.category]}{p.fan_type !== "none" && <><br /><span className="tag pk">{FAN_LABEL[p.fan_type]}</span></>}</td>
               <td>{p.link_url ? <a href={p.link_url} target="_blank" rel="noopener noreferrer">{p.name}</a> : p.name}{p.category_detail && <><br /><small>{p.category_detail}</small></>}{p.lat == null && <><br /><small className="err">좌표 없음(지도에 안 보임)</small></>}</td>
               <td className="n">{p.walk_min_from_venue ?? "-"}</td>
-              <td><small>{p.tags.map((t) => TAG_LABEL[t]).join(", ")}</small></td>
+              <td><small>{p.tags.map((t) => TAG_LABEL[t] ?? t).join(", ")}</small></td>
+              <td><small>{p.ai_spice ? `${({ mild: "덜 매움", medium: "보통", spicy: "매움", unknown: "모름" } as Record<string, string>)[p.ai_spice]}${p.ai_note ? ` · ${p.ai_note}` : ""}` : "-"}</small></td>
               <td><small>{p.description_ko}</small></td>
               <td><small>{p.source === "verified" ? "확인" : "확인 전"}</small></td>
               <td>{own

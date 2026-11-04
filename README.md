@@ -59,7 +59,7 @@ npm test                     # 일정 엔진·어댑터 테스트
 
 ## Supabase
 
-`supabase/migrations/0001_init.sql` → `0002_tt_places.sql` → `0003_v1_1.sql` → `0004_v1_2.sql` → `supabase/seed.sql` 순서로(이미 실행한 것은 건너뛰기) SQL 에디터에서 실행. RLS를 켜고 정책을 두지 않아 anon 키로는 접근할 수 없고, 서버만 service role 키로 접근합니다.
+`supabase/migrations/0001_init.sql` → `0002` → `0003` → `0004` → `0005_links.sql` → `supabase/seed.sql` 순서로(이미 실행한 것은 건너뛰기) SQL 에디터에서 실행. RLS를 켜고 정책을 두지 않아 anon 키로는 접근할 수 없고, 서버만 service role 키로 접근합니다.
 
 ## 일정 생성 (F5, v1.1)
 
