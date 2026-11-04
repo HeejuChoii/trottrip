@@ -2,7 +2,7 @@
 import "server-only";
 import { randomBytes } from "crypto";
 import { getConcert, getPlaces, getTripBy, listTtPlaces, mockVenue, upsertTtPlaces } from "./db.ts";
-import { courseSpots, getCourse, pilgrimView, km, type PilgrimCourse } from "./pilgrim.ts";
+import { courseSpots, geoQueries, getCourse, pilgrimView, km, type PilgrimCourse } from "./pilgrim.ts";
 import { geocode, importNearby, kakaoConfigured } from "./kakao-local.ts";
 import type { Concert, ConcertView, Place, Trip } from "./types.ts";
 import type { PlanInput } from "./planner.ts";
@@ -60,8 +60,8 @@ export async function pilgrimPlaces(course: PilgrimCourse): Promise<Place[]> {
     const now = new Date().toISOString();
     const rows = [];
     for (const p of missing) {
-      const addr = p.address && !/미확인|일대|단일 주소/.test(p.address) ? p.address.replace(/\s*\(.*\)$/, "") : "";
-      const hit = (addr ? await geocode(addr).catch(() => null) : null) ?? await geocode(p.name.replace(/\s*\(([^)]*)\)$/, " $1")).catch(() => null);
+      let hit: Awaited<ReturnType<typeof geocode>> = null;
+      for (const q of geoQueries(p)) { hit = await geocode(q).catch(() => null); if (hit) break; }
       if (hit) rows.push({ id: `geo__${p.id}`, venue_key: geoKey, concert_id: null, origin: "research" as const, data: { ...p, id: `geo__${p.id}`, lat: hit.lat, lng: hit.lng, link_url: hit.url }, updated_at: now });
     }
     if (rows.length) { await upsertTtPlaces(rows).catch(() => undefined); for (const r of rows) geo.set(r.id, r.data); }

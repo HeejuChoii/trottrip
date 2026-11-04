@@ -659,7 +659,12 @@
    ],
    "source": "needs_check",
    "confidence": "low",
-   "concertrip_url": ""
+   "concertrip_url": "",
+   "geo_query": [
+    "사천 노을빛공원",
+    "실안노을공원",
+    "사천 실안해안도로"
+   ]
   },
   {
    "id": "fan_psj_cablecar",
@@ -698,7 +703,12 @@
    ],
    "source": "needs_check",
    "confidence": "high",
-   "concertrip_url": ""
+   "concertrip_url": "",
+   "geo_query": [
+    "송가인마을",
+    "진도 소앵무마을",
+    "전남 진도군 지산면 앵무로 173"
+   ]
   },
   {
    "id": "fan_sgi_kkwabaegi",
@@ -929,7 +939,11 @@
    ],
    "source": "needs_check",
    "confidence": "medium",
-   "concertrip_url": ""
+   "concertrip_url": "",
+   "geo_query": [
+    "삼천포용궁수산시장",
+    "사천 용궁수산시장"
+   ]
   },
   {
    "id": "fan_psj_honeytown",

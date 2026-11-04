@@ -4,7 +4,7 @@ import { z } from "zod";
 import { isAdmin } from "@/lib/admin";
 import { listAllTtPlaces, listTtPlaces, upsertTtPlaces } from "@/lib/db";
 import { geocode, kakaoConfigured } from "@/lib/kakao-local";
-import { allSpots, pilgrimCourses } from "@/lib/pilgrim";
+import { allSpots, geoQueries, pilgrimCourses } from "@/lib/pilgrim";
 import { bad, body, ok } from "@/lib/http";
 import type { Place, TtPlaceRow } from "@/lib/types";
 
@@ -58,8 +58,8 @@ export async function POST(req: Request) {
       for (const p of allSpots()) {
         const prev = geo.get(`geo__${p.id}`);
         if ((prev?.lat ?? p.lat) != null) continue;
-        const addr = p.address && !/미확인|일대|단일 주소/.test(p.address) ? p.address.replace(/\s*\(.*\)$/, "") : "";
-        const hit = (addr ? await geocode(addr).catch(() => null) : null) ?? await geocode(p.name.replace(/\s*\(([^)]*)\)$/, " $1")).catch(() => null);
+        let hit: Awaited<ReturnType<typeof geocode>> = null;
+        for (const q of geoQueries(p)) { hit = await geocode(q).catch(() => null); if (hit) break; }
         if (hit) rows.push(geoRow(p, { lat: hit.lat, lng: hit.lng, link_url: hit.url, address: hit.address || p.address }, prev));
         else miss.push(p.name);
       }
