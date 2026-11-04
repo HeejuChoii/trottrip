@@ -35,6 +35,15 @@ export function estimateSteps(plan: Plan, places: Place[], parent: Pick<ParentPr
   let prev = 0;
   let walk = IN_VENUE_WALK_MIN;
   let stand = 0;
+  if (plan.pilgrim) {
+    // 성지순례: 구간 도보 시간(택시 구간은 타고 내리는 몇 분) + 장소 안에서 둘러보기
+    walk = 0;
+    for (const it of items) {
+      if (it.type === "medicine") continue;
+      walk += it.walk_min ?? (/택시|차로/.test(it.parent_text) ? 3 : 0);
+      if (it.type === "photo") { walk += 10; stand += 10; }
+    }
+  } else
   for (const it of items) {
     if (it.type === "show" || it.type === "medicine") continue;
     const taxi = /택시/.test(it.parent_text);
@@ -47,7 +56,7 @@ export function estimateSteps(plan: Plan, places: Place[], parent: Pick<ParentPr
     if (it.type === "photo" && !it.title.startsWith("최애 장소")) stand += Math.round(len / 2); // 포토존 줄
     if (it.type === "enter") stand += ENTER_QUEUE_MIN;
   }
-  walk += Math.round(prev * 0.6); // 마지막 장소에서 돌아오기
+  if (!plan.pilgrim) walk += Math.round(prev * 0.6); // 마지막 장소에서 돌아오기
   const steps = Math.round((walk * STEPS_PER_MIN) / 100) * 100;
   const u = usualSteps(parent);
   const ratio = steps / u.steps;

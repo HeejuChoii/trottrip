@@ -67,7 +67,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
         </>
       )}
       <p className="note">공식 자료를 바탕으로 한 안내예요. 당일 현장 안내를 우선해 주세요.</p>
-      <BottomBar token={token} />
+      <BottomBar token={token} pilgrim={!!d.concert.pilgrim} />
     </main>
   );
 }

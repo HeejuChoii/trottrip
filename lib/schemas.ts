@@ -44,8 +44,15 @@ export const CustomConcertSchema = z.object({
   start_time: z.string().regex(/^([01]?\d|2[0-3]):[0-5]\d$/, "시작 시각을 입력해 주세요"),
 });
 
+export const PilgrimageSchema = z.object({
+  course_id: z.string().min(1, "코스를 골라 주세요").max(60),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "날짜를 골라 주세요"),
+  start_time: z.string().regex(/^([01]?\d|2[0-3]):[0-5]\d$/).default("10:00"),
+});
+
 export const CreateTripSchema = z.object({
   concert_id: z.string().max(100).nullable().default(null),
+  pilgrimage: PilgrimageSchema.nullable().default(null),
   custom_concert: CustomConcertSchema.nullable().default(null),
   parent_profile: ParentSchema,
   prefs: PrefsSchema,
@@ -54,7 +61,7 @@ export const CreateTripSchema = z.object({
   src: s(40),
   privacy_ok: z.literal(true, { message: "개인정보 수집·이용에 동의해 주세요" }),
   marketing_opt_in: z.boolean().default(false),
-}).refine((v) => !!v.concert_id || !!v.custom_concert, { message: "공연을 골라 주세요" });
+}).refine((v) => !!v.concert_id || !!v.custom_concert || !!v.pilgrimage, { message: "공연을 골라 주세요" });
 
 export const ShareInfoSchema = z.object({
   kid_label: s(10),

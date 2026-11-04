@@ -16,12 +16,43 @@ const LCW_NOTICE = "공연 시작 시각은 예매처(예스24) 공지로 확인
 
 const coex = { city: "서울", venue_name: "코엑스 D홀", venue_key: "coex", venue_lat: 37.5126, venue_lng: 127.0588 };
 const kintex = { city: "고양", venue_name: "킨텍스 제1전시장 5홀", venue_key: "kintex-1", venue_lat: 37.6688, venue_lng: 126.7451 };
+const kspo = { city: "서울", venue_name: "KSPO DOME", venue_key: "kspo", venue_lat: 37.5193, venue_lng: 127.1272 };
+const gocheok = { city: "서울", venue_name: "고척스카이돔", venue_key: "gocheok", venue_lat: 37.4982, venue_lng: 126.8670 };
+const bexco = { city: "부산", venue_name: "벡스코 오디토리움", venue_key: "bexco", venue_lat: 35.1690, venue_lng: 129.1361 };
+const exco = { city: "대구", venue_name: "엑스코 동관", venue_key: "exco", venue_lat: 35.9070, venue_lng: 128.6131 };
+const gwangjuWu = { city: "광주", venue_name: "광주여대 유니버시아드체육관", venue_key: "gwangju-wu", venue_lat: 35.1375, venue_lng: 126.7915 };
+const goyangGym = { city: "고양", venue_name: "고양체육관", venue_key: "goyang-gym", venue_lat: 37.6757, venue_lng: 126.7427 };
 
 export const SEED_CONCERTS: Concert[] = [
   { ...base, ...coex, id: "psj-coex-1225", title: "박서진 〈MY NAME IS SEOJIN:갓〉", artist_display: "박서진", color: "#C21F72", date: "2026-12-25", start_time: "17:00", est_end_time: "19:30", notice_text: PSJ_NOTICE },
   { ...base, ...coex, id: "psj-coex-1226", title: "박서진 〈MY NAME IS SEOJIN:갓〉", artist_display: "박서진", color: "#C21F72", date: "2026-12-26", start_time: "17:00", est_end_time: "19:30", notice_text: PSJ_NOTICE },
   { ...base, ...kintex, id: "lcw-kintex-1218", title: "이찬원 〈찬스 감사제〉", artist_display: "이찬원", color: "#5E46C9", date: "2026-12-18", start_time: "19:30", est_end_time: "22:00", notice_text: LCW_NOTICE },
   { ...base, ...kintex, id: "lcw-kintex-1219", title: "이찬원 〈찬스 감사제〉", artist_display: "이찬원", color: "#5E46C9", date: "2026-12-19", start_time: "18:00", est_end_time: "20:30", notice_text: LCW_NOTICE },
+  // ↓ 시연용: 8명 가수 공연. 이승철 광주(11/14)·조용필 KSPO(11/27~29)는 보도로 확인한 일정, 나머지는 시연용 가상 공연(날짜·시각 재확인 필요)
+  { ...base, ...gocheok, id: "lyw-gocheok-1227", title: "임영웅 〈IM HERO 2026 앙코르〉", artist_display: "임영웅", color: "#3A8DDE", date: "2026-12-27", start_time: "18:00", est_end_time: "21:00",
+    notice_text: "입장은 공연 1시간 전부터예요. A·B구역은 1루 게이트, C·D구역은 3루 게이트로 들어오세요. 공식 MD는 외야 광장에서 오후 2시부터 팔아요.",
+    gate_map: { A: "1루 게이트", B: "1루 게이트", C: "3루 게이트", D: "3루 게이트" }, ticket_url: "https://nol.yanolja.com/ticket/search?keyword=%EC%9E%84%EC%98%81%EC%9B%85" },
+  { ...base, ...bexco, id: "sgi-bexco-1213", title: "송가인 〈가인달 2026 전국투어 - 부산〉", artist_display: "송가인", color: "#E2557B", date: "2026-12-13", start_time: "15:00", est_end_time: "17:30",
+    notice_text: "1층은 1층 입구, 2층은 2층 입구로 들어오세요. 공식 MD는 오디토리움 로비에서 공연 2시간 전부터 팔아요.",
+    gate_map: { "1층": "오디토리움 1층 입구", "2층": "오디토리움 2층 입구" }, ticket_url: "https://nol.yanolja.com/ticket/search?keyword=%EC%86%A1%EA%B0%80%EC%9D%B8" },
+  { ...base, ...exco, id: "yt-exco-1206", title: "영탁 〈TAK SHOW 5 - 대구〉", artist_display: "영탁", color: "#2F7D6D", date: "2026-12-06", start_time: "18:00", est_end_time: "20:30",
+    notice_text: "입장은 공연 1시간 전부터, 동관 1층 입구로 들어오세요. 공식 MD는 동관 로비에서 오후 3시부터 팔아요.",
+    gate_map: { R: "동관 1층 입구", S: "동관 1층 입구" }, ticket_url: "https://nol.yanolja.com/ticket/search?keyword=%EC%98%81%ED%83%81" },
+  { ...base, ...gwangjuWu, id: "lsc-gwangju-1114", title: "이승철 40주년 콘서트 〈THE VOICE〉 - 광주", artist_display: "이승철", color: "#E07A1F", date: "2026-11-14", start_time: "16:00", est_end_time: "18:30",
+    notice_text: "플로어석은 1층 정문, 스탠드석은 2층 입구로 들어오세요. 공식 MD는 체육관 앞에서 오후 1시부터 팔아요.",
+    gate_map: { "플로어": "체육관 1층 정문", "스탠드": "체육관 2층 입구" }, ticket_url: "https://ticket.yes24.com/" },
+  { ...base, ...kspo, id: "lsc-kspo-1205", title: "이승철 40주년 콘서트 〈THE VOICE〉 - 서울", artist_display: "이승철", color: "#E07A1F", date: "2026-12-05", start_time: "18:00", est_end_time: "20:30",
+    notice_text: "1층은 1번 게이트, 2층은 3번 게이트로 들어오세요. 공식 MD는 공연장 앞 광장에서 오후 3시부터 팔아요.",
+    gate_map: { "1층": "1번 게이트 (엘리베이터 옆)", "2층": "3번 게이트" }, ticket_url: "https://ticket.yes24.com/" },
+  { ...base, ...goyangGym, id: "kgm-goyang-1121", title: "김건모 35TH ANNIVERSARY LIVE TOUR - 고양", artist_display: "김건모", color: "#6B5BD6", date: "2026-11-21", start_time: "18:00", est_end_time: "20:30",
+    notice_text: "입장은 공연 1시간 전부터, 체육관 1층 입구로 들어오세요. 공식 MD는 체육관 앞 광장에서 오후 3시부터 팔아요.",
+    gate_map: { A: "체육관 1층 입구 (엘리베이터 옆)", B: "체육관 1층 입구 (엘리베이터 옆)" }, ticket_url: "https://ticket.yes24.com/" },
+  { ...base, ...kspo, id: "cyp-kspo-1127", title: "2026 조용필 & 위대한탄생 콘서트 - 서울", artist_display: "조용필", color: "#555B6E", date: "2026-11-27", start_time: "20:00", est_end_time: "22:30",
+    notice_text: "1층은 1번 게이트, 2층은 3번 게이트로 들어오세요. 공식 MD는 공연장 앞 광장에서 오후 4시부터 팔아요.",
+    gate_map: { "1층": "1번 게이트 (엘리베이터 옆)", "2층": "3번 게이트" }, ticket_url: "https://ticket.yes24.com/" },
+  { ...base, ...kspo, id: "cyp-kspo-1128", title: "2026 조용필 & 위대한탄생 콘서트 - 서울", artist_display: "조용필", color: "#555B6E", date: "2026-11-28", start_time: "18:00", est_end_time: "20:30",
+    notice_text: "1층은 1번 게이트, 2층은 3번 게이트로 들어오세요. 공식 MD는 공연장 앞 광장에서 오후 2시부터 팔아요.",
+    gate_map: { "1층": "1번 게이트 (엘리베이터 옆)", "2층": "3번 게이트" }, ticket_url: "https://ticket.yes24.com/" },
   { ...base, ...kintex, id: "lcw-kintex-1220", title: "이찬원 〈찬스 감사제〉", artist_display: "이찬원", color: "#5E46C9", date: "2026-12-20", start_time: "15:00", est_end_time: "17:30", notice_text: LCW_NOTICE },
 ];
 

@@ -7,7 +7,7 @@ import { BottomBar } from "./ParentHome";
 
 type Result = { message: string; changes: { before: string | null; after: string | null }[] };
 
-export default function ParentChange({ token, kidH, kidLabel }: { token: string; kidH: string; kidLabel: string }) {
+export default function ParentChange({ token, kidH, kidLabel, pilgrim }: { token: string; kidH: string; kidLabel: string; pilgrim?: boolean }) {
   const [busy, setBusy] = useState("");
   const [res, setRes] = useState<Result | null>(null);
   const [err, setErr] = useState("");
@@ -56,7 +56,7 @@ export default function ParentChange({ token, kidH, kidLabel }: { token: string;
           <Link className="bigbtn ok" href={`/p/${token}`}>바뀐 일정 보기</Link>
         </>
       )}
-      <BottomBar token={token} />
+      <BottomBar token={token} pilgrim={pilgrim} />
     </main>
   );
 }

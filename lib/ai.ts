@@ -14,6 +14,7 @@ import { getCachedPlan, setCachedPlan } from "./db.ts";
 import { budgetLeft, recordUsage } from "./usage.ts";
 import { toHHMM, toMin } from "./time.ts";
 import { CATEGORY_LABEL } from "./concertrip.ts";
+import { buildPilgrimPlan } from "./pilgrim.ts";
 
 export const MODEL = process.env.ANTHROPIC_MODEL || "claude-opus-5-5";
 export function aiEnabled() { return !!process.env.ANTHROPIC_API_KEY; }
@@ -61,7 +62,7 @@ function contextBlock(input: PlanInput) {
   return JSON.stringify({
     concert: {
       title: concert.title, venue: concert.venue_name, city: concert.city, date: concert.date,
-      start_time: concert.start_time, est_end_time: concert.est_end_time, notice: concert.notice_text,
+      start_time: concert.start_time, est_end_time: concert.est_end_time, notice: concert.notice_text, venue_tips: concert.tips ?? [],
       seat, gate_for_seat: gateForSeat(seat, concert.gate_map),
     },
     parent: { ...parent, max_walk_between_places_min: maxWalkFor(parent.walk) },
@@ -98,6 +99,7 @@ export async function generatePlan(input: PlanInput, opts: { lessWalk?: boolean 
   const hash = planHash(input, opts.lessWalk);
   const cached = await getCachedPlan(hash).catch(() => null);
   if (cached) return cached;
+  if (input.concert.pilgrim) return generatePilgrimPlan(input, hash, t0, !!opts.lessWalk);
 
   const skeleton = buildRulePlan(input);
   const cands = slotCandidates(skeleton, input);
@@ -134,15 +136,49 @@ export async function generatePlan(input: PlanInput, opts: { lessWalk?: boolean 
   return plan;
 }
 
-async function refineWithAI(skeleton: Plan, input: PlanInput): Promise<Plan | null> {
-  const cands = slotCandidates(skeleton, input);
+// ---------- 성지순례 여행 (공연 없음) ----------
+// 동선(순서·시각·도보/택시)은 코드가 정하고, AI는 장소를 바꾸지 않고 부모님용 문장만 다듬는다.
+async function generatePilgrimPlan(input: PlanInput, hash: string, t0: number, lessWalk: boolean): Promise<Plan> {
+  const c = input.concert;
+  const skeleton = buildPilgrimPlan({ view: c, parent: input.parent, transport: input.transport, places: input.places, lessWalk });
+  if (lessWalk) skeleton.less_walk = true;
+  const fan = input.places.filter((p) => p.origin === "concertrip");
+  const near = input.places.length - fan.length;
+  const spots = skeleton.items.filter((i) => i.type === "photo").length;
+  const trace: TraceStep[] = [
+    { step: "① 입력 정리", detail: `${c.artist_display} 성지순례 · ${c.city} · ${c.start_time} 출발 · 걷기 ${input.parent.walk === "30+" ? "많이" : input.parent.walk === "15-30" ? "적당히" : "여유롭게"} · 식사 ${input.parent.food.length ? input.parent.food.length + "가지 조건" : "상관없음"}` },
+    { step: "② 성지 불러오기", detail: `콘서트립 팬덤 장소 ${fan.length}곳${near ? ` + 근처 식당·카페 ${near}곳(카카오)` : ""}` },
+    { step: "③ 동선 최적화(코드)", detail: `가까운 곳부터 ${spots}곳 순서 정하기 · 점심을 11:40에 가깝게 끼워 넣기 · 걷기 기준(${maxWalkFor(input.parent.walk)}분)을 넘는 구간은 택시` },
+  ];
+  let plan: Plan = skeleton;
+  if (!aiEnabled()) trace.push({ step: "④ AI 문장", detail: "AI 키가 없어 기본 문장 사용" });
+  else if (!(await budgetLeft()).ok) trace.push({ step: "④ AI 문장", detail: "예산 한도라 기본 문장 사용" });
+  else {
+    const cands = Object.fromEntries(skeleton.items.filter((i) => i.place_id).map((i) => [i.id, input.places.filter((p) => p.id === i.place_id)]));
+    const refined = await refineWithAI(skeleton, input, cands);
+    if (refined) plan = { ...refined, pilgrim: true };
+    trace.push({ step: "④ AI 문장", detail: refined ? `${MODEL}가 장소는 그대로 두고 부모님용 안내 문장 작성` : "AI 응답 실패 → 기본 문장 사용" });
+  }
+  const v = validatePlan(plan, input.places);
+  if (!v.ok) plan = skeleton;
+  trace.push({ step: "⑤ 검증(코드)", detail: v.ok ? "목록 밖 장소·시각 겹침 검사 통과" : "검증 실패 → 기본 일정으로 대체" });
+  trace.push({ step: "⑥ 완성", detail: `${((Date.now() - t0) / 1000).toFixed(1)}초 · 같은 입력이면 저장된 일정을 그대로 사용` });
+  plan = annotateWhy({ ...plan, trace }, input);
+  await setCachedPlan(hash, plan).catch(() => undefined);
+  return plan;
+}
+
+async function refineWithAI(skeleton: Plan, input: PlanInput, candsOverride?: Record<string, Place[]>): Promise<Plan | null> {
+  const cands = candsOverride ?? slotCandidates(skeleton, input);
   const maxWalk = maxWalkFor(input.parent.walk);
   const skel = skeleton.items.map((i) => ({
     id: i.id, start: i.start, end: i.end, type: i.type, optional: !!i.optional, draft_title: i.title, draft_text: i.parent_text,
     candidates: (cands[i.id] ?? []).map((p) => p.id),
   }));
   const usedIds = new Set(Object.values(cands).flat().map((p) => p.id));
-  const system = `너는 트로트 공연에 가시는 부모님의 공연 날 일정표에 장소를 채우고 안내 문장을 쓰는 도우미다.\n\n${REFINE_RULES}`;
+  const system = input.concert.pilgrim
+    ? `너는 트로트 가수의 성지(가수가 다녀간 식당·여행지)를 도는 부모님의 하루 여행 일정표에 안내 문장을 쓰는 도우미다. 공연은 없다. 각 칸의 장소는 이미 정해져 있으니 candidates의 그 장소를 그대로 고른다. 이동 수단(도보/택시)과 분은 draft_text에 있는 그대로 쓴다.\n\n${REFINE_RULES}`
+    : `너는 트로트 공연에 가시는 부모님의 공연 날 일정표에 장소를 채우고 안내 문장을 쓰는 도우미다.\n\n${REFINE_RULES}`;
   const user = `INPUT\n${contextBlock(input)}\n\nSKELETON\n${JSON.stringify(skel)}\n\nPLACES(후보에 나온 곳만)\n${JSON.stringify(placesForPrompt(input.places.filter((p) => usedIds.has(p.id))))}\n\n모든 칸을 채워 JSON으로 답해 줘.`;
   let lastErr = "";
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -183,7 +219,7 @@ async function refineWithAI(skeleton: Plan, input: PlanInput): Promise<Plan | nu
         return {
           ...it, // 시각·종류·optional은 코드 값 그대로
           place_id: p ? p.id : (cands[it.id]?.length ? null : it.place_id),
-          walk_min: p ? p.walk_min_from_venue : it.walk_min,
+          walk_min: p && !input.concert.pilgrim ? p.walk_min_from_venue : it.walk_min,
           source: p ? p.source : it.place_id ? it.source : it.source,
           title: r.title || it.title,
           parent_text: text,
@@ -191,7 +227,7 @@ async function refineWithAI(skeleton: Plan, input: PlanInput): Promise<Plan | nu
           kid_note: r.kid_note || it.kid_note,
         } as PlanItem;
       });
-      return { ...skeleton, title: out.title || skeleton.title, summary: out.summary || skeleton.summary, items, generated_by: "ai" };
+      return { ...skeleton, title: input.concert.pilgrim ? skeleton.title : out.title || skeleton.title, summary: out.summary || skeleton.summary, items, generated_by: "ai" };
     } catch (e) {
       lastErr = e instanceof Error ? e.message : String(e);
     }

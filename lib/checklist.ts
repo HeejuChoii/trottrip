@@ -13,6 +13,20 @@ export function buildChecklist(o: { concert: ConcertView; parent: ParentProfile;
   const { concert, parent, prefs, transport: t, ticket, who } = o;
   const out: CheckItem[] = [];
   const add = (phase: CheckItem["phase"], id: string, text: string) => out.push({ id, phase, text });
+  if (concert.pilgrim) {
+    add("D-7", "places_open", "성지 가게들이 그날 문을 여는지 확인하기(휴무일·영업시간)");
+    if (t.mode === "train") add("D-7", "train_confirm", "열차·버스 왕복 예매 확인하고, 승차권을 휴대폰에 넣어 드리기");
+    if (t.stay === "overnight") add("D-7", "stay", "숙소 예약 확인하고 주소를 안내장에 함께 알려 드리기");
+    add("D-1", "weather", "여행 날 날씨 확인하기");
+    add("D-1", "clothes", season(concert.date) === "winter" ? "따뜻한 겉옷·핫팩 챙기시게 말씀드리기" : season(concert.date) === "summer" ? "양산·물 챙기시게 말씀드리기" : "얇은 겉옷 챙기시게 말씀드리기");
+    add("D-1", "taxi", "택시 앱을 깔아 드리거나, 택시비(카드) 챙기시게 말씀드리기");
+    if (parent.medicine_time) add("D-1", "medicine", `드시는 약(${parent.medicine_time})을 챙기시게 말씀드리기`);
+    add("D-1", "charge", `${who} 휴대폰 충전 부탁드리기`);
+    add("당일 아침", "link", "안내장 링크를 다시 보내 드리고, 열어 보셨는지 확인하기");
+    add("당일 아침", "call", "출발하셨는지 전화로 확인하기");
+    add("당일 아침", "status", "진행 상황 링크를 내 휴대폰에 열어 두기");
+    return out;
+  }
 
   add("D-7", "ticket_pickup", ticket.pickup === "onsite" ? `현장 수령이면 수령 장소·시간과 필요한 것(예매 번호·신분증)을 ${who}께 알려 드리기` : ticket.pickup === "mobile" ? `모바일 티켓을 ${who} 휴대폰으로 옮기거나 캡처해 드리기` : "티켓 수령 방식 확인하기(모바일 / 현장 수령 / 종이 티켓)");
   if (ticket.id_check) add("D-7", "id_check", `예매자 본인 확인이 있는지 확인하고, ${who} 신분증을 챙기시게 말씀드리기`);
@@ -39,6 +53,7 @@ export function buildChecklist(o: { concert: ConcertView; parent: ParentProfile;
 /** F18 부모님 준비물 (큰 글씨 표지에 보여 줄 것) */
 export function parentKit(o: { concert: ConcertView; parent: ParentProfile; prefs: Prefs; ticket: TicketInfo }): string[] {
   const s = season(o.concert.date);
+  if (o.concert.pilgrim) return ["휴대폰 · 보조배터리", "편한 신발", "택시비(카드)", s === "winter" ? "핫팩 · 목도리" : s === "summer" ? "물 · 양산" : "얇은 겉옷", ...(o.parent.medicine_time ? ["드시는 약"] : [])];
   return [
     o.ticket.pickup === "paper" ? "종이 티켓" : "티켓(휴대폰)",
     ...(o.ticket.id_check ? ["신분증"] : []),

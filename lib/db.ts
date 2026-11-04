@@ -7,6 +7,30 @@ import path from "path";
 import { randomUUID } from "crypto";
 import type { ChatRow, Concert, EventType, Place, Plan, Trip, TripEvent, TtPlaceRow } from "./types.ts";
 import { SEED_CONCERTS, SEED_TT_PLACES } from "./seed.ts";
+import venueMock from "../data/venue-mock.json" with { type: "json" };
+
+type MockVenue = { name: string; lat: number; lng: number; tips: string[]; places: (Partial<Place> & { id: string; name: string })[] };
+const MOCK = (venueMock as unknown as { venues: Record<string, MockVenue> }).venues;
+
+/** 시연용 공연장 시설·꿀팁 (운영자가 넣은 장소가 같은 id면 그쪽이 우선) */
+export function mockVenue(venueKey: string | null | undefined): { tips: string[]; places: Place[] } {
+  const v = venueKey ? MOCK[venueKey] : undefined;
+  if (!v) return { tips: [], places: [] };
+  return {
+    tips: v.tips,
+    places: v.places.map((p) => ({
+      concert_ids: [], address: v.name, walk_min_from_venue: null, tags: [], fan_type: "none", description_ko: "", evidence_urls: [],
+      source: "needs_check", updated_at: "2026-11-04T00:00:00+09:00", concertrip_url: "", lat: null, lng: null, category: "rest",
+      ...p, origin: "research",
+    }) as Place),
+  };
+}
+
+/** 시드 공연 중 아직 없는 것만 넣는다(운영자가 고친 공연은 건드리지 않음) */
+export async function ensureSeedConcerts(): Promise<void> {
+  const have = new Set((await listConcerts(false)).map((c) => c.id));
+  for (const c of SEED_CONCERTS) if (!have.has(c.id)) await upsertConcert({ ...c }).catch((e) => console.warn("[seed] 공연 넣기 실패", c.id, e instanceof Error ? e.message : e));
+}
 
 interface LocalDB {
   concerts: Concert[];
@@ -142,7 +166,10 @@ export async function getPlaces(concertId: string): Promise<Place[]> {
   const seen = new Set<string>();
   const out: Place[] = [];
   // 트롯트립 장소가 같은 id면 우선(운영자가 고친 값)
-  for (const p of [...tt.map((r) => ({ ...r.data, origin: r.origin })), ...ct]) {
+  // 같은 시설 종류를 운영자가 이미 넣었으면 시연용 목데이터는 그 종류를 건너뛴다
+  const ttCats = new Set(tt.map((r) => r.data.category));
+  const mock = mockVenue(concert?.venue_key).places.filter((p) => !ttCats.has(p.category) || ["goods", "photo"].includes(p.category) && !tt.some((r) => r.data.category === p.category));
+  for (const p of [...tt.map((r) => ({ ...r.data, origin: r.origin })), ...ct, ...mock]) {
     if (seen.has(p.id)) continue;
     seen.add(p.id);
     out.push(p);

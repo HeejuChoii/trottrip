@@ -11,9 +11,9 @@ const FAC: { cat: PlaceCategory; label: string }[] = [
 ];
 
 /** 부모님 화면용 짧은 설명: 괄호 속 메모를 빼고 첫 마디만, 18자 안쪽 */
-function shortDesc(t: string): string {
-  const s = t.replace(/\([^)]*\)/g, "").split(/[.。·,]/)[0].trim();
-  return s.length > 18 ? `${s.slice(0, 17)}…` : s;
+function shortDesc(t: string, max = 18): string {
+  const s = t.replace(/\([^)]*\)/g, "").split(/[.。,]|\s·\s/)[0].trim();
+  return s.length > max ? `${s.slice(0, max - 1)}…` : s;
 }
 function firstSentence(t: string): string {
   const s = t.split(/(?<=[.。요])\s/)[0].trim();
@@ -30,6 +30,27 @@ export default async function Page({ params }: { params: Promise<{ token: string
   const enter = trip.plan!.items.find((i) => i.type === "enter");
   const enterGate = enter?.place_id ? places.find((p) => p.id === enter.place_id) : undefined;
   const gateText = gate ?? enterGate?.name ?? null;
+
+  // 성지순례 여행: 공연장 대신 오늘 들르는 성지 목록
+  if (concert.pilgrim) {
+    const order = trip.plan!.items.filter((i) => i.place_id);
+    const spots = order.map((i) => ({ it: i, p: places.find((p) => p.id === i.place_id) })).filter((x) => x.p && x.p.origin === "concertrip");
+    return (
+      <main className="shell pv">
+        <div className="top"><Link className="back" href={`/p/${token}`} style={{ fontSize: 18 }}>← 일정으로</Link></div>
+        <h1 className="h">오늘 들르는 성지</h1>
+        <p className="hello">{concert.artist_display} · {concert.city}</p>
+        {spots.map(({ it, p }, n) => (
+          <Link key={it.id} className="card" href={`/p/${token}/map?place=${encodeURIComponent(p!.id)}`} style={{ textDecoration: "none", color: "inherit", display: "flex", gap: 12, alignItems: "center" }}>
+            <b style={{ fontSize: 22, color: "var(--purpleD)", minWidth: 22 }}>{n + 1}</b>
+            <span style={{ fontSize: 19, lineHeight: 1.4 }}><b>{p!.name.replace(/\s*\(.*\)$/, "")}</b><br /><small style={{ fontSize: 16, color: "var(--sub)" }}>{shortDesc(p!.description_ko, 26)} · {it.start}</small></span>
+          </Link>
+        ))}
+        <p className="note">콘서트립 팬덤 장소 정보예요. 가게 사정으로 문을 닫았을 수 있어요.</p>
+        <BottomBar token={token} pilgrim />
+      </main>
+    );
+  }
 
   return (
     <main className="shell pv">
@@ -52,6 +73,12 @@ export default async function Page({ params }: { params: Promise<{ token: string
         <details className="card" style={{ fontSize: 17, lineHeight: 1.5 }}>
           <summary style={{ cursor: "pointer" }}><b>공지</b> · {firstSentence(concert.notice_text)} <span style={{ color: "var(--deep)", fontWeight: 700 }}>더 보기</span></summary>
           <p style={{ margin: "8px 0 0" }}>{concert.notice_text}</p>
+        </details>
+      )}
+      {concert.tips && concert.tips.length > 0 && (
+        <details className="card" style={{ fontSize: 17, lineHeight: 1.55 }}>
+          <summary style={{ cursor: "pointer" }}><b>💡 공연장 꿀팁</b> · {firstSentence(concert.tips[0])} <span style={{ color: "var(--deep)", fontWeight: 700 }}>더 보기</span></summary>
+          <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>{concert.tips.map((t) => <li key={t}>{t}</li>)}</ul>
         </details>
       )}
       <div className="fac">
