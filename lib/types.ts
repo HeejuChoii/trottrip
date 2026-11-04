@@ -53,6 +53,8 @@ export interface Place {
   /** 영업시간 "11:00-21:00", 쉬는 요일 ["화"] (팬덤 스팟 데이터·운영자 입력) */
   hours?: string;
   closed?: string[];
+  /** 관광지 성격(전시·산책·시장·역사·바다·카페·실내) — 부모님 취향과 맞춘다 */
+  likes?: string[];
   /** 평점(운영자가 지도 화면에서 확인해 넣은 값, 5점 만점) */
   rating?: number | null;
   rating_count?: number | null;
@@ -129,6 +131,8 @@ export interface ParentProfile {
   rest_often: boolean;
   near_toilet: boolean;
   friends_fitness: "same" | "better";
+  /** 좋아하시는 것(1박 둘째 날 가볼 곳 고르기): 전시·산책·시장·역사·바다·카페·실내 */
+  likes?: string[];
 }
 
 export interface Prefs {

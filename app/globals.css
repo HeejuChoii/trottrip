@@ -3,9 +3,9 @@
 /* 디자인 토큰 (PRD 10장, 프로토타입) — 블루 없음 */
 :root {
   /* 로고 색만 쓴다: 민트(#14C1AD)·핑크(#FF5C93). 진초록 배경은 쓰지 않고, 글자용 민트만 조금 진하게(#0B8F80) */
-  --mint: #14c1ad; --deep: #0b8f80; --pink: #ff5c93; --pinkD: #c2185b; --purple: #ff8fb5; --purpleD: #c2185b;
+  --mint: #14c1ad; --deep: #109d8e; --pink: #ff5c93; --pinkD: #c2185b; --purple: #ff8fb5; --purpleD: #c2185b;
   /* 버튼: 민트 바탕 + 진한 글씨(대비 6.4), 강조 버튼: 연한 핑크 바탕 + 진한 자주 글씨(대비 6.9) */
-  --btn: #14c1ad; --btnInk: #111111; --accent: #ffa3c2; --accentInk: #111111;
+  --btn: #5fd8c8; --btnInk: #111111; --accent: #ffa3c2; --accentInk: #111111;
   --bg: #f2f4f6; --ink: #23313b; --sub: #5b6b73; --line: #e5e8eb; --card: #ffffff;
   --mintS: #e3f8f4; --pinkS: #ffeef4; --purpleS: #ffeef4;
   --f: "Noto Sans KR", "Noto Sans CJK KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
@@ -59,7 +59,7 @@ h1.h, h2.h { font-size: 24px; line-height: 1.3; margin: 4px 0 0; font-weight: 90
 .show b { font-size: 16px; display: block; }
 .show small { font-size: 13px; color: var(--sub); display: block; margin-top: 3px; line-height: 1.4; }
 .sel { border: 2px solid var(--mint); }
-.cta { border: 0; background: var(--btn); color: var(--btnInk); border-radius: 14px; padding: 16px; font-size: 18px; font-weight: 700; width: 100%; text-align: center; text-decoration: none; display: block; min-height: 56px; box-shadow: 0 3px 0 #0e9a8a; }
+.cta { border: 0; background: var(--btn); color: var(--btnInk); border-radius: 14px; padding: 16px; font-size: 18px; font-weight: 700; width: 100%; text-align: center; text-decoration: none; display: block; min-height: 56px; box-shadow: 0 3px 0 #9fe6dc; }
 .cta.pk, .cta.acc { background: var(--accent); color: var(--accentInk); box-shadow: 0 3px 0 #ee7fa6; }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .opt { border: 1.5px solid var(--line); border-radius: 14px; padding: 12px; background: #fff; text-align: left; color: var(--ink); }
@@ -107,7 +107,7 @@ h1.h, h2.h { font-size: 24px; line-height: 1.3; margin: 4px 0 0; font-weight: 90
 .next .when { display: inline-block; margin-top: 10px; background: rgba(255,255,255,.45); border-radius: 10px; padding: 6px 10px; font-size: 17px; font-weight: 700; }
 .next.pk { background: var(--accent); color: var(--accentInk); }
 .bigbtn { border: 0; border-radius: 18px; padding: 18px; font-size: 22px; font-weight: 800; width: 100%; min-height: 64px; text-align: center; text-decoration: none; display: block; }
-.bigbtn.ok { background: var(--btn); color: var(--btnInk); box-shadow: 0 4px 0 #0e9a8a; }
+.bigbtn.ok { background: var(--btn); color: var(--btnInk); box-shadow: 0 4px 0 #9fe6dc; }
 .bigbtn.line { background: #fff; color: var(--deep); border: 2px solid var(--mint); }
 .bigbtn.pk { background: var(--pinkS); color: var(--pinkD); border: 2px solid #ffb3d6; }
 .mini { display: flex; flex-direction: column; gap: 8px; }
@@ -167,7 +167,7 @@ h1.h, h2.h { font-size: 24px; line-height: 1.3; margin: 4px 0 0; font-weight: 90
 .bub.ai { align-self: flex-start; background: #fff; border: 1px solid var(--line); border-bottom-left-radius: 6px; }
 .bub.ai small { display: block; font-size: 14px; color: var(--sub); margin-top: 6px; }
 .bub.sos { background: #fff1f1; border: 2px solid #e5484d; color: #8f1d22; font-weight: 700; }
-.mic { border: 0; border-radius: 20px; background: var(--btn); color: var(--btnInk); box-shadow: 0 4px 0 #0e9a8a; font-size: 22px; font-weight: 800; padding: 18px; width: 100%; min-height: 64px; }
+.mic { border: 0; border-radius: 20px; background: var(--btn); color: var(--btnInk); box-shadow: 0 4px 0 #9fe6dc; font-size: 22px; font-weight: 800; padding: 18px; width: 100%; min-height: 64px; }
 .mic.on { background: var(--accent); color: var(--accentInk); box-shadow: 0 4px 0 #ee7fa6; }
 .qchips { display: flex; flex-wrap: wrap; gap: 6px; }
 .qchips button { background: var(--purpleS); color: var(--purpleD); border: 0; border-radius: 999px; padding: 10px 14px; font-size: 16px; font-weight: 700; min-height: 44px; }

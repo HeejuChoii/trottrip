@@ -4,6 +4,7 @@ import { randomBytes } from "crypto";
 import { getConcert, getPlaces, getTripBy, listTtPlaces, mockVenue, upsertTtPlaces } from "./db.ts";
 import { courseSpots, geoQueries, getCourse, pilgrimView, km, type PilgrimCourse } from "./pilgrim.ts";
 import { geocode, importNearby, kakaoConfigured } from "./kakao-local.ts";
+import { sightsNear } from "./sights.ts";
 import type { Concert, ConcertView, Place, Trip } from "./types.ts";
 import type { PlanInput } from "./planner.ts";
 
@@ -90,7 +91,7 @@ export async function pilgrimPlaces(course: PilgrimCourse): Promise<Place[]> {
       console.warn("[pilgrim] 근처 식당 불러오기 실패:", e instanceof Error ? e.message : e);
     }
   }
-  return [...spots, ...near.map((r) => ({ ...r.data, origin: r.origin }))];
+  return [...spots, ...near.map((r) => ({ ...r.data, origin: r.origin })), ...sightsNear(course.start, 30)];
 }
 
 /** 공연장 근처 식당·카페가 하나도 없으면 카카오에서 한 번 불러와 저장한다(시연·신규 공연장용) */

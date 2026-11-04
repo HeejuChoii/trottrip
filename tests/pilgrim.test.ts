@@ -52,3 +52,21 @@ test("자녀 메모에 영어 필드명·URL이 보이지 않게", async () => {
   assert.equal(cleanNote("숙소 링크: https://place.map.kakao.com/1117108402 · 지하철이면 한성백제역이 덜 붐빔"), "지하철이면 한성백제역이 덜 붐빔");
   assert.equal(cleanNote("near_toilet 조건에 맞는 쉼터"), "화장실 가까이 조건에 맞는 쉼터");
 });
+
+test("1박 둘째 날: 먼 팬덤 장소는 빼고 역 근처 취향 맞는 곳(전시)을 넣는다", async () => {
+  const { buildDayTwo } = await import("../lib/legs.ts");
+  const { sightsNear } = await import("../lib/sights.ts");
+  const seoulSt = { lat: 37.5547, lng: 126.9707 };
+  const farFan = { ...sightsNear(seoulSt, 5)[0], id: "fan_far", name: "먼 팬덤 장소", fan_type: "artist_visited" as const, lat: 35.87, lng: 128.6 };
+  let n = 0;
+  const items = buildDayTwo({
+    transport: { ...transport, mode: "train", train_to: "서울", train_return_depart: "15:40", stay: "overnight", stay_name: "숙소" },
+    parent: { ...parent, likes: ["전시"] }, places: [], used: new Set(), spots: [farFan], sights: sightsNear(seoulSt, 30),
+    base: { name: "숙소", lat: 37.6688, lng: 126.7451 }, stationLL: seoulSt, stayName: "숙소", stayUrl: null,
+  }, () => `d${++n}`);
+  const titles = items.map((i) => i.title);
+  assert.ok(!titles.some((t) => t.includes("먼 팬덤 장소")), "먼 팬덤 장소는 빠짐");
+  assert.ok(titles.some((t) => /둘러보기 · (국립중앙박물관|서울시립미술관)/.test(t)), titles.join(" / "));
+  assert.equal(items.at(-1)!.type, "return");
+  assert.ok(items.every((i) => i.day === 2));
+});

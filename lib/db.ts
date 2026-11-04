@@ -8,6 +8,7 @@ import { randomUUID } from "crypto";
 import type { ChatRow, Concert, EventType, Place, Plan, Trip, TripEvent, TtPlaceRow } from "./types.ts";
 import { SEED_CONCERTS, SEED_TT_PLACES } from "./seed.ts";
 import venueMock from "../data/venue-mock.json" with { type: "json" };
+import { sightsNear } from "./sights.ts";
 
 type MockVenue = { name: string; lat: number; lng: number; tips: string[]; places: (Partial<Place> & { id: string; name: string })[] };
 const MOCK = (venueMock as unknown as { venues: Record<string, MockVenue> }).venues;
@@ -185,7 +186,9 @@ export async function getPlaces(concertId: string): Promise<Place[]> {
   // 같은 시설 종류를 운영자가 이미 넣었으면 시연용 목데이터는 그 종류를 건너뛴다
   const ttCats = new Set(tt.map((r) => r.data.category));
   const mock = mockVenue(concert?.venue_key).places.filter((p) => !ttCats.has(p.category) || ["goods", "photo"].includes(p.category) && !tt.some((r) => r.data.category === p.category));
-  for (const p of [...tt.map((r) => ({ ...r.data, origin: r.origin })), ...ct, ...mock]) {
+  // 공연장 30km 안의 가볼 만한 곳(1박 둘째 날 추천용)
+  const sights = sightsNear(concert ? { lat: concert.venue_lat, lng: concert.venue_lng } : null, 30);
+  for (const p of [...tt.map((r) => ({ ...r.data, origin: r.origin })), ...ct, ...mock, ...sights]) {
     if (seen.has(p.id)) continue;
     seen.add(p.id);
     out.push(p);

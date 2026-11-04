@@ -16,6 +16,7 @@ export const ParentSchema = z.object({
   food_other: s(60),
   medicine_time: hhmm,
   friends_fitness: z.enum(["same", "better"]).default("same"),
+  likes: z.array(z.enum(["전시", "산책", "시장", "역사", "바다", "카페", "실내"])).max(7).default([]),
 });
 
 export const PrefsSchema = z.object({

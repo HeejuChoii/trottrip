@@ -70,8 +70,10 @@ export interface DayTwoInput {
   parent: ParentProfile;
   places: Place[];
   used: Set<string>;
-  /** 둘째 날 들를 곳 후보(팬덤 장소 등) — 가까운 순서로 넣는다 */
+  /** 둘째 날 들를 곳 후보(팬덤 장소) — 숙소에서 가까운 곳만 쓴다 */
   spots: Place[];
+  /** 공연장·역 근처 가볼 만한 곳(관광지) — 부모님 취향과 가까운 순서로 고른다 */
+  sights?: Place[];
   /** 숙소 근처 기준 좌표(없으면 공연장/코스 출발점) */
   base: { name: string; lat: number | null; lng: number | null };
   stationLL?: LL | null;
@@ -104,16 +106,29 @@ export function buildDayTwo(o: DayTwoInput, nid: () => string): PlanItem[] {
     parent_text: "짐 챙겨서 체크아웃하세요. 짐이 무거우면 숙소에 맡겨 두고 다녀오셔도 돼요.", done_label: "체크아웃했어요", kid_note: "둘째 날", source: "user_input",
     ...(o.stayUrl ? { link: { label: "🧭 숙소 위치 (카카오맵)", url: o.stayUrl } } : {}) });
   c += 45;
-  // 점심 전·후로 팬덤 장소 1~2곳(시간이 되면)
   const lunchLen = o.parent.food.includes("quick") ? 45 : 60;
-  const spots = o.spots.filter((p) => !o.used.has(p.id) && p.lat != null).slice(0, 2);
-  for (const p of spots) {
-    if (c + 40 + lunchLen + 30 > leaveBy) break;
-    o.used.add(p.id);
-    add({ start: toHHMM(c), end: toHHMM(c + 40), type: "photo", title: `최애 장소 · ${p.name}`, place_id: p.id, walk_min: null,
-      parent_text: `${p.description_ko || p.name}. 들러서 사진 한 장 남기세요.`, done_label: "다녀왔어요", kid_note: "둘째 날 · 팬덤 장소", source: p.source });
-    c += 55;
-  }
+  // 둘째 날 들를 곳: 숙소에서 20km 안의 팬덤 장소 → 없으면 역(기차)·숙소 근처 가볼 만한 곳(부모님 취향 우선)
+  const near = (p: Place, ll: LL | null, km: number) => !!ll && p.lat != null && p.lng != null && kmBetween(ll, { lat: p.lat, lng: p.lng }) <= km;
+  const baseLL = o.base.lat != null && o.base.lng != null ? { lat: o.base.lat, lng: o.base.lng } : null;
+  const anchor = t.mode === "train" && o.stationLL ? o.stationLL : baseLL;
+  const likes = o.parent.likes ?? [];
+  const fanNear = o.spots.filter((p) => !o.used.has(p.id) && near(p, baseLL, 20));
+  const sightPool = (o.sights ?? []).filter((p) => !o.used.has(p.id) && (near(p, anchor, 12) || near(p, baseLL, 15)));
+  const sightScore = (p: Place) => (p.likes ?? []).filter((l) => likes.includes(l)).length * 3 - (anchor && p.lat != null ? kmBetween(anchor, { lat: p.lat, lng: p.lng! }) / 4 : 0);
+  const sights = [...sightPool].sort((a, b) => sightScore(b) - sightScore(a));
+  const picks: { p: Place; fan: boolean }[] = [...fanNear.slice(0, 1).map((p) => ({ p, fan: true })), ...sights.map((p) => ({ p, fan: false }))].slice(0, 2);
+  const visit = (x: { p: Place; fan: boolean }) => {
+    const len = x.fan ? 40 : (x.p.likes ?? []).includes("전시") ? 90 : 60;
+    if (c + len + 15 > leaveBy) return false;
+    o.used.add(x.p.id);
+    const liked = (x.p.likes ?? []).filter((l) => likes.includes(l));
+    add({ start: toHHMM(c), end: toHHMM(c + len), type: x.fan ? "photo" : "extra", title: `${x.fan ? "최애 장소" : "둘러보기"} · ${x.p.name}`, place_id: x.p.id, walk_min: null,
+      parent_text: `${x.p.description_ko || x.p.name}.${x.fan ? " 들러서 사진 한 장 남기세요." : liked.length ? ` ${liked.join("·")}을 좋아하셔서 넣었어요.` : " 돌아가시기 전에 천천히 둘러보세요."}`,
+      done_label: "다녀왔어요", kid_note: x.fan ? "둘째 날 · 팬덤 장소" : `둘째 날 · 근처 가볼 곳${liked.length ? ` · ${liked.join("·")} 취향` : ""}`, source: x.p.source });
+    c += len + 20;
+    return true;
+  };
+  if (picks[0]) visit(picks[0]);
   if (c + lunchLen <= leaveBy) {
     const r = o.places.find((p) => p.category === "restaurant" && !o.used.has(p.id) && restaurantMatches(p, o.parent));
     if (r) o.used.add(r.id);
@@ -124,6 +139,7 @@ export function buildDayTwo(o: DayTwoInput, nid: () => string): PlanItem[] {
       c = start + lunchLen + 10;
     }
   }
+  if (picks[1]) visit(picks[1]);
   if (t.mode === "train") {
     const st = stationName(t.train_to || "역");
     const s = Math.max(c, leaveBy);
