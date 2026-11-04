@@ -113,7 +113,9 @@ export function buildDayTwo(o: DayTwoInput, nid: () => string): PlanItem[] {
   const anchor = t.mode === "train" && o.stationLL ? o.stationLL : baseLL;
   const likes = o.parent.likes ?? [];
   const fanNear = o.spots.filter((p) => !o.used.has(p.id) && near(p, baseLL, 20));
-  const sightPool = (o.sights ?? []).filter((p) => !o.used.has(p.id) && (near(p, anchor, 12) || near(p, baseLL, 15)));
+  // 공연장·컨벤션 건물이나 박람회 같은 행사는 '가볼 만한 곳'이 아니다(예전에 불러온 데이터도 거른다)
+  const notVenue = (p: Place) => !/컨벤션|전시장|박람회|페어|산업대전|산업전|엑스포|EXCO|엑스코|킨텍스|KINTEX|코엑스|COEX|벡스코|BEXCO|\d홀|홀$|[동서]관$/i.test(`${p.name} ${p.category_detail ?? ""}`);
+  const sightPool = (o.sights ?? []).filter((p) => !o.used.has(p.id) && notVenue(p) && (near(p, anchor, 12) || near(p, baseLL, 15)));
   const sightScore = (p: Place) => (p.likes ?? []).filter((l) => likes.includes(l)).length * 3 - (anchor && p.lat != null ? kmBetween(anchor, { lat: p.lat, lng: p.lng! }) / 4 : 0);
   const sights = [...sightPool].sort((a, b) => sightScore(b) - sightScore(a));
   const picks: { p: Place; fan: boolean }[] = [...fanNear.slice(0, 1).map((p) => ({ p, fan: true })), ...sights.map((p) => ({ p, fan: false }))].slice(0, 2);
