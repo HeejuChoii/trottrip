@@ -68,7 +68,13 @@ export async function pilgrimPlaces(course: PilgrimCourse): Promise<Place[]> {
   }
   spots = spots.map((p) => {
     const g = geo.get(`geo__${p.id}`);
-    return p.lat == null && g ? { ...p, lat: g.lat, lng: g.lng, link_url: g.link_url ?? p.link_url } : p;
+    if (!g) return p;
+    // 운영자 붙여넣기(브라우저로 확인한 카카오맵 좌표·링크·평점)가 있으면 그 값이 우선
+    return {
+      ...p,
+      lat: g.lat ?? p.lat, lng: g.lng ?? p.lng, link_url: g.link_url ?? p.link_url,
+      address: g.address || p.address, rating: g.rating ?? p.rating, rating_count: g.rating_count ?? p.rating_count, rating_src: g.rating_src ?? p.rating_src,
+    };
   });
   let near = await listTtPlaces({ venue_key: key }).catch(() => []);
   if (!near.length && kakaoConfigured()) {

@@ -52,6 +52,8 @@ function score(p: Place, prefer: string[]) {
   for (const t of prefer) if ((p.tags as string[]).includes(t)) s += 2;
   if (p.source === "verified") s += 1;
   if (p.walk_min_from_venue !== null) s += Math.max(0, 10 - p.walk_min_from_venue) / 10;
+  // 평점(운영자 확인 값): 4.0을 기준으로 0.1점당 0.3 가산, 리뷰가 적으면 절반만
+  if (p.rating != null) s += Math.max(-1, (p.rating - 4) * 3) * ((p.rating_count ?? 0) >= 20 ? 1 : 0.5);
   return s;
 }
 
@@ -107,6 +109,12 @@ export function candidates(cat: PlaceCategory, input: PlanInput, extraPrefer: st
 
 function walkOf(p: Place | undefined): number | null {
   return p?.walk_min_from_venue ?? null;
+}
+
+/** 장소 설명을 뒤에 붙일 한 문장으로 (예: "실내 의자가 있어요." / "공연 3시간 전 판매 시작.") */
+export function note(p: Place | undefined | null): string {
+  const d = (p?.description_ko || "").trim();
+  return d ? ` ${d.replace(/[.。]$/, "")}.` : "";
 }
 
 // ---------- 규칙 기반 생성 ----------
@@ -169,7 +177,7 @@ export function buildRulePlan(input: PlanInput): Plan {
     title: restPlace ? `쉬기 · ${restPlace.name}` : "앉아서 쉬기",
     place_id: restPlace?.id ?? null, walk_min: walkOf(restPlace),
     parent_text: restPlace
-      ? `${restPlace.description_ko || restPlace.name}에서 앉아 쉬세요. 화장실도 미리 다녀오세요.`
+      ? `${restPlace.name}에서 앉아 쉬세요.${note(restPlace)} 화장실도 미리 다녀오세요.`
       : "입장 전에 앉아서 쉬세요. 화장실도 미리 다녀오세요.",
     done_label: "잘 쉬었어요", kid_note: restPlace ? "" : "쉼터 정보 확인 필요",
     source: restPlace?.source ?? "needs_check",
@@ -184,7 +192,7 @@ export function buildRulePlan(input: PlanInput): Plan {
       start: toHHMM(cursor - GOODS_WAIT_MIN), end: toHHMM(cursor), type: "goods",
       title: g ? `공식 굿즈 사기 · ${g.name}` : "공식 굿즈 사기",
       place_id: g?.id ?? null, walk_min: walkOf(g),
-      parent_text: `${g?.description_ko || "굿즈 부스"}에서 줄을 서세요. 줄이 길면 건너뛰어도 돼요.`,
+      parent_text: `${g?.name ?? "굿즈 부스"}에서 줄을 서세요.${note(g)} 줄이 길면 건너뛰어도 돼요.`,
       done_label: "다 샀어요", kid_note: `대기 ${GOODS_WAIT_MIN}분 확보${g ? "" : " · MD 부스 위치 공지 대기"}`,
       source: g?.source ?? "needs_check", optional: true,
     });
@@ -199,7 +207,7 @@ export function buildRulePlan(input: PlanInput): Plan {
         start: toHHMM(cursor - 20), end: toHHMM(cursor), type: "photo",
         title: ph ? `포토존 · ${ph.name}` : "포토존 사진 찍기",
         place_id: ph?.id ?? null, walk_min: walkOf(ph),
-        parent_text: `${ph?.description_ko || "공연장 포토존"}에서 사진 찍으세요. 줄이 길면 건너뛰어도 돼요.`,
+        parent_text: `${ph?.name ?? "공연장 포토존"}에서 사진 찍으세요.${note(ph)} 줄이 길면 건너뛰어도 돼요.`,
         done_label: "사진 찍었어요", kid_note: "", source: ph?.source ?? "needs_check", optional: true,
       });
       before.unshift(it); optional.push(it);
@@ -463,7 +471,7 @@ export function rulesReplan(plan: Plan, input: PlanInput, reason: ChangeReason, 
         id: nid2(), start: toHHMM(nowMin), end: toHHMM(nowMin + len), type: "rest",
         title: restPlace ? `쉬기 · ${restPlace.name}` : "앉아서 쉬기",
         place_id: restPlace?.id ?? null, walk_min: restPlace?.walk_min_from_venue ?? null,
-        parent_text: restPlace ? `${restPlace.description_ko || restPlace.name}에서 앉아 쉬세요.` : "가까운 곳에 앉아 쉬세요.",
+        parent_text: restPlace ? `${restPlace.name}에서 앉아 쉬세요.${note(restPlace)}` : "가까운 곳에 앉아 쉬세요.",
         done_label: "잘 쉬었어요", kid_note: reason === "leg_pain" ? "다리 통증으로 휴식 추가" : "줄이 길어 휴식으로 변경",
         source: restPlace?.source ?? "needs_check",
       };
@@ -579,6 +587,15 @@ export function whyFor(it: PlanItem, p: Place | undefined, input: PlanInput): st
     if (parent.food.includes("mild") && !(p.tags as string[]).includes("mild")) bits.push(p.ai_spice === "mild" ? "AI 추정: 덜 매운 메뉴 많음" : "매운 메뉴 아님(확인 필요)");
     if (parent.food.includes("soup") && p.ai_soup) bits.push("AI 추정: 국물 요리");
     if (parent.food.includes("rice") && p.ai_staple === "rice") bits.push("AI 추정: 밥 메뉴");
+  }
+  if (it.type === "meal" && p.rating != null) {
+    // 같은 종류(한식 등) 근처 식당 중 평점 순위
+    const kind = (["korean", "chinese", "japanese", "western", "snack", "asian"] as const).find((t) => (p.tags as string[]).includes(t));
+    const KIND: Record<string, string> = { korean: "한식", chinese: "중식", japanese: "일식", western: "양식", snack: "분식", asian: "아시아 음식" };
+    const pool = input.places.filter((x) => x.category === "restaurant" && x.rating != null && (!kind || (x.tags as string[]).includes(kind)));
+    const rank = [...pool].sort((a, b) => b.rating! - a.rating!).findIndex((x) => x.id === p.id) + 1;
+    const star = `${p.rating_src || "지도"} 평점 ${p.rating.toFixed(1)}${p.rating_count ? `(${p.rating_count})` : ""}`;
+    bits.unshift(rank > 0 && rank <= 3 && pool.length >= 3 ? `근처 ${kind ? KIND[kind] : "식당"} ${pool.length}곳 중 평점 ${rank}위 · ${star}` : star);
   }
   if (it.type === "enter" && parent.elevator_first && (p.tags as string[]).includes("elevator")) bits.push("엘리베이터 바로 옆 입구");
   if (it.type === "enter" && gateForSeat(input.seat, input.concert.gate_map)) bits.push(`${input.seat} 좌석 입구`);

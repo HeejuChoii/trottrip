@@ -616,13 +616,13 @@
    ]
   },
   "exco": {
-   "name": "엑스코 동관",
+   "name": "엑스코",
    "lat": 35.907,
    "lng": 128.6131,
    "tips": [
     "엑스코선이 생기기 전이라 지하철은 멀어요. 대구역·동대구역에서 택시가 편해요(15~20분).",
     "주차장이 넓지만 공연 날은 일찍 차요. 공연 2시간 전엔 도착하세요.",
-    "동관 1층 로비가 넓고 의자가 많아요.",
+    "동관·서관 로비가 넓고 의자가 많아요. 내 공연이 어느 관인지 먼저 확인하세요.",
     "끝나면 택시가 몰려요. 엑스코 정문보다 동문 쪽이 잘 잡혀요."
    ],
    "places": [
@@ -758,6 +758,478 @@
      "tags": [],
      "fan_type": "none",
      "description_ko": "팬 모임 버스 하차 지점",
+     "source": "needs_check",
+     "evidence_urls": []
+    }
+   ]
+  },
+  "kintex-2": {
+   "name": "킨텍스 제2전시장",
+   "lat": 37.6655,
+   "lng": 126.7496,
+   "tips": [
+    "GTX-A 킨텍스역에서 제2전시장까지 걸어서 10분쯤이에요. 제1전시장보다 안쪽이에요.",
+    "대화역(3호선)에서 오는 무료 셔틀이 제2전시장에도 서요.",
+    "9A홀은 제2전시장 끝쪽이에요. 입구에서 홀까지 5분 넘게 걸으니 일찍 오세요.",
+    "제2전시장 1층 푸드코트가 점심에 편해요. 11시 반 전이 덜 붐벼요."
+   ],
+   "places": [
+    {
+     "id": "mk_kintex-2_0",
+     "name": "9A홀 1번 입구 (엘리베이터 옆)",
+     "category": "gate",
+     "lat": 37.6646,
+     "lng": 126.7488,
+     "walk_min_from_venue": 3,
+     "tags": [
+      "elevator",
+      "accessible"
+     ],
+     "fan_type": "none",
+     "description_ko": "1층 객석 입구, 엘리베이터 가까워요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kintex-2_1",
+     "name": "9A홀 2번 입구",
+     "category": "gate",
+     "lat": 37.6652,
+     "lng": 126.7488,
+     "walk_min_from_venue": 4,
+     "tags": [],
+     "fan_type": "none",
+     "description_ko": "뒤쪽 구역 입구",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kintex-2_2",
+     "name": "제2전시장 9홀 앞 화장실",
+     "category": "toilet",
+     "lat": 37.6658,
+     "lng": 126.7488,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor",
+      "accessible"
+     ],
+     "fan_type": "none",
+     "description_ko": "홀 입구 바로 옆",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kintex-2_3",
+     "name": "제2전시장 중앙 엘리베이터",
+     "category": "elevator",
+     "lat": 37.6664,
+     "lng": 126.7488,
+     "walk_min_from_venue": 2,
+     "tags": [
+      "indoor",
+      "elevator"
+     ],
+     "fan_type": "none",
+     "description_ko": "2층 로비까지",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kintex-2_4",
+     "name": "제2전시장 로비 쉼터",
+     "category": "rest",
+     "lat": 37.6646,
+     "lng": 126.7496,
+     "walk_min_from_venue": 2,
+     "tags": [
+      "indoor",
+      "seating"
+     ],
+     "fan_type": "none",
+     "description_ko": "실내 의자가 많아요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kintex-2_5",
+     "name": "제2전시장 물품보관소",
+     "category": "locker",
+     "lat": 37.6652,
+     "lng": 126.7496,
+     "walk_min_from_venue": 3,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "none",
+     "description_ko": "1층 안내데스크 옆",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kintex-2_6",
+     "name": "제2전시장 안내데스크",
+     "category": "info_desk",
+     "lat": 37.6658,
+     "lng": 126.7496,
+     "walk_min_from_venue": 3,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "none",
+     "description_ko": "1층 중앙",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kintex-2_7",
+     "name": "공식 MD 부스 (9홀 로비)",
+     "category": "goods",
+     "lat": 37.6664,
+     "lng": 126.7496,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "official",
+     "description_ko": "공연 3시간 전 판매 시작",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kintex-2_8",
+     "name": "9A홀 입구 포토월",
+     "category": "photo",
+     "lat": 37.6646,
+     "lng": 126.7504,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "official",
+     "description_ko": "홀 입구 정면",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kintex-2_9",
+     "name": "제2전시장 대형버스 하차장",
+     "category": "bus_stop",
+     "lat": 37.6652,
+     "lng": 126.7504,
+     "walk_min_from_venue": 5,
+     "tags": [],
+     "fan_type": "none",
+     "description_ko": "팬 모임 버스 하차 지점",
+     "source": "needs_check",
+     "evidence_urls": []
+    }
+   ]
+  },
+  "dcc-2": {
+   "name": "대전컨벤션센터 제2전시장",
+   "lat": 36.3748,
+   "lng": 127.3935,
+   "tips": [
+    "지하철 1호선 정부청사역에서 택시로 10분쯤이에요. 대전역·서대전역에선 택시로 20분이에요.",
+    "엑스포과학공원·신세계 아트앤사이언스가 바로 옆이라 점심·카페가 편해요.",
+    "주차장은 공연 날 일찍 차요. 공연 2시간 전엔 도착하세요.",
+    "끝나면 택시가 몰려요. 신세계 쪽 큰길로 나가면 잘 잡혀요."
+   ],
+   "places": [
+    {
+     "id": "mk_dcc-2_0",
+     "name": "제2전시장 1번 입구 (엘리베이터 옆)",
+     "category": "gate",
+     "lat": 36.3739,
+     "lng": 127.3927,
+     "walk_min_from_venue": 2,
+     "tags": [
+      "elevator",
+      "accessible"
+     ],
+     "fan_type": "none",
+     "description_ko": "앞쪽 구역 입구",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_dcc-2_1",
+     "name": "제2전시장 2번 입구",
+     "category": "gate",
+     "lat": 36.3745,
+     "lng": 127.3927,
+     "walk_min_from_venue": 3,
+     "tags": [],
+     "fan_type": "none",
+     "description_ko": "뒤쪽 구역 입구",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_dcc-2_2",
+     "name": "제2전시장 로비 화장실",
+     "category": "toilet",
+     "lat": 36.3751,
+     "lng": 127.3927,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor",
+      "accessible"
+     ],
+     "fan_type": "none",
+     "description_ko": "로비 양쪽",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_dcc-2_3",
+     "name": "로비 엘리베이터",
+     "category": "elevator",
+     "lat": 36.3757,
+     "lng": 127.3927,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor",
+      "elevator"
+     ],
+     "fan_type": "none",
+     "description_ko": "2층까지",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_dcc-2_4",
+     "name": "제2전시장 로비 의자",
+     "category": "rest",
+     "lat": 36.3739,
+     "lng": 127.3935,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor",
+      "seating"
+     ],
+     "fan_type": "none",
+     "description_ko": "실내 의자가 있어요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_dcc-2_5",
+     "name": "대전컨벤션센터 안내데스크",
+     "category": "info_desk",
+     "lat": 36.3745,
+     "lng": 127.3935,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "none",
+     "description_ko": "제2전시장 로비",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_dcc-2_6",
+     "name": "공식 MD 부스 (제2전시장 로비)",
+     "category": "goods",
+     "lat": 36.3751,
+     "lng": 127.3935,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "official",
+     "description_ko": "공연 3시간 전 판매 시작",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_dcc-2_7",
+     "name": "제2전시장 앞 포토월",
+     "category": "photo",
+     "lat": 36.3757,
+     "lng": 127.3935,
+     "walk_min_from_venue": 2,
+     "tags": [],
+     "fan_type": "official",
+     "description_ko": "정문 앞",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_dcc-2_8",
+     "name": "컨벤션센터 앞 대형버스 하차",
+     "category": "bus_stop",
+     "lat": 36.3739,
+     "lng": 127.3943,
+     "walk_min_from_venue": 4,
+     "tags": [],
+     "fan_type": "none",
+     "description_ko": "팬 모임 버스 하차 지점",
+     "source": "needs_check",
+     "evidence_urls": []
+    }
+   ]
+  },
+  "inspire": {
+   "name": "인스파이어 아레나",
+   "lat": 37.4648,
+   "lng": 126.3891,
+   "tips": [
+    "공항철도 운서역에서 인스파이어 무료 셔틀이 다녀요. 인천공항 1·2터미널에서도 셔틀이 있어요.",
+    "리조트 안 실내 통로(오로라 거리)로 이동해서 비·추위 걱정이 없어요.",
+    "리조트 안 푸드코트·식당이 많아요. 공연 직전엔 붐비니 일찍 드세요.",
+    "끝나고 운서역 셔틀 줄이 길어요. 시간이 촉박하면 택시를 예약하세요."
+   ],
+   "places": [
+    {
+     "id": "mk_inspire_0",
+     "name": "아레나 1층 입구 (엘리베이터 옆)",
+     "category": "gate",
+     "lat": 37.4639,
+     "lng": 126.3883,
+     "walk_min_from_venue": 2,
+     "tags": [
+      "elevator",
+      "accessible"
+     ],
+     "fan_type": "none",
+     "description_ko": "1층 플로어·하단석 입구",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_inspire_1",
+     "name": "아레나 2층 입구",
+     "category": "gate",
+     "lat": 37.4645,
+     "lng": 126.3883,
+     "walk_min_from_venue": 3,
+     "tags": [],
+     "fan_type": "none",
+     "description_ko": "2층 상단석 입구",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_inspire_2",
+     "name": "아레나 로비 화장실",
+     "category": "toilet",
+     "lat": 37.4651,
+     "lng": 126.3883,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor",
+      "accessible"
+     ],
+     "fan_type": "none",
+     "description_ko": "층마다 있어요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_inspire_3",
+     "name": "아레나 로비 엘리베이터",
+     "category": "elevator",
+     "lat": 37.4657,
+     "lng": 126.3883,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor",
+      "elevator"
+     ],
+     "fan_type": "none",
+     "description_ko": "2층 객석까지",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_inspire_4",
+     "name": "오로라 거리 의자",
+     "category": "rest",
+     "lat": 37.4639,
+     "lng": 126.3891,
+     "walk_min_from_venue": 3,
+     "tags": [
+      "indoor",
+      "seating"
+     ],
+     "fan_type": "none",
+     "description_ko": "리조트 실내 거리, 앉을 곳이 많아요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_inspire_5",
+     "name": "아레나 물품보관소",
+     "category": "locker",
+     "lat": 37.4645,
+     "lng": 126.3891,
+     "walk_min_from_venue": 2,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "none",
+     "description_ko": "1층 로비",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_inspire_6",
+     "name": "아레나 고객 안내",
+     "category": "info_desk",
+     "lat": 37.4651,
+     "lng": 126.3891,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "none",
+     "description_ko": "1층 로비",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_inspire_7",
+     "name": "공식 MD 부스 (아레나 로비)",
+     "category": "goods",
+     "lat": 37.4657,
+     "lng": 126.3891,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "official",
+     "description_ko": "공연 3시간 전 판매 시작",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_inspire_8",
+     "name": "아레나 입구 포토월",
+     "category": "photo",
+     "lat": 37.4639,
+     "lng": 126.3899,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "official",
+     "description_ko": "로비 정면 대형 스크린",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_inspire_9",
+     "name": "인스파이어 셔틀·대형버스 승하차장",
+     "category": "bus_stop",
+     "lat": 37.4645,
+     "lng": 126.3899,
+     "walk_min_from_venue": 4,
+     "tags": [],
+     "fan_type": "none",
+     "description_ko": "운서역 셔틀과 팬 모임 버스",
      "source": "needs_check",
      "evidence_urls": []
     }

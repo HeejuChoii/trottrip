@@ -26,10 +26,26 @@ export function mockVenue(venueKey: string | null | undefined): { tips: string[]
   };
 }
 
+/** 실제 일정으로 바뀌어 더 쓰지 않는 시연용 가상 공연 → 목록에서 숨긴다 */
+const RETIRED_SEED_IDS = ["yt-exco-1206", "kgm-goyang-1121"];
+/** 공식 일정으로 시각·예매처가 바뀐 시드 공연 → 시각·예매처·공지만 시드 값으로 맞춘다 */
+const REFRESH_SEED_IDS = ["cyp-kspo-1127", "cyp-kspo-1128", "lsc-kspo-1205"];
+
 /** 시드 공연 중 아직 없는 것만 넣는다(운영자가 고친 공연은 건드리지 않음) */
 export async function ensureSeedConcerts(): Promise<void> {
-  const have = new Set((await listConcerts(false)).map((c) => c.id));
-  for (const c of SEED_CONCERTS) if (!have.has(c.id)) await upsertConcert({ ...c }).catch((e) => console.warn("[seed] 공연 넣기 실패", c.id, e instanceof Error ? e.message : e));
+  const all = await listConcerts(false);
+  const byId = new Map(all.map((c) => [c.id, c]));
+  const warn = (id: string) => (e: unknown) => console.warn("[seed] 공연 반영 실패", id, e instanceof Error ? e.message : e);
+  for (const c of SEED_CONCERTS) {
+    const cur = byId.get(c.id);
+    if (!cur) await upsertConcert({ ...c }).catch(warn(c.id));
+    else if (REFRESH_SEED_IDS.includes(c.id) && (cur.start_time !== c.start_time || cur.ticket_url !== c.ticket_url))
+      await upsertConcert({ ...cur, start_time: c.start_time, est_end_time: c.est_end_time, ticket_url: c.ticket_url, notice_text: c.notice_text }).catch(warn(c.id));
+  }
+  for (const id of RETIRED_SEED_IDS) {
+    const cur = byId.get(id);
+    if (cur?.active) await upsertConcert({ ...cur, active: false }).catch(warn(id));
+  }
 }
 
 interface LocalDB {
@@ -188,6 +204,13 @@ export async function listTtPlaces(scope: { venue_key?: string | null; concert_i
     return must(await s.from("tt_places").select("*").or(ors.join(","))) as TtPlaceRow[];
   }
   return ((await local()).tt_places ?? []).filter((r) => (!!scope.venue_key && r.venue_key === scope.venue_key) || (!!scope.concert_id && r.concert_id === scope.concert_id));
+}
+
+/** 전체 tt_places (평점 붙여넣기 매칭용, 수백 건 규모) */
+export async function listAllTtPlaces(): Promise<TtPlaceRow[]> {
+  const s = supa();
+  if (s) return must(await s.from("tt_places").select("*").limit(5000)) as TtPlaceRow[];
+  return (await local()).tt_places ?? [];
 }
 
 export async function upsertTtPlaces(rows: TtPlaceRow[]): Promise<void> {
