@@ -57,6 +57,8 @@ export const SEED_CONCERTS: Concert[] = [
     notice_text: "1층은 1번 게이트, 2층은 3번 게이트로 들어오세요. 공식 MD는 공연장 앞 광장에서 오후 2시부터 팔아요. 티켓 VIP 17.6만·R 16.5만·S 14.3만·A 11만 원.", gate_map: { "1층": "1번 게이트 (엘리베이터 옆)", "2층": "3번 게이트" }, ticket_url: "https://m.ticket.yes24.com/Genre/GenreBridge.aspx?genre=15456&id=1576" },
   { ...base, ...kspo, id: "cyp-kspo-1129", title: "2026 조용필 & 위대한탄생 콘서트 - 서울", artist_display: "조용필", color: "#555B6E", date: "2026-11-29", start_time: "17:00", est_end_time: "19:30",
     notice_text: "1층은 1번 게이트, 2층은 3번 게이트로 들어오세요. 공식 MD는 공연장 앞 광장에서 오후 1시부터 팔아요. 티켓 VIP 17.6만·R 16.5만·S 14.3만·A 11만 원.", gate_map: { "1층": "1번 게이트 (엘리베이터 옆)", "2층": "3번 게이트" }, ticket_url: "https://m.ticket.yes24.com/Genre/GenreBridge.aspx?genre=15456&id=1576" },
+  { ...base, ...excoWest, id: "cyp-exco-1219", title: "2026 조용필 & 위대한탄생 콘서트 - 대구", artist_display: "조용필", color: "#555B6E", date: "2026-12-19", start_time: "18:00", est_end_time: "20:30",
+    notice_text: "엑스코 서관으로 들어오세요. 공식 MD는 서관 로비에서 오후 2시부터 팔아요. 예매처 YES24.", gate_map: { "A": "서관 1홀 1번 입구", "B": "서관 1홀 1번 입구", "C": "서관 1홀 2번 입구" }, ticket_url: "https://m.ticket.yes24.com/Genre/GenreBridge.aspx?genre=15456&id=1576" },
   { ...base, ...gwangjuWu, id: "kgm-gwangju-1205", title: "김건모 35TH ANNIVERSARY LIVE TOUR - 광주", artist_display: "김건모", color: "#6B5BD6", date: "2026-12-05", start_time: "17:00", est_end_time: "19:30",
     notice_text: "플로어석은 1층 정문, 스탠드석은 2층 입구로 들어오세요. 공식 MD는 체육관 앞에서 오후 2시부터 팔아요.", gate_map: { "플로어": "체육관 1층 정문", "스탠드": "체육관 2층 입구" }, ticket_url: "https://ticket.yes24.com/" },
   { ...base, ...kintex2, id: "kgm-kintex2-1226", title: "김건모 35TH ANNIVERSARY LIVE TOUR - 고양", artist_display: "김건모", color: "#6B5BD6", date: "2026-12-26", start_time: "17:00", est_end_time: "19:30",

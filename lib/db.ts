@@ -214,7 +214,7 @@ const POSTERS = "posters";
 /** 기본 포스터(공식 포스터 이미지를 public/posters에 둠). 운영자가 넣은 값이 있으면 그쪽이 우선 */
 const STATIC_POSTERS: Record<string, string> = {
   이승철: "/posters/lee-seungchul.webp", 김건모: "/posters/kim-gunmo.webp", 박서진: "/posters/park-seojin.webp",
-  이찬원: "/posters/lee-chanwon.png", 영탁: "/posters/youngtak.png",
+  이찬원: "/posters/lee-chanwon.png", 영탁: "/posters/youngtak.png", 조용필: "/posters/cho-yongpil.png",
 };
 /** 키(공연 id 또는 가수 이름) → 포스터 이미지 주소 */
 export async function listPosters(): Promise<Record<string, string>> {
