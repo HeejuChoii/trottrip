@@ -4,11 +4,11 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
-import type { ChatRow, Place, Plan, PlanItem } from "./types.ts";
+import type { ChatRow, Place, Plan, PlanItem, TraceStep } from "./types.ts";
 import { createHash } from "crypto";
 import {
   buildRulePlan, classifyReason, ENTER_BEFORE_MIN, gateForSeat, honorificOf,
-  maxWalkFor, rulesReplan, slotCandidates, validatePlan, type ChangeReason, type ChangeResult, type PlanInput,
+  maxWalkFor, rulesReplan, slotCandidates, validatePlan, annotateWhy, type ChangeReason, type ChangeResult, type PlanInput,
 } from "./planner.ts";
 import { getCachedPlan, setCachedPlan } from "./db.ts";
 import { budgetLeft, recordUsage } from "./usage.ts";
@@ -94,26 +94,42 @@ export function planHash(input: PlanInput, lessWalk = false): string {
 }
 
 export async function generatePlan(input: PlanInput, opts: { lessWalk?: boolean } = {}): Promise<Plan> {
+  const t0 = Date.now();
   const hash = planHash(input, opts.lessWalk);
   const cached = await getCachedPlan(hash).catch(() => null);
   if (cached) return cached;
 
   const skeleton = buildRulePlan(input);
+  const cands = slotCandidates(skeleton, input);
+  const slotCount = Object.keys(cands).length;
+  const candTotal = new Set(Object.values(cands).flat().map((p) => p.id)).size;
+  const t = input.transport;
+  const trace: TraceStep[] = [
+    { step: "① 입력 정리", detail: `${input.concert.start_time} 공연 · ${t.mode === "fan_bus" ? "팬 모임 버스" : t.mode === "train" ? "열차" : t.mode === "shuttle" ? "공연 셔틀" : "자가용·택시"} · 걷기 ${input.parent.walk === "30+" ? "많이" : input.parent.walk === "15-30" ? "적당히" : "여유롭게"} · 식사 ${input.parent.food.length ? input.parent.food.length + "가지 조건" : "상관없음"}` },
+    { step: "② 시간 역산(코드)", detail: `입장 ${ENTER_BEFORE_MIN}분 전부터 거꾸로 ${skeleton.items.length}칸 배치` },
+    { step: "③ 후보 거르기(코드)", detail: input.places.length ? `장소 ${input.places.length}곳 중 걷기·식성·엘리베이터 조건에 맞는 ${candTotal}곳을 ${slotCount}칸에 후보로` : "이 공연은 장소 정보가 없어 시각만 배치" },
+  ];
   if (opts.lessWalk) skeleton.less_walk = true;
   let plan: Plan = skeleton;
   if (input.places.length === 0) {
     plan = skeleton; // 일반 일정
+    trace.push({ step: "④ AI 조합", detail: "장소가 없어 건너뜀(일반 일정)" });
   } else if (!aiEnabled()) {
-    plan = skeleton;
+    trace.push({ step: "④ AI 조합", detail: "AI 키가 없어 규칙으로 후보 1순위 선택" });
   } else if (!(await budgetLeft()).ok) {
     plan = { ...skeleton, fallback_reason: "AI 사용량이 한도에 닿아 기본 규칙으로 만들었어요" };
+    trace.push({ step: "④ AI 조합", detail: "예산 한도라 규칙으로 선택" });
   } else {
     const refined = await refineWithAI(skeleton, input);
     plan = refined ?? { ...skeleton, fallback_reason: "AI 응답이 늦어 기본 규칙으로 만들었어요" };
+    trace.push({ step: "④ AI 조합", detail: refined ? `${MODEL}가 ${slotCount}칸의 후보 중 장소를 고르고 부모님용 문장 작성` : "AI 응답 실패 → 1회 재시도 후 규칙으로 선택" });
   }
   // AI 결과든 규칙이든 하루 중 겹치지 않게 한 번 더 확인
   const v = validatePlan(plan, input.places);
   if (!v.ok) plan = skeleton;
+  trace.push({ step: "⑤ 검증(코드)", detail: v.ok ? "목록 밖 장소·시각 겹침·입장 시각 검사 통과" : "검증 실패 → 규칙 일정으로 대체" });
+  trace.push({ step: "⑥ 완성", detail: `${((Date.now() - t0) / 1000).toFixed(1)}초 · 같은 입력이면 저장된 일정을 그대로 사용` });
+  plan = annotateWhy({ ...plan, trace }, input);
   if (!plan.fallback_reason) await setCachedPlan(hash, plan).catch(() => undefined);
   return plan;
 }

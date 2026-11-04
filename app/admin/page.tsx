@@ -8,6 +8,7 @@ import { concertripConfigured } from "@/lib/concertrip";
 import AdminLogin from "@/components/admin/AdminLogin";
 import AdminConcerts from "@/components/admin/AdminConcerts";
 import AdminEval from "@/components/admin/AdminEval";
+import DeckCard from "@/components/admin/DeckCard";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "운영자 · 트롯트립", robots: { index: false, follow: false } };
@@ -36,6 +37,8 @@ export default async function Page() {
         <small>{byKind.map(([k, v]) => `${k}: ${v.n}회 $${v.usd.toFixed(3)}`).join(" · ") || "아직 호출 없음"}</small><br />
         <small>Croche 챗봇 비용은 Croche Studio에서 확인하세요.</small>
       </div>
+
+      <DeckCard d={m.deck} />
 
       <h2 className="h" style={{ fontSize: 20 }}>해커톤 지표</h2>
       <div className="tblwrap"><table>

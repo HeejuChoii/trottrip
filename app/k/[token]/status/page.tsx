@@ -28,6 +28,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
   for (const e of events) if ((e.type === "done" || e.type === "boarded") && e.item_id && !doneAt.has(e.item_id)) doneAt.set(e.item_id, e);
   const opened = events.find((e) => e.type === "parent_open");
   const changes = events.filter((e) => e.type === "change");
+  const fb = events.find((e) => e.type === "feedback");
   const who = parentShort(trip.parent_profile.honorific);
 
   // 질문-답변 짝
@@ -40,6 +41,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
     <main className="shell">
       <div className="top"><Link className="back" href={`/k/${token}`}>← 일정</Link><Refresh /></div>
       <h1 className="h" style={{ fontSize: 22 }}>{who}{eunNeun(who)} 지금</h1>
+      {fb && <div className="stat" style={{ background: "var(--mintS)" }}><span>오늘 하루</span><b className="ok">{({ good: "😊 좋았어요", ok: "🙂 괜찮았어요", hard: "😥 조금 힘들었어요" } as Record<string, string>)[String(fb.payload?.answer)] ?? ""}</b></div>}
       <div className="stat"><span>안내장 열람</span>{opened ? <b className="ok">{kstDate(opened.created_at)} {kst(opened.created_at)} 열어 보셨어요 ✓</b> : <b className="wait">아직 안 여셨어요</b>}</div>
       {trip.plan.items.filter((i) => i.type !== "show").map((it) => {
         const e = doneAt.get(it.id);

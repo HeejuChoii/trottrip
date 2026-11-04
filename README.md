@@ -1,6 +1,8 @@
 # 트롯트립 (TrotTrip)
 
-자녀가 공연과 부모님 정보를 넣으면, AI가 콘서트 하루를 짜서 링크 하나로 부모님께 보내 드리는 모바일 웹앱 (PRD v1.1).
+자녀가 공연과 부모님 정보를 넣으면, AI가 콘서트 하루를 짜서 링크 하나로 부모님께 보내 드리는 모바일 웹앱 (PRD v1.1 + v1.2).
+
+- 시연: `/demo` (고정 시나리오, 지표에서 제외) · 발표용 지표·CSV: `/admin`
 
 - Next.js 15 (App Router) + TypeScript + Tailwind 4
 - Supabase(Postgres) — 미설정 시 로컬 개발용 `.data/db.json`
@@ -57,7 +59,7 @@ npm test                     # 일정 엔진·어댑터 테스트
 
 ## Supabase
 
-`supabase/migrations/0001_init.sql` → `0002_tt_places.sql` → `0003_v1_1.sql` → `supabase/seed.sql` 순서로(이미 실행한 것은 건너뛰기) SQL 에디터에서 실행. RLS를 켜고 정책을 두지 않아 anon 키로는 접근할 수 없고, 서버만 service role 키로 접근합니다.
+`supabase/migrations/0001_init.sql` → `0002_tt_places.sql` → `0003_v1_1.sql` → `0004_v1_2.sql` → `supabase/seed.sql` 순서로(이미 실행한 것은 건너뛰기) SQL 에디터에서 실행. RLS를 켜고 정책을 두지 않아 anon 키로는 접근할 수 없고, 서버만 service role 키로 접근합니다.
 
 ## 일정 생성 (F5, v1.1)
 

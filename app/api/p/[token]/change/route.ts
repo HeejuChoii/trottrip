@@ -4,7 +4,7 @@ import { replan } from "@/lib/ai";
 import { isExpired, loadTrip } from "@/lib/trip";
 import { nowKST, toMin, isHHMM } from "@/lib/time";
 import { bad, body, ok } from "@/lib/http";
-import type { ChangeReason } from "@/lib/planner";
+import { annotateWhy, type ChangeReason } from "@/lib/planner";
 
 export const maxDuration = 60;
 const REASONS: ChangeReason[] = ["leg_pain", "long_line", "late", "free"];
@@ -24,6 +24,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   const done = new Set(events.filter((e) => e.type === "done" && e.item_id).map((e) => e.item_id!));
 
   const result = await replan(loaded.trip.plan, loaded.input, reason, text, nowMin, done);
+  result.plan = annotateWhy(result.plan, loaded.input);
   if (result.changes.length) {
     await updateTrip(loaded.trip.id, { plan: result.plan, plan_version: loaded.trip.plan_version + 1 });
   }

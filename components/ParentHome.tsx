@@ -170,6 +170,7 @@ export default function ParentHome(p: Props) {
         {askedCard}
         <h1 className="h">오늘 일정을 다 마치셨어요</h1>
         <p className="hello">조심히 들어가세요. {kidH}께도 알려 드렸어요.</p>
+        <Feedback token={token} />
         <div className="mini">
           {items.filter((i) => i.type !== "show").map((i) => <div key={i.id} className="mi past"><span>{mainTitle(i)}</span><b>{done.has(i.id) ? "완료" : fmtShort(i.start)}</b></div>)}
         </div>
@@ -221,5 +222,19 @@ export default function ParentHome(p: Props) {
       <Link className="bigbtn pk" href={`/p/${token}/change`} style={{ fontSize: 19, padding: 14 }}>일정 바꾸기</Link>
       <BottomBar token={token} />
     </main>
+  );
+}
+
+/** v1.2 수요 근거: 귀가 후 만족도 한 번 누르기 */
+function Feedback({ token }: { token: string }) {
+  const [sent, setSent] = useState<string | null>(() => ls.get(`tt_fb_${token}`));
+  if (sent) return <div className="ai"><p style={{ marginTop: 0 }}>알려 주셔서 고마워요. 즐거운 공연 되셨기를 바라요!</p></div>;
+  return (
+    <div className="card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <b style={{ fontSize: 20 }}>오늘 하루 어떠셨어요?</b>
+      {[["good", "😊 좋았어요"], ["ok", "🙂 괜찮았어요"], ["hard", "😥 조금 힘들었어요"]].map(([v, l]) => (
+        <button key={v} className="bigbtn line" style={{ fontSize: 20, padding: 14 }} onClick={() => { track("feedback", token, undefined, { answer: v }); ls.set(`tt_fb_${token}`, v); setSent(v); }}>{l}</button>
+      ))}
+    </div>
   );
 }

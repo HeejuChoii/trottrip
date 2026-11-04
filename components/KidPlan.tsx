@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Brand from "./Brand";
 import { useKakao } from "./useKakao";
-import { postJSON, track } from "@/lib/client";
+import { ls, postJSON, track } from "@/lib/client";
 import { fmtDateKo, fmtTimeKo, isHHMM } from "@/lib/time";
 import { shareTitle } from "@/lib/text";
 import { CATEGORY_LABEL, FAN_LABEL } from "@/lib/concertrip";
@@ -52,6 +52,9 @@ export default function KidPlan(props: Props) {
   const [toast, setToast] = useState("");
   const [busy, setBusy] = useState("");
   const [intent, setIntent] = useState<"" | "yes" | "no">("");
+  // v1.2 수요 근거: 공유 직후 1문항
+  const [survey, setSurvey] = useState<"hidden" | "open" | "done">("hidden");
+  const askSurvey = () => { if (!ls.get(`tt_survey_${kidToken}`)) setSurvey((s) => (s === "hidden" ? "open" : s)); };
   const [origin, setOrigin] = useState("");
   const kakao = useKakao(kakaoKey);
   const [tab, setTab] = useState<"plan" | "check" | "ticket">("plan");
@@ -91,7 +94,7 @@ export default function KidPlan(props: Props) {
       if (navigator.share) { navigator.share({ title, text: kind === "parent" ? desc : "진행 상황 보기", url: text }).catch(() => undefined); }
       else window.prompt("이 링크를 복사해 주세요", text);
     }
-    if (kind === "parent") track("share_copy", kidToken);
+    if (kind === "parent") { track("share_copy", kidToken); askSurvey(); }
   }
 
   async function sendKakao(toSelf = false) {
@@ -109,7 +112,7 @@ export default function KidPlan(props: Props) {
           },
           buttons: [{ title: toSelf ? "진행 상황 보기" : "안내장 열기", link: { mobileWebUrl: url, webUrl: url } }],
         });
-        if (!toSelf) track("share_kakao", kidToken);
+        if (!toSelf) { track("share_kakao", kidToken); askSurvey(); }
         return;
       } catch { /* 아래 대체 경로 */ }
     }
@@ -124,6 +127,7 @@ export default function KidPlan(props: Props) {
     if (!(await saveShare())) return;
     const body = `${props.parentHonorific}, ${title}이에요.\n\n${desc}\n\n아래 링크를 누르시면 공연 날 할 일을 큰 글씨로 보실 수 있어요.\n${parentUrl}\n\n앱을 설치하지 않으셔도 돼요.`;
     track("share_email", kidToken);
+    askSurvey();
     location.href = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
   }
 
@@ -222,6 +226,7 @@ export default function KidPlan(props: Props) {
                 </small>
                 {p?.fan_type && p.fan_type !== "none" && <span className="tag pk" style={{ marginRight: 4 }}>{FAN_LABEL[p.fan_type]}</span>}
                 {sourceTag(it)}
+                {it.why && <small style={{ color: "var(--deep)", marginTop: 4 }}>왜 여기? {it.why}</small>}
                 {editing && (
                   <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 8, flexWrap: "wrap" }}>
                     <input aria-label="시작" className="inp sm" type="time" value={it.start} style={{ width: 110 }} onChange={(e) => setDraft(draft.map((d) => d.id === it.id ? { ...d, start: e.target.value } : d))} />
@@ -238,6 +243,17 @@ export default function KidPlan(props: Props) {
           );
         })}
       </div>
+
+      {plan.trace && plan.trace.length > 0 && (
+        <details className="card">
+          <summary style={{ fontWeight: 700, cursor: "pointer" }}>🤖 AI가 이렇게 짰어요</summary>
+          <ol style={{ margin: "10px 0 0", paddingLeft: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+            {plan.trace.map((t, i) => (
+              <li key={i} style={{ fontSize: 14, lineHeight: 1.5 }}><b style={{ color: "var(--deep)" }}>{t.step}</b><br /><span style={{ color: "var(--sub)" }}>{t.detail}</span></li>
+            ))}
+          </ol>
+        </details>
+      )}
 
       {fanPlaces.length > 0 && (
         <>
@@ -286,6 +302,19 @@ export default function KidPlan(props: Props) {
         <button className="ghost" onClick={sendEmail}>이메일로<br />보내기</button>
       </div>
       <button className="linkbtn" onClick={() => copy(parentUrl, "parent")}>링크 복사</button>
+
+      {survey === "open" && (
+        <div className="intent" style={{ borderColor: "var(--purple)" }}>
+          <b>잠깐! 공연 날 가장 걱정되는 건 뭐예요?</b>
+          <p>하나만 골라 주세요. 서비스를 더 낫게 만드는 데 써요.</p>
+          <div className="chips">
+            {["식사", "쉴 곳", "길·입구 찾기", "굿즈 줄", "화장실", "귀가", "연락이 안 될 때"].map((a) => (
+              <button key={a} className="chip pu" onClick={() => { track("survey", kidToken, undefined, { q: "worry", answer: a }); ls.set(`tt_survey_${kidToken}`, "1"); setSurvey("done"); }}>{a}</button>
+            ))}
+          </div>
+        </div>
+      )}
+      {survey === "done" && <p className="note" style={{ margin: 0 }}>답해 주셔서 고마워요!</p>}
 
       <div className="card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <b style={{ fontSize: 15 }}>나도 진행 상황 보기</b>
