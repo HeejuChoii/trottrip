@@ -62,9 +62,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   if (!q) return bad("질문을 말씀해 주세요");
   const { trip, concert, places, input } = loaded;
 
-  const history = await listChats(trip.id);
+  const allChats = await listChats(trip.id);
+  // AI에 넘기는 앞 대화는 최근 6시간 것만(며칠 전 테스트 질문이 답에 섞이지 않게). 하루 질문 수 제한은 전체 기준
+  const history = allChats.filter((c) => Date.now() - new Date(c.created_at).getTime() < 6 * 3600000);
   // trip당 물어보기 30회 (PRD 9장 예산)
-  if (history.filter((h) => h.role === "parent").length >= CHAT_LIMIT) {
+  if (allChats.filter((h) => h.role === "parent").length >= CHAT_LIMIT) {
     const kh = kidHonorific(trip.kid_label);
     return ok({ answer: `오늘은 물어보기를 많이 쓰셨어요. 가까운 안내소에 물어보시거나${trip.kid_phone ? ` ${kh}(${trip.kid_phone})께` : ` ${kh}께`} 전화해 주세요.`, place_id: null, needs_check: true, emergency: false, actions: [] });
   }

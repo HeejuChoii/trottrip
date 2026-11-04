@@ -1,11 +1,11 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { hhmmNow, postJSON } from "@/lib/client";
+import { hhmmNow, ls, postJSON } from "@/lib/client";
 import { useSpeech } from "./useSpeech";
 
 type Action = { type: "schedule"; item_id: string; label: string } | { type: "map"; place_id: string; label: string };
-type Msg = { role: "parent" | "ai"; text: string; place_id?: string | null; needs_check?: boolean; emergency?: boolean; actions?: Action[] };
+type Msg = { role: "parent" | "ai"; text: string; at?: string; place_id?: string | null; needs_check?: boolean; emergency?: boolean; actions?: Action[] };
 function chips(mode: string, pilgrim: boolean): string[] {
   const ride = mode === "train" ? "기차 몇 시야?" : mode === "car" ? "다음 장소까지 얼마나 걸려?" : "버스 몇 시야?";
   return pilgrim ? ["다음엔 어디 가?", ride, "점심 어디서 먹어?", "근처 쉴 곳"] : ["화장실 어디야?", ride, "입구가 어디야?", "근처 쉴 곳"];
@@ -13,7 +13,17 @@ function chips(mode: string, pilgrim: boolean): string[] {
 
 export default function ParentAsk({ token, kidH, history, mode = "fan_bus", pilgrim = false }: { token: string; kidH: string; history: Msg[]; mode?: string; pilgrim?: boolean }) {
   const CHIPS = chips(mode, pilgrim);
-  const [msgs, setMsgs] = useState<Msg[]>(history);
+  // 부모님 화면에는 오늘(한국 시간) 나눈 대화만, '새로 묻기'를 누른 뒤의 대화만 보여 준다(기록은 자녀 화면에 남음)
+  const [msgs, setMsgs] = useState<Msg[]>([]);
+  useEffect(() => {
+    const today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+    const cleared = ls.get(`tt_chat_clear_${token}`) ?? "";
+    setMsgs(history.filter((m) => !m.at || (new Date(new Date(m.at).getTime() + 9 * 3600000).toISOString().slice(0, 10) === today && m.at > cleared)));
+  }, [history, token]);
+  function clearChat() {
+    ls.set(`tt_chat_clear_${token}`, new Date().toISOString());
+    setMsgs([]);
+  }
   const [busy, setBusy] = useState(false);
   const [text, setText] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
@@ -38,7 +48,7 @@ export default function ParentAsk({ token, kidH, history, mode = "fan_bus", pilg
 
   return (
     <main className="shell pv">
-      <div className="top"><Link className="back" href={`/p/${token}`} style={{ fontSize: 18 }}>← 일정으로</Link><span style={{ fontSize: 14, color: "var(--sub)" }}>대화는 {kidH}도 볼 수 있어요</span></div>
+      <div className="top"><Link className="back" href={`/p/${token}`} style={{ fontSize: 18 }}>← 일정으로</Link>{msgs.length > 0 ? <button className="mini-btn" style={{ fontSize: 15, padding: "6px 12px" }} onClick={clearChat}>새로 묻기</button> : <span style={{ fontSize: 14, color: "var(--sub)" }}>대화는 {kidH}도 볼 수 있어요</span>}</div>
       <h1 className="h" style={{ fontSize: 26 }}>무엇이든 물어보세요</h1>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }} aria-live="polite">
         {msgs.length === 0 && <p className="hello">오늘 일정과 공연장 안내를 보고 답해 드려요.</p>}
