@@ -48,6 +48,13 @@ function toPlace(r: RawPlace): Place {
   } as Place;
 }
 
+/** 좌표 검색어: 주소 → 대체 검색어(geo_query) → 이름 순서로 카카오에서 찾는다 */
+export function geoQueries(p: Place): string[] {
+  const raw = D.places.find((x) => x.id === p.id) as (RawPlace & { geo_query?: string[] }) | undefined;
+  const addr = p.address && !/미확인|일대|단일 주소|출구 앞/.test(p.address) ? p.address.replace(/\s*\(.*\)$/, "") : "";
+  return [addr, ...(raw?.geo_query ?? []), p.name.replace(/\s*\(([^)]*)\)$/, " $1"), p.name.replace(/\s*\(.*\)$/, "")].filter((q, i, a) => q && a.indexOf(q) === i);
+}
+
 /** 모든 성지 (관리자 좌표·평점 붙여넣기용) */
 export function allSpots(): Place[] {
   return D.places.map(toPlace);
