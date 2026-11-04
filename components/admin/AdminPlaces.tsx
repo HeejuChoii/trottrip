@@ -85,7 +85,7 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { c
           <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
             반경 <select className="inp sm" value={radius} onChange={(e) => setRadius(Number(e.target.value))}>{[500, 800, 1200, 2000].map((r) => <option key={r} value={r}>{r}m</option>)}</select>
             <button className="mini-btn" disabled={!kakao || !!busy} onClick={() => run<{ restaurants: number; cafes: number; labeled: number }>("kakao", { action: "kakao_import", radius }, (r) => `식당 ${r.restaurants}곳, 카페 ${r.cafes}곳 불러왔어요 · AI 맵기 라벨 ${r.labeled}곳`)}>{busy === "kakao" ? "불러오는 중…" : "불러오기"}</button>
-            <button className="mini-btn" disabled={!ai || !!busy} onClick={() => run<{ labeled: number }>("label", { action: "label_spice" }, (r) => `AI 맵기 라벨 ${r.labeled}곳`)}>{busy === "label" ? "라벨 다는 중…" : "AI 맵기 라벨 다시 달기"}</button>
+            <button className="mini-btn" disabled={!ai || !!busy} onClick={() => run<{ labeled: number }>("label", { action: "label_spice" }, (r) => `AI 맵기 라벨 ${r.labeled}곳`)}>{busy === "label" ? "라벨 다는 중…" : "AI 라벨(맵기·국물·밥/면·날것) 다시 달기"}</button>
           </span>
           {!kakao && <small className="err">KAKAO_REST_API_KEY 환경변수가 필요해요</small>}
         </div>
@@ -163,7 +163,7 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { c
         </select>
       </div>
       <div className="tblwrap"><table>
-        <thead><tr><th>출처</th><th>종류</th><th>이름</th><th>도보</th><th>태그</th><th>AI 맵기</th><th>설명</th><th>확인</th><th></th></tr></thead>
+        <thead><tr><th>출처</th><th>종류</th><th>이름</th><th>도보</th><th>태그</th><th>AI 라벨</th><th>설명</th><th>확인</th><th></th></tr></thead>
         <tbody>{shown.map((p) => {
           const own = p.origin !== "concertrip";
           return (
@@ -173,7 +173,7 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { c
               <td>{p.link_url ? <a href={p.link_url} target="_blank" rel="noopener noreferrer">{p.name}</a> : p.name}{p.category_detail && <><br /><small>{p.category_detail}</small></>}{p.lat == null && <><br /><small className="err">좌표 없음(지도에 안 보임)</small></>}</td>
               <td className="n">{p.walk_min_from_venue ?? "-"}</td>
               <td><small>{p.tags.map((t) => TAG_LABEL[t] ?? t).join(", ")}</small></td>
-              <td><small>{p.ai_spice ? `${({ mild: "덜 매움", medium: "보통", spicy: "매움", unknown: "모름" } as Record<string, string>)[p.ai_spice]}${p.ai_note ? ` · ${p.ai_note}` : ""}` : "-"}</small></td>
+              <td><small>{p.ai_spice ? [({ mild: "덜 매움", medium: "보통", spicy: "매움", unknown: "맵기 모름" } as Record<string, string>)[p.ai_spice], p.ai_soup ? "국물" : null, p.ai_staple && p.ai_staple !== "unknown" ? ({ rice: "밥", noodle: "면", bread: "빵", mixed: "섞임" } as Record<string, string>)[p.ai_staple] : null, p.ai_raw ? "날것" : null, p.ai_note].filter(Boolean).join(" · ") : "-"}</small></td>
               <td><small>{p.description_ko}</small></td>
               <td><small>{p.source === "verified" ? "확인" : "확인 전"}</small></td>
               <td>{own
