@@ -29,6 +29,30 @@ function fallbackActions(q: string, loaded: LoadedTrip, placeId: string | null, 
 }
 const EMERGENCY = "119에 전화하시고 가까운 안전요원에게 알리세요.";
 
+/** 다른 교통수단을 물으셨을 때(기차로 오셨는데 "버스 몇 시야?") 실제 교통편으로 되물어 답한다 */
+function transportAnswer(q: string, loaded: LoadedTrip): { answer: string; actions: ChatAction[] } | null {
+  const t = loaded.trip.transport;
+  const asksBus = /버스|셔틀/.test(q) && !/기차|열차|ktx|srt/i.test(q);
+  const asksTrain = /기차|열차|ktx|srt/i.test(q);
+  if (!asksBus && !asksTrain) return null;
+  const ret = loaded.trip.plan!.items.find((i) => i.type === "return");
+  const actions: ChatAction[] = ret ? [{ type: "schedule", item_id: ret.id, label: `일정에서 보기 · ${ret.title.split(" · ")[0]}` }] : [];
+  if (t.mode === "train") {
+    const go = t.train_depart ? `가는 기차는 ${t.train_from || "출발역"} ${t.train_depart} 출발${t.train_arrive ? `, ${t.train_to || "도착역"} ${t.train_arrive} 도착` : ""}이에요. `
+      : t.train_arrive ? `가는 기차는 ${t.train_to || "도착역"}에 ${t.train_arrive} 도착해요. ` : "";
+    const back = t.train_return_depart ? `돌아오는 기차는 ${t.train_to || "역"}에서 ${t.train_return_depart}에 출발해요.` : t.stay === "overnight" ? "오늘은 1박이라 돌아오는 기차는 내일이에요. 승차권을 확인해 주세요." : "돌아오는 기차 시각은 승차권을 확인해 주세요.";
+    // 기차로 오셨는데 버스를 물으시면 되묻고, 기차를 물으시면 바로 답한다
+    return { answer: `${asksBus ? "혹시 기차 시간을 물으시는 건가요? 오늘은 기차로 다녀오세요. " : ""}${go}${back}`, actions };
+  }
+  if (t.mode === "fan_bus" || t.mode === "shuttle") {
+    const what = t.mode === "fan_bus" ? "팬 모임 버스" : "공연 셔틀";
+    const back = t.mode === "fan_bus" && t.return_time ? `귀가 버스는 ${t.return_place || "타는 곳"}에서 ${t.return_time}에 출발해요.` : ret ? `돌아가는 차는 ${ret.start}쯤이에요.` : "";
+    const go = t.mode === "fan_bus" && t.meet_time ? `가는 버스는 ${t.meet_place || "집결 장소"}에서 ${t.meet_time}에 모여요. ` : "";
+    return { answer: `${asksTrain ? `혹시 버스 시간을 물으시는 건가요? 오늘은 ${what}로 다녀오세요. ` : ""}${go}${back}`.trim() || `${what} 시간은 ${loaded.trip.kid_label || "자녀"}분께 확인해 주세요.`, actions };
+  }
+  return null;
+}
+
 export async function POST(req: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const loaded = await loadTrip("parent_token", token);
@@ -60,7 +84,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   let needs_check = false;
   let via = "rules";
   let actions: ChatAction[] = [];
-  if (isStrongEmergency(q)) {
+  const tr = !isStrongEmergency(q) ? transportAnswer(q, loaded) : null;
+  if (tr) {
+    answer = tr.answer;
+    actions = tr.actions;
+    via = "rules";
+  } else if (isStrongEmergency(q)) {
     answer = EMERGENCY + (trip.kid_phone ? ` ${ctx.kidHonorific} 번호는 ${trip.kid_phone}이에요.` : "");
     via = "emergency";
   } else if (agentEnabled()) {

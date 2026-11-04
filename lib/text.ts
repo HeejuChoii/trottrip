@@ -61,3 +61,12 @@ export function sourceName(url: string): string {
   for (const [re, n] of SOURCE_NAMES) if (re.test(url)) return n;
   try { return new URL(url).hostname.replace(/^www\.|^m\./, ""); } catch { return "근거"; }
 }
+
+/** 공연장 꿀팁 중 이 교통수단과 상관없는 것은 뺀다(기차로 오시는데 주차 안내 등) */
+export function tipsFor(tips: string[] | undefined, mode: string): string[] {
+  return (tips ?? []).filter((t) => {
+    if (/주차|자가용/.test(t) && mode !== "car") return false;
+    if (/대절버스|팬 모임 버스/.test(t) && mode !== "fan_bus") return false;
+    return true;
+  });
+}

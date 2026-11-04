@@ -32,7 +32,7 @@ interface Props {
 
 /** 굿즈·포토존·팬덤 스팟(가수가 다녀간 식당 포함)은 분홍 카드 */
 function tone(it: PlanItem, p?: Place) {
-  if (it.type === "goods" || it.type === "photo" || (p && p.fan_type !== "none")) return "pk";
+  if (it.type === "goods" || it.type === "photo" || it.type === "show" || (p && p.fan_type !== "none")) return "pk";
   return it.type === "extra" ? "pu" : "";
 }
 
@@ -234,7 +234,7 @@ export default function KidPlan(props: Props) {
           : <button className="mini-btn" onClick={() => { setDraft(plan.items); setEditing(true); }}>시간 조정·삭제</button>}
       </div>
 
-      <a className="actbtn" href={`/p/${parentToken}/map?kid=1`} target="_blank" rel="noopener noreferrer" style={{ textAlign: "center" }}>🗺 지도에서 동선 보기</a>
+      <a className="actbtn" href={`/k/${kidToken}/map`} style={{ textAlign: "center" }}>🗺 지도에서 동선 보기</a>
       <div className="tl">
         {items.map((it) => {
           const p = it.place_id ? byId.get(it.place_id) : undefined;

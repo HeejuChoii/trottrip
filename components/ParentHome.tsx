@@ -29,10 +29,18 @@ interface Props {
 export function AskFab({ token }: { token: string }) {
   return (
     <Link href={`/p/${token}/ask`} className="fab" aria-label="물어보기">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" /><path d="M8.5 11h.01M12 11h.01M15.5 11h.01" strokeWidth="2.6" />
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <line x1="24" y1="7" x2="24" y2="12.5" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
+        <circle cx="24" cy="6" r="2.7" fill="#fff" />
+        <rect x="7" y="18" width="5" height="9" rx="2.5" fill="#fff" />
+        <rect x="36" y="18" width="5" height="9" rx="2.5" fill="#fff" />
+        <rect x="11" y="12" width="26" height="21" rx="9" fill="#fff" />
+        <path d="M16 31 L14.5 39 L23.5 32.5 Z" fill="#fff" />
+        <rect x="15" y="16" width="18" height="13" rx="5.5" fill="#ff7aa8" />
+        <circle cx="20" cy="21.2" r="1.9" fill="#fff" />
+        <circle cx="28" cy="21.2" r="1.9" fill="#fff" />
+        <path d="M20.5 24.6 Q24 27.4 27.5 24.6" stroke="#fff" strokeWidth="1.8" fill="none" strokeLinecap="round" />
       </svg>
-      물어보기
     </Link>
   );
 }
@@ -219,6 +227,19 @@ export default function ParentHome(p: Props) {
   }
 
   const cur = current!;
+  // 일정 목록은 늘 시간순: 지금 할 일보다 이른 것(끝낸 것 포함)은 위에 연하게, 늦은 것은 아래에
+  const row = (list: PlanItem[], label: string) => list.length ? (
+    <div className="mini" aria-label={label}>
+      {list.map((i) => {
+        const past = done.has(i.id) || (rel === "today" && toMin(i.end) <= minNow && i.type !== "return") || rel === "after";
+        return (
+          <div key={i.id} className={`mi ${past ? "past" : ""} ${i.type === "goods" || i.type === "photo" || i.type === "enter" ? "pk" : ""}`}>
+            <span>{mainTitle(i)}</span><b>{done.has(i.id) ? "완료" : fmtShort(i.start)}</b>
+          </div>
+        );
+      })}
+    </div>
+  ) : null;
   const curPlace = cur.place_id ? p.placeNames[cur.place_id] : undefined;
   const started = rel === "today" && toMin(cur.start) <= minNow;
   const pink = cur.type === "goods" || cur.type === "photo";
@@ -238,6 +259,7 @@ export default function ParentHome(p: Props) {
       {rel === "before" && (
         <div className="card" style={{ fontSize: 17, lineHeight: 1.5 }}>{DAY}은 <b>{fmtDateLongKo(p.concertDate)}</b>이에요. 그날 이 화면을 열면 지금 할 일을 순서대로 알려 드려요.</div>
       )}
+      {row(items.filter((i) => i.id !== cur.id && i.type !== "show" && toMin(i.start) < toMin(cur.start)), "지난 일정")}
       <section className={`next ${pink ? "pk" : ""}`} aria-live="polite">
         <div className="k">{rel === "before" ? `${DAY} 처음 할 일` : started ? "지금 할 일" : "다음 할 일"}</div>
         <div className="w">{mainTitle(cur)}</div>
@@ -249,16 +271,7 @@ export default function ParentHome(p: Props) {
       </section>
       {cur.type !== "show" && <button className="bigbtn ok" disabled={busy} onClick={() => complete(cur)}>{cur.done_label || "했어요"} ✓</button>}
       <Actions it={cur} place={curPlace} token={token} />
-      <div className="mini" aria-label="오늘 일정">
-        {items.filter((i) => i.id !== cur.id && i.type !== "show").map((i) => {
-          const past = done.has(i.id) || (rel === "today" && toMin(i.end) <= minNow && i.type !== "return") || rel === "after";
-          return (
-            <div key={i.id} className={`mi ${past ? "past" : ""} ${i.type === "goods" || i.type === "photo" || i.type === "enter" ? "pk" : ""}`}>
-              <span>{mainTitle(i)}</span><b>{done.has(i.id) ? "완료" : fmtShort(i.start)}</b>
-            </div>
-          );
-        })}
-      </div>
+      {row(items.filter((i) => i.id !== cur.id && i.type !== "show" && toMin(i.start) >= toMin(cur.start)), "남은 일정")}
       <Link className="bigbtn pk" href={`/p/${token}/change`} style={{ fontSize: 19, padding: 14 }}>일정 바꾸기</Link>
       <BottomBar token={token} pilgrim={p.pilgrim} current="home" />
     </main>

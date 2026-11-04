@@ -29,7 +29,7 @@ export function mockVenue(venueKey: string | null | undefined): { tips: string[]
 /** 실제 일정으로 바뀌어 더 쓰지 않는 시연용 가상 공연 → 목록에서 숨긴다 */
 const RETIRED_SEED_IDS = ["yt-exco-1206", "kgm-goyang-1121"];
 /** 공식 일정으로 시각·예매처가 바뀐 시드 공연 → 시각·예매처·공지만 시드 값으로 맞춘다 */
-const REFRESH_SEED_IDS = ["cyp-kspo-1127", "cyp-kspo-1128", "lsc-kspo-1205"];
+const REFRESH_SEED_IDS = ["cyp-kspo-1127", "cyp-kspo-1128", "lsc-kspo-1205", "yt-daegu-1128", "yt-daegu-1129"];
 
 /** 시드 공연 중 아직 없는 것만 넣는다(운영자가 고친 공연은 건드리지 않음) */
 export async function ensureSeedConcerts(): Promise<void> {

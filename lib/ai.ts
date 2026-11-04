@@ -14,6 +14,7 @@ import { getCachedPlan, setCachedPlan } from "./db.ts";
 import { budgetLeft, recordUsage } from "./usage.ts";
 import { toHHMM, toMin } from "./time.ts";
 import { CATEGORY_LABEL } from "./concertrip.ts";
+import { tipsFor } from "./text.ts";
 import { buildPilgrimPlan, PILGRIM_REV } from "./pilgrim.ts";
 import { geocode, kakaoConfigured } from "./kakao-local.ts";
 import venueMock from "../data/venue-mock.json" with { type: "json" };
@@ -66,7 +67,7 @@ function contextBlock(input: PlanInput) {
   return JSON.stringify({
     concert: {
       title: concert.title, venue: concert.venue_name, city: concert.city, date: concert.date,
-      start_time: concert.start_time, est_end_time: concert.est_end_time, notice: concert.notice_text, venue_tips: concert.tips ?? [],
+      start_time: concert.start_time, est_end_time: concert.est_end_time, notice: concert.notice_text, venue_tips: tipsFor(concert.tips, transport.mode),
       seat, gate_for_seat: gateForSeat(seat, concert.gate_map),
     },
     parent: { ...parent, max_walk_between_places_min: maxWalkFor(parent.walk) },

@@ -7,13 +7,8 @@ import { kidHonorific } from "@/lib/text";
 import { CATEGORY_LABEL } from "@/lib/concertrip";
 import { BottomBar } from "./ParentHome";
 import type { Place, PlanItem } from "@/lib/types";
+import { PIN_LABEL, pinElement } from "./mapPin";
 
-const PIN: Record<string, { t: string; bg: string; fg: string }> = {
-  restaurant: { t: "밥", bg: "#45D9C5", fg: "#23313B" }, cafe: { t: "카페", bg: "#45D9C5", fg: "#23313B" },
-  rest: { t: "쉼", bg: "#087E72", fg: "#fff" }, goods: { t: "굿즈", bg: "#FF58AB", fg: "#fff" }, photo: { t: "사진", bg: "#FF58AB", fg: "#fff" },
-  toilet: { t: "WC", bg: "#fff", fg: "#23313B" }, elevator: { t: "EV", bg: "#8067E8", fg: "#fff" }, gate: { t: "입구", bg: "#087E72", fg: "#fff" },
-  bus_stop: { t: "버스", bg: "#23313B", fg: "#fff" }, info_desk: { t: "안내", bg: "#5E46C9", fg: "#fff" }, locker: { t: "보관", bg: "#fff", fg: "#23313B" },
-};
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare global { interface Window { kakao?: any } }
@@ -56,13 +51,13 @@ export default function ParentMap(p: Props) {
         : p.venue.lat != null ? new k.LatLng(p.venue.lat, p.venue.lng) : p.pins[0] ? new k.LatLng(p.pins[0].lat, p.pins[0].lng) : new k.LatLng(37.5665, 126.978);
       map.current = new k.Map(box.current, { center, level: 3 });
       for (const pin of p.pins) {
-        const s = PIN[pin.category] ?? PIN.gate;
         const isT = target?.place.id === pin.id;
-        const el = document.createElement("div");
-        el.textContent = s.t;
+        // 일정에 들어간 곳은 일정 이름(점심·굿즈…), 나머지는 시설 이름(화장실·입구…)
+        const it = p.items.find((i) => i.place_id === pin.id);
+        const label = it ? (/ 스팟 · /.test(it.title) ? pin.name.replace(/\s*\(.*\)$/, "") : it.title.split(" · ")[0]) : PIN_LABEL[pin.category] ?? pin.name;
+        const el = pinElement(label, { focus: isT });
         el.title = pin.name;
-        el.style.cssText = `background:${s.bg};color:${s.fg};border:2px solid ${isT ? "#C21F72" : "#23313B"};border-radius:999px;padding:${isT ? "8px 12px" : "4px 8px"};font:900 ${isT ? 16 : 13}px var(--f);box-shadow:0 2px 6px rgba(0,0,0,.25);white-space:nowrap`;
-        new k.CustomOverlay({ map: map.current, position: new k.LatLng(pin.lat, pin.lng), content: el, yAnchor: 0.5, zIndex: isT ? 3 : 1 });
+        new k.CustomOverlay({ map: map.current, position: new k.LatLng(pin.lat, pin.lng), content: el, yAnchor: 1, zIndex: isT ? 3 : 1 });
       }
       setMapOk(true);
     });
@@ -85,7 +80,7 @@ export default function ParentMap(p: Props) {
         if (map.current && window.kakao?.maps) {
           const k = window.kakao.maps;
           const el = document.createElement("div");
-          el.style.cssText = "width:18px;height:18px;border-radius:50%;background:#8067E8;border:3px solid #fff;box-shadow:0 0 0 2px #5E46C9";
+          el.style.cssText = "width:18px;height:18px;border-radius:50%;background:#14C1AD;border:3px solid #fff;box-shadow:0 0 0 2px #0B8F80, 0 2px 6px rgba(0,0,0,.3)";
           el.title = "내 위치";
           meMarker.current?.setMap(null);
           meMarker.current = new k.CustomOverlay({ map: map.current, position: new k.LatLng(loc.lat, loc.lng), content: el, zIndex: 4 });
@@ -133,7 +128,6 @@ export default function ParentMap(p: Props) {
           {!p.pins.length && <p className="note">지도에 표시할 장소를 준비 중이에요.</p>}
         </div>
       )}
-      {mapOk && <div className="legend2"><span>밥 식당</span><span>쉼 쉼터</span><span>굿즈 부스</span><span>EV 엘리베이터</span><span>WC 화장실</span><span>버스</span></div>}
       <button className="bigbtn line" onClick={locate} style={{ fontSize: 19 }}>내 위치 보기</button>
       {locErr && <p className="note">{locErr}</p>}
       {nav && <a className="cta" href={nav} target="_blank" rel="noopener noreferrer">카카오맵으로 길 안내 보기</a>}

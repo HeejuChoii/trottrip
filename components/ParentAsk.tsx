@@ -6,9 +6,13 @@ import { useSpeech } from "./useSpeech";
 
 type Action = { type: "schedule"; item_id: string; label: string } | { type: "map"; place_id: string; label: string };
 type Msg = { role: "parent" | "ai"; text: string; place_id?: string | null; needs_check?: boolean; emergency?: boolean; actions?: Action[] };
-const CHIPS = ["화장실 어디야?", "버스 몇 시야?", "입구가 어디야?", "근처 쉴 곳"];
+function chips(mode: string, pilgrim: boolean): string[] {
+  const ride = mode === "train" ? "기차 몇 시야?" : mode === "car" ? "다음 장소까지 얼마나 걸려?" : "버스 몇 시야?";
+  return pilgrim ? ["다음엔 어디 가?", ride, "점심 어디서 먹어?", "근처 쉴 곳"] : ["화장실 어디야?", ride, "입구가 어디야?", "근처 쉴 곳"];
+}
 
-export default function ParentAsk({ token, kidH, history }: { token: string; kidH: string; history: Msg[] }) {
+export default function ParentAsk({ token, kidH, history, mode = "fan_bus", pilgrim = false }: { token: string; kidH: string; history: Msg[]; mode?: string; pilgrim?: boolean }) {
+  const CHIPS = chips(mode, pilgrim);
   const [msgs, setMsgs] = useState<Msg[]>(history);
   const [busy, setBusy] = useState(false);
   const [text, setText] = useState("");
@@ -64,7 +68,6 @@ export default function ParentAsk({ token, kidH, history }: { token: string; kid
         <input className="inp" style={{ fontSize: 18 }} value={text} onChange={(e) => setText(e.target.value)} placeholder={speech.supported ? "글로 물어보기" : "여기에 적어 주세요"} aria-label="질문" />
         <button className="mini-btn" style={{ fontSize: 17, padding: "0 14px" }} disabled={busy}>보내기</button>
       </form>
-      <p className="note">몸이 불편하시면 바로 119에 전화하세요.</p>
     </main>
   );
 }
