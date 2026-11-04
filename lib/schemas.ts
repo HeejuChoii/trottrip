@@ -12,7 +12,7 @@ export const ParentSchema = z.object({
   rest_often: z.boolean().default(false),
   near_toilet: z.boolean().default(false),
   elevator_first: z.boolean().default(false),
-  food: z.array(z.enum(["korean", "chinese", "japanese", "western", "snack", "mild", "seafood", "quick", "any"])).default([]),
+  food: z.array(z.enum(["korean", "chinese", "japanese", "western", "snack", "mild", "soup", "rice", "no_raw", "seafood", "quick", "any"])).default([]),
   food_other: s(60),
   medicine_time: hhmm,
   friends_fitness: z.enum(["same", "better"]).default("same"),

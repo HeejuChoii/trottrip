@@ -44,6 +44,12 @@ export interface Place {
   ai_spice?: "mild" | "medium" | "spicy" | "unknown";
   /** AI 추정 근거 한 줄 (예: "국밥·설렁탕류라 맵지 않은 메뉴가 많아요") */
   ai_note?: string;
+  /** AI 추정: 대표 메뉴가 국물 요리인지 */
+  ai_soup?: boolean | null;
+  /** AI 추정: 주식 (밥/면/빵/섞임) */
+  ai_staple?: "rice" | "noodle" | "bread" | "mixed" | "unknown";
+  /** AI 추정: 회·초밥처럼 날것이 대표 메뉴인지 */
+  ai_raw?: boolean | null;
 }
 
 /** 장소 출처: 콘서트립(팬덤 장소), 카카오 로컬(식당·카페), 운영자 입력, 공연 공지에서 추출, 웹 조사 */

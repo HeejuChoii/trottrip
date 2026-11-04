@@ -73,6 +73,8 @@ export function restaurantMatches(p: Place, parent: ParentProfile): boolean {
   // 종류(한식·중식·일식·양식·분식)를 고르셨으면 그중 하나에 맞는 곳만
   const wantCuisine = parent.food.filter((f) => (CUISINE_TAGS as readonly string[]).includes(f));
   if (wantCuisine.length && !wantCuisine.some((c) => tags.includes(c))) return false;
+  if (parent.food.includes("no_raw") && (p.ai_raw === true || /회|초밥|스시|사시미|육회|물회/.test(`${p.name} ${p.category_detail ?? ""}`))) return false;
+  if (parent.food.includes("rice") && (p.ai_staple === "noodle" || p.ai_staple === "bread")) return false;
   if (parent.food.includes("mild")) {
     if (p.ai_spice === "spicy") return false; // AI 추정으로 대표 메뉴가 매운 곳은 뺀다
     if (!tags.includes("mild") && p.ai_spice !== "mild" && (isSpicyByName(p) || (!p.category_detail && p.origin !== "kakao"))) return false;
@@ -92,7 +94,9 @@ export function candidates(cat: PlaceCategory, input: PlanInput, extraPrefer: st
     list = list.filter((p) => restaurantMatches(p, input.parent));
     if (input.parent.food.includes("quick")) prefer.push("quick");
     if (input.parent.food.includes("mild")) prefer.push("mild"); // 확인된 곳 우선
-    if (input.parent.food.includes("mild")) list = [...list].sort((a, b) => (b.ai_spice === "mild" ? 1 : 0) - (a.ai_spice === "mild" ? 1 : 0));
+    // AI 추정 라벨로 취향에 맞는 곳을 앞으로 (덜 매움·국물·밥)
+    const fit = (p: Place) => (input.parent.food.includes("mild") && p.ai_spice === "mild" ? 1 : 0) + (input.parent.food.includes("soup") && p.ai_soup ? 1 : 0) + (input.parent.food.includes("rice") && p.ai_staple === "rice" ? 1 : 0);
+    list = [...list].sort((a, b) => fit(b) - fit(a));
   }
   if (cat === "gate" && input.parent.elevator_first) {
     const ev = list.filter((p) => (p.tags as string[]).includes("elevator"));
@@ -573,6 +577,8 @@ export function whyFor(it: PlanItem, p: Place | undefined, input: PlanInput): st
       if ((p.tags as string[]).includes(t) && parent.food.includes(t)) bits.push(TAG_WHY[t]);
     }
     if (parent.food.includes("mild") && !(p.tags as string[]).includes("mild")) bits.push(p.ai_spice === "mild" ? "AI 추정: 덜 매운 메뉴 많음" : "매운 메뉴 아님(확인 필요)");
+    if (parent.food.includes("soup") && p.ai_soup) bits.push("AI 추정: 국물 요리");
+    if (parent.food.includes("rice") && p.ai_staple === "rice") bits.push("AI 추정: 밥 메뉴");
   }
   if (it.type === "enter" && parent.elevator_first && (p.tags as string[]).includes("elevator")) bits.push("엘리베이터 바로 옆 입구");
   if (it.type === "enter" && gateForSeat(input.seat, input.concert.gate_map)) bits.push(`${input.seat} 좌석 입구`);

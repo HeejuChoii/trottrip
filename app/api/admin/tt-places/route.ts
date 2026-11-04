@@ -3,10 +3,11 @@
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import { isAdmin } from "@/lib/admin";
-import { deleteTtPlace, getConcert, listTtPlaces, replaceTtPlacesByOrigin, upsertConcert, upsertTtPlaces } from "@/lib/db";
+import { addNoticeCheck, deleteTtPlace, getConcert, listTtPlaces, replaceTtPlacesByOrigin, setNoticeCheckStatus, upsertConcert, upsertTtPlaces } from "@/lib/db";
 import { geocode, importNearby, kakaoConfigured, walkMinFromDistance } from "@/lib/kakao-local";
 import { extractNotice, NoticeSchema } from "@/lib/notice-extract";
 import { labelSpice } from "@/lib/label-ai";
+import { findNoticeOnWeb } from "@/lib/notice-watch";
 import { bad, body, ok } from "@/lib/http";
 import research from "@/data/venue-research.json";
 import { PLACE_CATEGORIES, PLACE_TAGS, FAN_TYPES, type Concert, type Place, type TtPlaceRow } from "@/lib/types";
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
         const radius = Math.min(Math.max(Number(b.radius) || 800, 200), 2000);
         const places = await importNearby(concert.venue_lat, concert.venue_lng, radius);
         const labels = await labelSpice(places);
-        for (const p of places) { const l = labels.get(p.id); if (l) { p.ai_spice = l.spice; p.ai_note = l.note; } }
+        for (const p of places) { const l = labels.get(p.id); if (l) Object.assign(p, { ai_spice: l.spice, ai_note: l.note, ai_soup: l.soup, ai_staple: l.staple, ai_raw: l.raw }); }
         const now = new Date().toISOString();
         await replaceTtPlacesByOrigin(concert.venue_key, "kakao", places.map((p) => ({ id: p.id, venue_key: concert.venue_key, concert_id: null, origin: "kakao" as const, data: p, updated_at: now })));
         return ok({ count: places.length, restaurants: places.filter((p) => p.category === "restaurant").length, cafes: places.filter((p) => p.category === "cafe").length, labeled: labels.size });
@@ -73,7 +74,7 @@ export async function POST(req: Request) {
         if (!concert) return bad("공연을 찾을 수 없어요", 404);
         const rows = (await listTtPlaces({ venue_key: concert.venue_key, concert_id: concert.id })).filter((r) => r.data.category === "restaurant");
         const labels = await labelSpice(rows.map((r) => r.data));
-        const changed = rows.filter((r) => labels.has(r.id)).map((r) => ({ ...r, data: { ...r.data, ai_spice: labels.get(r.id)!.spice, ai_note: labels.get(r.id)!.note }, updated_at: new Date().toISOString() }));
+        const changed = rows.filter((r) => labels.has(r.id)).map((r) => ({ ...r, data: { ...r.data, ai_spice: labels.get(r.id)!.spice, ai_note: labels.get(r.id)!.note, ai_soup: labels.get(r.id)!.soup, ai_staple: labels.get(r.id)!.staple, ai_raw: labels.get(r.id)!.raw }, updated_at: new Date().toISOString() }));
         await upsertTtPlaces(changed);
         return ok({ labeled: changed.length });
       }
@@ -143,6 +144,22 @@ export async function POST(req: Request) {
         });
         await upsertTtPlaces(rows);
         return ok({ count: rows.length });
+      }
+      case "notice_search": {
+        if (!concert) return bad("공연을 찾을 수 없어요", 404);
+        try {
+          const f = await findNoticeOnWeb(concert);
+          const row = await addNoticeCheck(concert.id, f as unknown as Record<string, unknown>);
+          return ok({ check: row });
+        } catch (e) {
+          const row = await addNoticeCheck(concert.id, { error: e instanceof Error ? e.message : String(e) }, "failed");
+          return ok({ check: row });
+        }
+      }
+      case "notice_check_status": {
+        if (typeof b.id !== "string" || !["applied", "dismissed"].includes(String(b.status))) return bad("잘못된 요청");
+        await setNoticeCheckStatus(b.id, b.status as "applied" | "dismissed");
+        return ok({ ok: true });
       }
       case "list": {
         if (!concert) return bad("공연을 찾을 수 없어요", 404);

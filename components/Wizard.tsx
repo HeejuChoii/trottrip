@@ -225,7 +225,7 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
             <p className="fine" style={{ textAlign: "left", margin: "6px 0 0" }}>공연 날 예상 걸음 수를 평소와 비교해 알려 드려요.</p></div>
           <div className="card"><span className="lab">식사 (여러 개 고를 수 있어요)</span>
             <div className="chips">
-              {([["korean", "한식"], ["chinese", "중식"], ["japanese", "일식"], ["western", "양식"], ["snack", "분식"], ["mild", "덜 매운 음식"], ["seafood", "해산물 좋아함"], ["quick", "빨리 드시는 편"], ["any", "아무거나 좋아함"]] as const).map(([v, l]) => <Chip key={v} on={parent.food.includes(v)} onClick={() => toggleFood(v)}>{l}</Chip>)}
+              {([["korean", "한식"], ["chinese", "중식"], ["japanese", "일식"], ["western", "양식"], ["snack", "분식"], ["mild", "덜 매운 음식"], ["soup", "국물 요리 좋아함"], ["rice", "밥이 좋아요 (면·빵 X)"], ["no_raw", "날것(회·초밥) X"], ["seafood", "해산물 좋아함"], ["quick", "빨리 드시는 편"], ["any", "아무거나 좋아함"]] as const).map(([v, l]) => <Chip key={v} on={parent.food.includes(v)} onClick={() => toggleFood(v)}>{l}</Chip>)}
             </div>
             <input className="inp" style={{ marginTop: 8 }} value={parent.food_other} onChange={(e) => P({ food_other: e.target.value })} placeholder="기타 (예: 밀가루 음식은 안 드세요)" />
           </div>

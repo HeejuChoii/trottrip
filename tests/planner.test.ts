@@ -180,3 +180,10 @@ test("식사 종류(중식 등)와 AI 맵기 추정으로 식당을 고른다", 
   const plan = buildRulePlan({ ...base, places: ps, parent: { ...base.parent, food: ["chinese", "mild"] } });
   assert.equal(plan.items.find((i) => i.type === "meal")!.place_id, "c2");
 });
+
+test("국물·밥·날것 취향을 AI 라벨로 반영한다", () => {
+  const r = (id: string, name: string, x: Partial<{ ai_soup: boolean; ai_staple: "rice" | "noodle"; ai_raw: boolean }>) => ({ ...places[0], id, name, tags: ["korean"] as never, origin: "kakao" as const, category_detail: "음식점 > 한식", walk_min_from_venue: 3, source: "needs_check" as const, ...x });
+  const ps = [...places.filter((p) => p.category !== "restaurant"), r("n1", "손칼국수", { ai_soup: true, ai_staple: "noodle" }), r("s1", "물회집", { ai_raw: true, ai_soup: true, ai_staple: "rice" }), r("g1", "할매국밥", { ai_soup: true, ai_staple: "rice" })];
+  const plan = buildRulePlan({ ...base, places: ps, parent: { ...base.parent, food: ["korean", "soup", "rice", "no_raw"] } });
+  assert.equal(plan.items.find((i) => i.type === "meal")!.place_id, "g1");
+});
