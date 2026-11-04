@@ -172,6 +172,12 @@ export default function KidPlan(props: Props) {
       <h1 className="h" style={{ fontSize: 22 }}>{plan.title}</h1>
       <p className="lead">{plan.summary}</p>
       <p className="note" style={{ textAlign: "left", margin: "-4px 0 0" }}>{concert.venue_name} · {fmtDateKo(concert.date)} {fmtTimeKo(concert.start_time)} 시작{props.share && ""}</p>
+      {(concert.ticket_url || concert.shuttle_url) && (
+        <p className="note" style={{ textAlign: "left", margin: 0, display: "flex", gap: 12, flexWrap: "wrap" }}>
+          {concert.ticket_url && <a href={concert.ticket_url} target="_blank" rel="noopener noreferrer">예매처 공지 ↗</a>}
+          {concert.shuttle_url && <a href={concert.shuttle_url} target="_blank" rel="noopener noreferrer">공연 셔틀 예약 ↗</a>}
+        </p>
+      )}
       {plan.general && <div className="card" style={{ fontSize: 14, lineHeight: 1.5 }}><b>이 공연은 장소 정보를 준비 중이에요.</b><br />식사·이동·귀가 시각만 담은 일반 일정이에요. 장소가 준비되면 운영자가 콘서트립에 올려요.</div>}
 
       {plan.fallback_reason && <p className="note" style={{ textAlign: "left", margin: 0 }}>※ {plan.fallback_reason}</p>}

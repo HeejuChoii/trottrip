@@ -7,7 +7,7 @@ import { PLACE_CATEGORIES, PLACE_TAGS, type Concert, type Place, type PlaceCateg
 import type { NoticeExtract } from "@/lib/notice-extract";
 
 const ORIGIN_LABEL: Record<string, string> = { concertrip: "콘서트립", kakao: "카카오", manual: "직접 입력", notice: "공지", research: "웹 조사" };
-const TAG_LABEL: Record<PlaceTag, string> = { korean: "한식", mild: "안 매움", seafood: "해산물", quick: "빨리", indoor: "실내", elevator: "엘리베이터", seating: "앉을 곳", accessible: "무장애" };
+const TAG_LABEL: Record<PlaceTag, string> = { korean: "한식", chinese: "중식", japanese: "일식", western: "양식", snack: "분식", asian: "아시아", mild: "안 매움", seafood: "해산물", quick: "빨리", indoor: "실내", elevator: "엘리베이터", seating: "앉을 곳", accessible: "무장애" };
 
 type Form = { id?: string; scope: "venue" | "concert"; name: string; category: PlaceCategory; description_ko: string; walk: string; lat: string; lng: string; address: string; tags: PlaceTag[]; fan_type: Place["fan_type"]; evidence: string; source: Place["source"] };
 const emptyForm = (scope: "venue" | "concert"): Form => ({ scope, name: "", category: "toilet", description_ko: "", walk: "", lat: "", lng: "", address: "", tags: [], fan_type: "none", evidence: "", source: "needs_check" });
@@ -81,10 +81,11 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { c
       <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(330px, 1fr))" }}>
         <div className="card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <b>① 주변 식당·카페 불러오기 (카카오 로컬)</b>
-          <small style={{ color: "var(--sub)", lineHeight: 1.5 }}>공연장 반경에서 가까운 식당 최대 45곳·카페 15곳. 다시 누르면 카카오 장소만 새로 바꿔요(직접 고친 장소는 그대로). 평점은 카카오 공식 API에 없어서 받지 않아요. &quot;안 매운 음식&quot;은 메뉴 분류로 추정하고 &quot;확인 필요&quot;로 표시돼요.</small>
+          <small style={{ color: "var(--sub)", lineHeight: 1.5 }}>공연장 반경에서 가까운 식당 최대 45곳·카페 15곳. 다시 누르면 카카오 장소만 새로 바꿔요(직접 고친 장소는 그대로). 한식·중식·일식·양식·분식은 카카오 분류로 붙이고, 맵기는 AI가 이름·분류로 추정해요(메뉴판은 카카오가 API로 주지 않아요). 평점은 받지 않아요.</small>
           <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
             반경 <select className="inp sm" value={radius} onChange={(e) => setRadius(Number(e.target.value))}>{[500, 800, 1200, 2000].map((r) => <option key={r} value={r}>{r}m</option>)}</select>
-            <button className="mini-btn" disabled={!kakao || !!busy} onClick={() => run<{ restaurants: number; cafes: number }>("kakao", { action: "kakao_import", radius }, (r) => `식당 ${r.restaurants}곳, 카페 ${r.cafes}곳 불러왔어요`)}>{busy === "kakao" ? "불러오는 중…" : "불러오기"}</button>
+            <button className="mini-btn" disabled={!kakao || !!busy} onClick={() => run<{ restaurants: number; cafes: number; labeled: number }>("kakao", { action: "kakao_import", radius }, (r) => `식당 ${r.restaurants}곳, 카페 ${r.cafes}곳 불러왔어요 · AI 맵기 라벨 ${r.labeled}곳`)}>{busy === "kakao" ? "불러오는 중…" : "불러오기"}</button>
+            <button className="mini-btn" disabled={!ai || !!busy} onClick={() => run<{ labeled: number }>("label", { action: "label_spice" }, (r) => `AI 맵기 라벨 ${r.labeled}곳`)}>{busy === "label" ? "라벨 다는 중…" : "AI 맵기 라벨 다시 달기"}</button>
           </span>
           {!kakao && <small className="err">KAKAO_REST_API_KEY 환경변수가 필요해요</small>}
         </div>
@@ -162,7 +163,7 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { c
         </select>
       </div>
       <div className="tblwrap"><table>
-        <thead><tr><th>출처</th><th>종류</th><th>이름</th><th>도보</th><th>태그</th><th>설명</th><th>확인</th><th></th></tr></thead>
+        <thead><tr><th>출처</th><th>종류</th><th>이름</th><th>도보</th><th>태그</th><th>AI 맵기</th><th>설명</th><th>확인</th><th></th></tr></thead>
         <tbody>{shown.map((p) => {
           const own = p.origin !== "concertrip";
           return (
@@ -171,7 +172,8 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { c
               <td>{CATEGORY_LABEL[p.category]}{p.fan_type !== "none" && <><br /><span className="tag pk">{FAN_LABEL[p.fan_type]}</span></>}</td>
               <td>{p.link_url ? <a href={p.link_url} target="_blank" rel="noopener noreferrer">{p.name}</a> : p.name}{p.category_detail && <><br /><small>{p.category_detail}</small></>}{p.lat == null && <><br /><small className="err">좌표 없음(지도에 안 보임)</small></>}</td>
               <td className="n">{p.walk_min_from_venue ?? "-"}</td>
-              <td><small>{p.tags.map((t) => TAG_LABEL[t]).join(", ")}</small></td>
+              <td><small>{p.tags.map((t) => TAG_LABEL[t] ?? t).join(", ")}</small></td>
+              <td><small>{p.ai_spice ? `${({ mild: "덜 매움", medium: "보통", spicy: "매움", unknown: "모름" } as Record<string, string>)[p.ai_spice]}${p.ai_note ? ` · ${p.ai_note}` : ""}` : "-"}</small></td>
               <td><small>{p.description_ko}</small></td>
               <td><small>{p.source === "verified" ? "확인" : "확인 전"}</small></td>
               <td>{own

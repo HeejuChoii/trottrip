@@ -173,3 +173,10 @@ test("왜 여기? 는 장소 태그·거리에서만 만든다", async () => {
   const enter = plan.items.find((i) => i.type === "enter")!;
   assert.match(enter.why!, /엘리베이터/);
 });
+
+test("식사 종류(중식 등)와 AI 맵기 추정으로 식당을 고른다", () => {
+  const r = (id: string, name: string, tags: string[], ai?: "mild" | "spicy") => ({ ...places[0], id, name, tags: tags as never, origin: "kakao" as const, category_detail: "음식점", walk_min_from_venue: 3, ai_spice: ai, source: "needs_check" as const });
+  const ps = [...places.filter((p) => p.category !== "restaurant"), r("c1", "얼큰 짬뽕", ["chinese"], "spicy"), r("c2", "중화 반점", ["chinese"], "mild"), r("k1", "한식당", ["korean"], "mild")];
+  const plan = buildRulePlan({ ...base, places: ps, parent: { ...base.parent, food: ["chinese", "mild"] } });
+  assert.equal(plan.items.find((i) => i.type === "meal")!.place_id, "c2");
+});

@@ -9,7 +9,9 @@ export type PlaceCategory = (typeof PLACE_CATEGORIES)[number];
 export const FAN_TYPES = ["artist_visited", "fan_made", "official", "none"] as const;
 export type FanType = (typeof FAN_TYPES)[number];
 
-export const PLACE_TAGS = ["korean", "mild", "seafood", "quick", "indoor", "elevator", "seating", "accessible"] as const;
+export const PLACE_TAGS = ["korean", "chinese", "japanese", "western", "snack", "asian", "mild", "seafood", "quick", "indoor", "elevator", "seating", "accessible"] as const;
+/** 식사 종류 태그 (카카오 분류에서 코드로 붙인다) */
+export const CUISINE_TAGS = ["korean", "chinese", "japanese", "western", "snack", "asian"] as const;
 export type PlaceTag = (typeof PLACE_TAGS)[number];
 
 export type PlaceSource = "verified" | "needs_check" | "user_input";
@@ -38,6 +40,10 @@ export interface Place {
   phone?: string;
   /** 카카오맵 등 외부 상세 링크 */
   link_url?: string;
+  /** AI가 이름·분류로 추정한 맵기 (메뉴 원문은 받지 않음). mild=덜 매운 메뉴가 많음, spicy=대표 메뉴가 매움 */
+  ai_spice?: "mild" | "medium" | "spicy" | "unknown";
+  /** AI 추정 근거 한 줄 (예: "국밥·설렁탕류라 맵지 않은 메뉴가 많아요") */
+  ai_note?: string;
 }
 
 /** 장소 출처: 콘서트립(팬덤 장소), 카카오 로컬(식당·카페), 운영자 입력, 공연 공지에서 추출, 웹 조사 */
@@ -75,6 +81,10 @@ export interface Concert {
   official_map_url: string | null;
   info_desk_place_id: string | null;
   active: boolean;
+  /** 예매처 공연 상세 링크 (티켓이 아직 없는 자녀, 공지 확인용) */
+  ticket_url?: string | null;
+  /** 공식·제휴 셔틀 예약 링크 (카카오 T 셔틀, 퀸즈스마일, 버스타다 등). 링크 안내까지만 하고 판매·알선은 하지 않는다 */
+  shuttle_url?: string | null;
 }
 
 /** 목록에 없는 공연 직접 입력 (F2) */
@@ -95,7 +105,7 @@ export interface ParentProfile {
   walk: WalkLevel;
   /** 평소 하루 걸음 수(선택). 0 = 모름 */
   steps_usual: number;
-  food: string[]; // korean, mild(덜 매운), seafood, quick, any
+  food: string[]; // korean/chinese/japanese/western/snack(종류), mild(덜 매운), seafood, quick, any
   food_other: string;
   // ↓ 더 챙겨 드릴 것(선택)
   elevator_first: boolean;
@@ -255,4 +265,6 @@ export interface ConcertView {
   official_map_url: string | null;
   info_desk_place_id: string | null;
   custom: boolean;
+  ticket_url?: string | null;
+  shuttle_url?: string | null;
 }

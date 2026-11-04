@@ -6,6 +6,7 @@ import { isAdmin } from "@/lib/admin";
 import { deleteTtPlace, getConcert, listTtPlaces, replaceTtPlacesByOrigin, upsertConcert, upsertTtPlaces } from "@/lib/db";
 import { geocode, importNearby, kakaoConfigured, walkMinFromDistance } from "@/lib/kakao-local";
 import { extractNotice, NoticeSchema } from "@/lib/notice-extract";
+import { labelSpice } from "@/lib/label-ai";
 import { bad, body, ok } from "@/lib/http";
 import research from "@/data/venue-research.json";
 import { PLACE_CATEGORIES, PLACE_TAGS, FAN_TYPES, type Concert, type Place, type TtPlaceRow } from "@/lib/types";
@@ -62,9 +63,19 @@ export async function POST(req: Request) {
         if (concert.venue_lat == null || concert.venue_lng == null) return bad("공연장 위도·경도를 먼저 넣어 주세요");
         const radius = Math.min(Math.max(Number(b.radius) || 800, 200), 2000);
         const places = await importNearby(concert.venue_lat, concert.venue_lng, radius);
+        const labels = await labelSpice(places);
+        for (const p of places) { const l = labels.get(p.id); if (l) { p.ai_spice = l.spice; p.ai_note = l.note; } }
         const now = new Date().toISOString();
         await replaceTtPlacesByOrigin(concert.venue_key, "kakao", places.map((p) => ({ id: p.id, venue_key: concert.venue_key, concert_id: null, origin: "kakao" as const, data: p, updated_at: now })));
-        return ok({ count: places.length, restaurants: places.filter((p) => p.category === "restaurant").length, cafes: places.filter((p) => p.category === "cafe").length });
+        return ok({ count: places.length, restaurants: places.filter((p) => p.category === "restaurant").length, cafes: places.filter((p) => p.category === "cafe").length, labeled: labels.size });
+      }
+      case "label_spice": {
+        if (!concert) return bad("공연을 찾을 수 없어요", 404);
+        const rows = (await listTtPlaces({ venue_key: concert.venue_key, concert_id: concert.id })).filter((r) => r.data.category === "restaurant");
+        const labels = await labelSpice(rows.map((r) => r.data));
+        const changed = rows.filter((r) => labels.has(r.id)).map((r) => ({ ...r, data: { ...r.data, ai_spice: labels.get(r.id)!.spice, ai_note: labels.get(r.id)!.note }, updated_at: new Date().toISOString() }));
+        await upsertTtPlaces(changed);
+        return ok({ labeled: changed.length });
       }
       case "upsert": {
         if (!concert) return bad("공연을 찾을 수 없어요", 404);

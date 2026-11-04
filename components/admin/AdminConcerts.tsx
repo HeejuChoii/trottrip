@@ -47,6 +47,8 @@ function ConcertForm({ initial, onDone }: { initial: Concert; onDone: () => void
       {row("공지 문구", <textarea className="inp" rows={2} value={c.notice_text} onChange={(e) => S("notice_text", e.target.value)} />)}
       {row("구역→게이트 (JSON)", <input className="inp sm" value={gate} onChange={(e) => setGate(e.target.value)} placeholder='{"A":"1번 입구","B":"3번 입구"}' />)}
       {row("구역도 이미지 URL", <input className="inp sm" value={c.zone_image_url ?? ""} onChange={(e) => S("zone_image_url", txt(e.target.value))} />)}
+      {row("예매처 링크", <input className="inp sm" value={c.ticket_url ?? ""} onChange={(e) => S("ticket_url", txt(e.target.value))} placeholder="티켓링크·예스24 공연 상세 주소" />)}
+      {row("셔틀 예약 링크", <input className="inp sm" value={c.shuttle_url ?? ""} onChange={(e) => S("shuttle_url", txt(e.target.value))} placeholder="카카오 T 셔틀·퀸즈스마일·버스타다 상품 주소(있을 때만)" />)}
       {row("공식 배치도 링크", <input className="inp sm" value={c.official_map_url ?? ""} onChange={(e) => S("official_map_url", txt(e.target.value))} />)}
       {row("안내소 장소 id", <input className="inp sm" value={c.info_desk_place_id ?? ""} onChange={(e) => S("info_desk_place_id", txt(e.target.value))} placeholder="콘서트립 장소 id" />)}
       {row("노출", <input type="checkbox" checked={c.active} onChange={(e) => S("active", e.target.checked)} />)}

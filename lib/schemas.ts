@@ -12,7 +12,7 @@ export const ParentSchema = z.object({
   rest_often: z.boolean().default(false),
   near_toilet: z.boolean().default(false),
   elevator_first: z.boolean().default(false),
-  food: z.array(z.enum(["korean", "mild", "seafood", "quick", "any"])).default([]),
+  food: z.array(z.enum(["korean", "chinese", "japanese", "western", "snack", "mild", "seafood", "quick", "any"])).default([]),
   food_other: s(60),
   medicine_time: hhmm,
   friends_fitness: z.enum(["same", "better"]).default("same"),
@@ -80,6 +80,8 @@ export const ConcertAdminSchema = z.object({
   gate_map: z.record(z.string(), z.string()).default({}),
   zone_image_url: z.string().url().nullable().default(null),
   official_map_url: z.string().url().nullable().default(null),
+  ticket_url: z.string().url().nullable().default(null),
+  shuttle_url: z.string().url().nullable().default(null),
   info_desk_place_id: z.string().max(100).nullable().default(null),
   active: z.boolean().default(true),
 });
