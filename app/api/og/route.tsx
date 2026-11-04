@@ -45,7 +45,7 @@ export async function GET(req: Request) {
   return new ImageResponse(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", background: "#F2F4F6", padding: 64, fontFamily: "Noto" }}>
-        <div style={{ display: "flex", fontSize: 44, fontWeight: 900, color: "#087E72" }}>트롯<span style={{ color: "#FF58AB" }}>트립</span></div>
+        <div style={{ display: "flex", fontSize: 44, fontWeight: 900, color: "#14C1AD" }}>트롯<span style={{ color: "#FF7461" }}>트립</span></div>
         <div style={{ display: "flex", flexDirection: "column", background: color, color: "#fff", borderRadius: 36, padding: "44px 48px" }}>
           <div style={{ fontSize: 60, fontWeight: 900, lineHeight: 1.2 }}>{title}</div>
           <div style={{ fontSize: 36, fontWeight: 500, marginTop: 18, opacity: 0.92 }}>{sub}</div>
