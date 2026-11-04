@@ -99,6 +99,8 @@ export interface CustomConcert {
   venue_name: string;
   date: string;
   start_time: string;
+  /** 공연 없이 떠나는 성지순례 여행이면 코스 id (data/pilgrimage.json) */
+  course_id?: string;
 }
 
 export type WalkLevel = "30+" | "15-30" | "15-";
@@ -190,6 +192,8 @@ export interface Plan {
   /** 덜 걷게 바꾼 일정 */
   less_walk?: boolean;
   trace?: TraceStep[];
+  /** 공연 없는 성지순례 여행 일정 */
+  pilgrim?: boolean;
 }
 
 export interface Trip {
@@ -273,4 +277,8 @@ export interface ConcertView {
   custom: boolean;
   ticket_url?: string | null;
   shuttle_url?: string | null;
+  /** 공연장 꿀팁 (data/venue-mock.json, 시연용) */
+  tips?: string[];
+  /** 성지순례 여행이면 코스 정보 (공연장·입장·티켓 없음) */
+  pilgrim?: { course_id: string; region: string; provider: string } | null;
 }

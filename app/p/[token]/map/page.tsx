@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getParentData } from "../data";
 import ParentMap from "@/components/ParentMap";
 
-const MAP_CATS = new Set(["restaurant", "cafe", "rest", "goods", "photo", "toilet", "elevator", "gate", "bus_stop", "info_desk", "locker"]);
+const MAP_CATS = new Set(["restaurant", "cafe", "rest", "goods", "photo", "sight", "toilet", "elevator", "gate", "bus_stop", "info_desk", "locker"]);
 
 // P5 지도 (F8)
 export default async function Page({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ place?: string }> }) {
@@ -24,6 +24,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       venue={{ name: d.concert.venue_name, lat: d.concert.venue_lat, lng: d.concert.venue_lng }}
       kakaoKey={process.env.NEXT_PUBLIC_KAKAO_JS_KEY ?? ""}
       kidLabel={d.trip.kid_label}
+      pilgrim={!!d.concert.pilgrim}
     />
   );
 }

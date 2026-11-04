@@ -12,7 +12,9 @@ export default async function Page({ params }: { params: Promise<{ token: string
   const d = await getParentData(token);
   if (!d || d.expired) notFound();
   const show = d.trip.plan!.items.find((i) => i.type === "show");
-  const showEnd = d.concert.est_end_time || show?.end || toHHMM(toMin(d.concert.start_time) + 150);
+  const ret = d.trip.plan!.items.find((i) => i.type === "return");
+  // 성지순례 여행은 공연이 없으니 귀가 시각이 되어야 귀가 화면으로 바뀐다
+  const showEnd = d.concert.pilgrim ? ret?.start ?? "23:59" : d.concert.est_end_time || show?.end || toHHMM(toMin(d.concert.start_time) + 150);
   const placeNames = Object.fromEntries(d.places.map((p) => [p.id, { name: p.name, walk: p.walk_min_from_venue }]));
   return (
     <ParentHome
@@ -28,7 +30,8 @@ export default async function Page({ params }: { params: Promise<{ token: string
       placeNames={placeNames}
       stepsLine={estimateSteps(d.trip.plan!, d.places, d.trip.parent_profile).line}
       kit={parentKit({ concert: d.concert, parent: d.trip.parent_profile, prefs: d.trip.prefs, ticket: { ...EMPTY_TICKET, ...(d.trip.ticket ?? {}) } })}
-      concertLine={`${d.concert.venue_name} · ${fmtTimeKo(d.concert.start_time)} 시작`}
+      concertLine={d.concert.pilgrim ? `${d.concert.city} · ${fmtTimeKo(d.concert.start_time)} ${d.concert.venue_name}에서 출발` : `${d.concert.venue_name} · ${fmtTimeKo(d.concert.start_time)} 시작`}
+      pilgrim={!!d.concert.pilgrim}
     />
   );
 }

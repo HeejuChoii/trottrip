@@ -21,19 +21,23 @@ interface Props {
   stepsLine: string;
   kit: string[];
   concertLine: string; // "코엑스 D홀 · 오후 5시 시작"
+  /** 공연 없는 성지순례 여행 */
+  pilgrim?: boolean;
 }
 
-export function BottomBar({ token }: { token: string }) {
+export function BottomBar({ token, pilgrim }: { token: string; pilgrim?: boolean }) {
   return (
     <nav className="bbar" aria-label="부모님 메뉴">
       <Link href={`/p/${token}/map`}>지도</Link>
-      <Link href={`/p/${token}/venue`}>공연장</Link>
+      <Link href={`/p/${token}/venue`}>{pilgrim ? "성지" : "공연장"}</Link>
       <Link href={`/p/${token}/ask`} className="ask">물어보기</Link>
     </nav>
   );
 }
 
 function mainTitle(it: PlanItem) {
+  // 성지순례: "성지 · 송가인공원 (진도 임회)" → "송가인공원"
+  if (it.title.startsWith("성지 · ")) return it.title.slice(5).replace(/\s*\(.*\)$/, "");
   return it.title.split(" · ")[0];
 }
 
@@ -46,6 +50,7 @@ export default function ParentHome(p: Props) {
   const [askedId, setAskedId] = useState<string | null>(null);
   const [preview, setPreview] = useState(false); // 공연 전: 표지(P0) 대신 당일 화면 미리 보기
   const kidH = kidHonorific(p.kidLabel);
+  const DAY = p.pilgrim ? "여행 날" : "공연 날";
 
   useEffect(() => {
     setAskedId(new URLSearchParams(location.search).get("item")); // 물어보기에서 "일정에서 보기"로 온 경우
@@ -84,18 +89,18 @@ export default function ParentHome(p: Props) {
       <div className="top"><Brand href={null} /><span style={{ fontSize: 16, color: "var(--sub)" }}>{fmtDateLongKo(p.concertDate)}</span></div>
       <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "space-between" }}>
         <span style={{ fontSize: 16, color: "var(--sub)" }}>👟 {p.stepsLine.split(" · ")[0]}</span>
-        <Link href={`/p/${token}/ticket`} className="mini-btn" style={{ fontSize: 17, padding: "10px 14px", textDecoration: "none" }}>🎫 내 티켓</Link>
+        {!p.pilgrim && <Link href={`/p/${token}/ticket`} className="mini-btn" style={{ fontSize: 17, padding: "10px 14px", textDecoration: "none" }}>🎫 내 티켓</Link>}
       </div>
     </>
   );
 
   // F18 P0 안내장 표지: 공연 날 전에는 이 화면이 첫 화면
   if (rel === "before" && !preview && !askedId) {
-    const glance = items.filter((i) => ["arrive", "meal", "goods", "enter", "return"].includes(i.type)).slice(0, 5);
+    const glance = items.filter((i) => (p.pilgrim ? ["arrive", "meal", "photo", "return"] : ["arrive", "meal", "goods", "enter", "return"]).includes(i.type)).slice(0, p.pilgrim ? 6 : 5);
     return (
       <main className="shell pv">
         <div className="top"><Brand href={null} /></div>
-        <p className="hello">{p.honorific}, {kidH}이 보낸 공연 날 안내장이에요</p>
+        <p className="hello">{p.honorific}, {kidH}이 보낸 {p.pilgrim ? "성지순례 여행" : "공연 날"} 안내장이에요</p>
         <section className="next pk">
           <div className="k">{fmtDateLongKo(p.concertDate)}</div>
           <div className="w">{p.concertTitle}</div>
@@ -113,9 +118,9 @@ export default function ParentHome(p: Props) {
         <div className="card" style={{ fontSize: 18, lineHeight: 1.6 }}>
           <b>🎒 챙기실 것</b><br />{p.kit.join(" · ")}
         </div>
-        <div className="ai"><p style={{ marginTop: 0 }}>공연 날 이 링크를 열면 <b>지금 할 일</b>을 하나씩 알려 드려요. 앱 설치는 필요 없어요.</p></div>
-        <Link href={`/p/${token}/ticket`} className="bigbtn line">🎫 내 티켓 보기</Link>
-        <button className="bigbtn pk" style={{ fontSize: 19, padding: 14 }} onClick={() => setPreview(true)}>공연 날 화면 미리 보기</button>
+        <div className="ai"><p style={{ marginTop: 0 }}>{DAY} 이 링크를 열면 <b>지금 할 일</b>을 하나씩 알려 드려요. 앱 설치는 필요 없어요.</p></div>
+        {!p.pilgrim && <Link href={`/p/${token}/ticket`} className="bigbtn line">🎫 내 티켓 보기</Link>}
+        <button className="bigbtn pk" style={{ fontSize: 19, padding: 14 }} onClick={() => setPreview(true)}>{DAY} 화면 미리 보기</button>
       </main>
     );
   }
@@ -144,7 +149,7 @@ export default function ParentHome(p: Props) {
     const place = ret.place_id ? p.placeNames[ret.place_id] : undefined;
     return (
       <main className="shell pv">
-        <div className="top"><Brand href={null} /><span style={{ fontSize: 16, color: "var(--sub)" }}>공연이 끝났어요</span></div>
+        <div className="top"><Brand href={null} /><span style={{ fontSize: 16, color: "var(--sub)" }}>{p.pilgrim ? "오늘 일정 끝" : "공연이 끝났어요"}</span></div>
         {askedCard}
         <h1 className="h">집에 가실 시간이에요</h1>
         <div className="home">
@@ -158,7 +163,7 @@ export default function ParentHome(p: Props) {
         </div>
         <button className="bigbtn ok" disabled={busy} onClick={() => complete(ret)}>{ret.done_label} ✓</button>
         <div className="kid"><div className="av">{p.kidLabel.slice(0, 2) || "자녀"}</div><div>버튼을 누르시면 {kidH}께 바로 알려 드려요</div></div>
-        <BottomBar token={token} />
+        <BottomBar token={token} pilgrim={p.pilgrim} />
       </main>
     );
   }
@@ -170,11 +175,11 @@ export default function ParentHome(p: Props) {
         {askedCard}
         <h1 className="h">오늘 일정을 다 마치셨어요</h1>
         <p className="hello">조심히 들어가세요. {kidH}께도 알려 드렸어요.</p>
-        <Feedback token={token} />
+        <Feedback token={token} pilgrim={p.pilgrim} />
         <div className="mini">
           {items.filter((i) => i.type !== "show").map((i) => <div key={i.id} className="mi past"><span>{mainTitle(i)}</span><b>{done.has(i.id) ? "완료" : fmtShort(i.start)}</b></div>)}
         </div>
-        <BottomBar token={token} />
+        <BottomBar token={token} pilgrim={p.pilgrim} />
       </main>
     );
   }
@@ -187,7 +192,7 @@ export default function ParentHome(p: Props) {
   return (
     <main className="shell pv">
       {header}
-      <p className="hello">{p.honorific}, 즐거운 공연 여행 되세요</p>
+      <p className="hello">{p.honorific}, 즐거운 {p.pilgrim ? "성지순례" : "공연 여행"} 되세요</p>
       {firstOpen && (
         <div className="kid" role="note">
           <div className="av">{p.kidLabel.slice(0, 2) || "자녀"}</div>
@@ -197,10 +202,10 @@ export default function ParentHome(p: Props) {
       )}
       {askedCard}
       {rel === "before" && (
-        <div className="card" style={{ fontSize: 17, lineHeight: 1.5 }}>공연 날은 <b>{fmtDateLongKo(p.concertDate)}</b>이에요. 그날 이 화면을 열면 지금 할 일을 순서대로 알려 드려요.</div>
+        <div className="card" style={{ fontSize: 17, lineHeight: 1.5 }}>{DAY}은 <b>{fmtDateLongKo(p.concertDate)}</b>이에요. 그날 이 화면을 열면 지금 할 일을 순서대로 알려 드려요.</div>
       )}
       <section className={`next ${pink ? "pk" : ""}`} aria-live="polite">
-        <div className="k">{rel === "before" ? "공연 날 처음 할 일" : started ? "지금 할 일" : "다음 할 일"}</div>
+        <div className="k">{rel === "before" ? `${DAY} 처음 할 일` : started ? "지금 할 일" : "다음 할 일"}</div>
         <div className="w">{mainTitle(cur)}</div>
         <div className="d">
           {curPlace ? `${curPlace.name} · ` : ""}{cur.parent_text}
@@ -220,15 +225,15 @@ export default function ParentHome(p: Props) {
         })}
       </div>
       <Link className="bigbtn pk" href={`/p/${token}/change`} style={{ fontSize: 19, padding: 14 }}>일정 바꾸기</Link>
-      <BottomBar token={token} />
+      <BottomBar token={token} pilgrim={p.pilgrim} />
     </main>
   );
 }
 
 /** v1.2 수요 근거: 귀가 후 만족도 한 번 누르기 */
-function Feedback({ token }: { token: string }) {
+function Feedback({ token, pilgrim }: { token: string; pilgrim?: boolean }) {
   const [sent, setSent] = useState<string | null>(() => ls.get(`tt_fb_${token}`));
-  if (sent) return <div className="ai"><p style={{ marginTop: 0 }}>알려 주셔서 고마워요. 즐거운 공연 되셨기를 바라요!</p></div>;
+  if (sent) return <div className="ai"><p style={{ marginTop: 0 }}>알려 주셔서 고마워요. 즐거운 {pilgrim ? "여행" : "공연"} 되셨기를 바라요!</p></div>;
   return (
     <div className="card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <b style={{ fontSize: 20 }}>오늘 하루 어떠셨어요?</b>

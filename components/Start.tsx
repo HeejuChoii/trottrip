@@ -12,10 +12,10 @@ export default function Start() {
 
   useEffect(() => { captureSrc(); }, []);
 
-  function start() {
+  function start(fan = false) {
     if (!privacy) { setErr("개인정보 수집·이용에 동의해 주세요."); return; }
     ss.set("tt_consent", JSON.stringify({ privacy, marketing }));
-    router.push("/new");
+    router.push(fan ? "/new?mode=fan" : "/new");
   }
 
   return (
@@ -38,7 +38,9 @@ export default function Start() {
         </label>
         {err && <p className="err" role="alert" style={{ margin: 0 }}>{err}</p>}
       </div>
-      <button className="cta" onClick={start}>바로 시작하기</button>
+      <button className="cta" onClick={() => start()}>공연 날 하루 짜기</button>
+      <button className="cta" style={{ background: "var(--purple)" }} onClick={() => start(true)}>공연 없이 성지순례 여행 선물하기</button>
+      <p className="fine" style={{ marginTop: -4 }}>가수가 다녀간 식당·여행지를 하루 코스로 · 이번 주말 선물로</p>
       <p className="fine">로그인 없이 바로 시작해요. 해커톤 기간 얼리버드는 무료예요.</p>
     </main>
   );

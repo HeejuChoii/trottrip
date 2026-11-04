@@ -68,7 +68,11 @@ export default function KidPlan(props: Props) {
   const parentUrl = `${origin}/p/${parentToken}`;
   const kidUrl = `${origin}/k/${kidToken}/status`;
   const title = shareTitle(share.kid_label, share.kid_name);
-  const desc = `〈${concert.title.replace(/.*〈|〉.*/g, "")}〉 · ${fmtDateKo(concert.date)} · 앱 설치 없이 바로 보세요`;
+  const pil = !!concert.pilgrim;
+  const DAY = pil ? "여행 날" : "공연 날";
+  const desc = pil
+    ? `${concert.artist_display} 성지순례 · ${concert.city} · ${fmtDateKo(concert.date)} · 앱 설치 없이 바로 보세요`
+    : `〈${concert.title.replace(/.*〈|〉.*/g, "")}〉 · ${fmtDateKo(concert.date)} · 앱 설치 없이 바로 보세요`;
   const ogImage = `${origin}/api/og?t=${parentToken}`;
 
   const fanPlaces = useMemo(() => {
@@ -105,7 +109,7 @@ export default function KidPlan(props: Props) {
         window.Kakao.Share.sendDefault({
           objectType: "feed",
           content: {
-            title: toSelf ? "부모님 공연 날 진행 상황" : title,
+            title: toSelf ? `부모님 ${DAY} 진행 상황` : title,
             description: toSelf ? "누른 버튼과 질문만 보여요. 위치는 보내지 않아요." : desc,
             imageUrl: ogImage,
             link: { mobileWebUrl: url, webUrl: url },
@@ -178,7 +182,8 @@ export default function KidPlan(props: Props) {
       <div className="top"><Brand /><Link className="back" href={`/k/${kidToken}/status`}>진행 상황 보기 →</Link></div>
       <h1 className="h" style={{ fontSize: 22 }}>{plan.title}</h1>
       <p className="lead">{plan.summary}</p>
-      <p className="note" style={{ textAlign: "left", margin: "-4px 0 0" }}>{concert.venue_name} · {fmtDateKo(concert.date)} {fmtTimeKo(concert.start_time)} 시작{props.share && ""}</p>
+      <p className="note" style={{ textAlign: "left", margin: "-4px 0 0" }}>{pil ? `${concert.city} · ${fmtDateKo(concert.date)} ${fmtTimeKo(concert.start_time)} ${concert.venue_name}에서 출발` : `${concert.venue_name} · ${fmtDateKo(concert.date)} ${fmtTimeKo(concert.start_time)} 시작`}</p>
+      {pil && <p className="note" style={{ textAlign: "left", margin: 0 }}><span className="tag pu">콘서트립에서 불러온 성지</span> 공연 없이 떠나는 {concert.artist_display} 성지순례 여행이에요</p>}
       {(concert.ticket_url || concert.shuttle_url) && (
         <p className="note" style={{ textAlign: "left", margin: 0, display: "flex", gap: 12, flexWrap: "wrap" }}>
           {concert.ticket_url && <a href={concert.ticket_url} target="_blank" rel="noopener noreferrer">예매처 공지 ↗</a>}
@@ -202,7 +207,7 @@ export default function KidPlan(props: Props) {
         );
       })()}
       <div className="chips" role="tablist">
-        {([["plan", "일정"], ["check", "준비 체크리스트"], ["ticket", "티켓 정보"]] as const).map(([k, l]) => (
+        {(pil ? [["plan", "일정"], ["check", "준비 체크리스트"]] as const : [["plan", "일정"], ["check", "준비 체크리스트"], ["ticket", "티켓 정보"]] as const).map(([k, l]) => (
           <button key={k} role="tab" className="chip" aria-pressed={tab === k} aria-selected={tab === k} onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
@@ -219,7 +224,7 @@ export default function KidPlan(props: Props) {
 
       {tab === "plan" && <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span className="lab" style={{ margin: 0 }}>공연 날 하루</span>
+        <span className="lab" style={{ margin: 0 }}>{DAY} 하루</span>
         {editing
           ? <span style={{ display: "flex", gap: 6 }}><button className="mini-btn" onClick={() => { setDraft(plan.items); setEditing(false); }}>취소</button><button className="mini-btn" style={{ background: "var(--deep)", color: "#fff" }} disabled={busy === "edit"} onClick={saveEdit}>저장</button></span>
           : <button className="mini-btn" onClick={() => { setDraft(plan.items); setEditing(true); }}>시간 조정·삭제</button>}
@@ -248,7 +253,7 @@ export default function KidPlan(props: Props) {
                     {it.type !== "show" && it.type !== "enter" && <button className="mini-btn del" onClick={() => setDraft(draft.filter((d) => d.id !== it.id))}>삭제</button>}
                   </div>
                 )}
-                {!editing && SWAPPABLE.has(it.type) && it.place_id && (
+                {!editing && SWAPPABLE.has(it.type) && it.place_id && (!pil || it.type === "meal") && (
                   <div style={{ marginTop: 6 }}><button className="mini-btn" disabled={busy === it.id} onClick={() => swap(it.id)}>{SWAP_LABEL[it.type]}</button></div>
                 )}
               </div>
@@ -270,10 +275,10 @@ export default function KidPlan(props: Props) {
 
       {fanPlaces.length > 0 && (
         <>
-          <span className="lab" style={{ margin: "4px 0 -6px" }}>최애 장소</span>
+          <span className="lab" style={{ margin: "4px 0 -6px" }}>{pil ? "오늘 들르는 성지" : "최애 장소"}</span>
           {fanPlaces.map((p) => (
             <div key={p.id} className="fanc">
-              <b>{p.name}</b> <span className="tag pk">{FAN_LABEL[p.fan_type]}</span>
+              <b>{p.name}</b> <span className="tag pk">{FAN_LABEL[p.fan_type]}</span>{(p.origin ?? "concertrip") === "concertrip" && <span className="tag pu" style={{ marginLeft: 4 }}>콘서트립에서 불러옴</span>}
               <p>{p.description_ko || CATEGORY_LABEL[p.category]}{p.walk_min_from_venue != null ? ` · 공연장에서 도보 ${p.walk_min_from_venue}분` : ""}</p>
               <p style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 {p.evidence_urls.map((u, i) => <a key={u} href={u} target="_blank" rel="noopener noreferrer">근거 {i + 1}</a>)}
@@ -314,14 +319,14 @@ export default function KidPlan(props: Props) {
         <button className="kakao" onClick={() => sendKakao(false)}>카카오톡으로<br />보내기</button>
         <button className="ghost" onClick={shareLink}>링크 복사·<br />문자로 보내기</button>
       </div>
-      <p className="fine" style={{ margin: "-4px 0 0" }}>문자·밴드로 보내도 공연 카드 미리보기가 함께 떠요.</p>
+      <p className="fine" style={{ margin: "-4px 0 0" }}>문자·밴드로 보내도 {pil ? "여행" : "공연"} 카드 미리보기가 함께 떠요.</p>
 
       {survey === "open" && (
         <div className="intent" style={{ borderColor: "var(--purple)" }}>
-          <b>잠깐! 공연 날 가장 걱정되는 건 뭐예요?</b>
+          <b>잠깐! {DAY} 가장 걱정되는 건 뭐예요?</b>
           <p>하나만 골라 주세요. 서비스를 더 낫게 만드는 데 써요.</p>
           <div className="chips">
-            {["식사", "쉴 곳", "길·입구 찾기", "굿즈 줄", "화장실", "귀가", "연락이 안 될 때"].map((a) => (
+            {(pil ? ["식사", "쉴 곳", "길 찾기", "가게가 문을 닫았을 때", "화장실", "귀가", "연락이 안 될 때"] : ["식사", "쉴 곳", "길·입구 찾기", "굿즈 줄", "화장실", "귀가", "연락이 안 될 때"]).map((a) => (
               <button key={a} className="chip pu" onClick={() => { track("survey", kidToken, undefined, { q: "worry", answer: a }); ls.set(`tt_survey_${kidToken}`, "1"); setSurvey("done"); }}>{a}</button>
             ))}
           </div>
@@ -346,7 +351,7 @@ export default function KidPlan(props: Props) {
           : <div className="row2"><button className="y" onClick={() => sendIntent("yes")}>출시되면 결제할게요</button><button onClick={() => sendIntent("no")}>괜찮아요</button></div>}
         <p style={{ textAlign: "center" }}>지금 결제되지는 않아요.</p>
       </div>
-      <p className="fine">부모님 링크는 공연 다음 날 23:59까지 열려요. 장소 정보는 콘서트립(concertrip.kr)에서 불러와요.</p>
+      <p className="fine">부모님 링크는 {pil ? "여행" : "공연"} 다음 날 23:59까지 열려요. 장소 정보는 콘서트립(concertrip.kr)에서 불러와요.</p>
       {toast && <div className="toast" role="status">{toast}</div>}
     </main>
   );

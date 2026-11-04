@@ -4,7 +4,7 @@ import "server-only";
 import { createTrip, getConcert, getPlaces, getTripBy, listTripsLite, upsertConcert } from "./db.ts";
 import { SEED_CONCERTS } from "./seed.ts";
 import { generatePlan } from "./ai.ts";
-import { concertView, newToken } from "./trip.ts";
+import { concertView, ensureVenueFood, newToken } from "./trip.ts";
 import { expiryFor } from "./time.ts";
 import { EMPTY_TICKET } from "./schemas.ts";
 import type { ParentProfile, Prefs, Transport, Trip } from "./types.ts";
@@ -39,6 +39,7 @@ export async function getOrCreateDemoTrip(fresh = false): Promise<Trip> {
     c = await getConcert(DEMO_CONCERT);
   }
   if (!c) throw new Error(`시연 공연(${DEMO_CONCERT})을 만들지 못했어요. Supabase concerts 테이블을 확인해 주세요`);
+  await ensureVenueFood(c);
   const places = await getPlaces(c.id);
   const view = concertView({ custom_concert: null } as never, c);
   const plan = await generatePlan({ concert: view, parent, prefs, transport, seat: "B구역 12열", places });

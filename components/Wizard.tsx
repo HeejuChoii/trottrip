@@ -9,6 +9,8 @@ import { shortTitle } from "@/lib/planner";
 import { eunNeun } from "@/lib/text";
 
 type C = Concert & { place_count: number };
+export interface CourseCard { id: string; artist: string; title: string; region: string; blurb: string; start: string; spots: { name: string; kind: string }[] }
+export interface ArtistCard { name: string; fandom: string; color: string; blurb: string }
 
 function Chip({ on, onClick, children, tone }: { on: boolean; onClick: () => void; children: React.ReactNode; tone?: "pk" | "pu" }) {
   return <button type="button" className={`chip ${tone ?? ""}`} aria-pressed={on} onClick={onClick}>{children}</button>;
@@ -20,8 +22,24 @@ function Prog({ n }: { n: number }) {
 
 const HONORIFICS = ["어머니", "아버지", "두 분"];
 
-export default function Wizard({ concerts }: { concerts: C[] }) {
+/** 다가오는 토요일 (오늘이 토요일이면 다음 주) */
+function nextSaturday(): string {
+  const d = new Date(Date.now() + 9 * 3600000);
+  const add = ((6 - d.getUTCDay() + 7) % 7) || 7;
+  d.setUTCDate(d.getUTCDate() + add);
+  return d.toISOString().slice(0, 10);
+}
+
+export default function Wizard({ concerts, artists = [], courses = [], initialMode = "concert" }: { concerts: C[]; artists?: ArtistCard[]; courses?: CourseCard[]; initialMode?: "concert" | "fan" }) {
   const router = useRouter();
+  // 공연 보러 가세요 / 공연 없이 성지순례 여행
+  const [mode, setMode] = useState<"concert" | "fan">(initialMode);
+  const fanMode = mode === "fan";
+  const [artist, setArtist] = useState(artists[0]?.name ?? "");
+  const [courseId, setCourseId] = useState(courses.find((c) => c.artist === artists[0]?.name)?.id ?? "");
+  const [tripDate, setTripDate] = useState(nextSaturday);
+  const [tripStart, setTripStart] = useState("10:00");
+  const course = courses.find((c) => c.id === courseId) ?? null;
   const [step, setStep] = useState(1);
   const [err, setErr] = useState("");
   // 요구사항 정제: 입력이 모호하면 일정을 만들기 전에 한 가지만 되묻는다(F5)
@@ -61,10 +79,16 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
   const P = (patch: Partial<ParentProfile>) => setParent((p) => ({ ...p, ...patch }));
   const T = (patch: Partial<Transport>) => setTr((t) => ({ ...t, ...patch }));
   const toggleFood = (f: string) => P({ food: parent.food.includes(f) ? parent.food.filter((x) => x !== f) : [...parent.food, f] });
-  const startTime = useCustom ? custom.start_time : concert?.start_time ?? "";
-  const city = useCustom ? "" : concert?.city ?? "";
+  const startTime = fanMode ? tripStart : useCustom ? custom.start_time : concert?.start_time ?? "";
+  const city = fanMode ? course?.region ?? "" : useCustom ? "" : concert?.city ?? "";
 
   function next1() {
+    if (fanMode) {
+      if (!course) return setErr("코스를 골라 주세요.");
+      if (!tripDate) return setErr("날짜를 골라 주세요.");
+      if (tr.mode !== "train" && tr.mode !== "car") T({ mode: "car" });
+      setErr(""); setStep(2); scrollTo(0, 0); return;
+    }
     if (useCustom) {
       if (!custom.title || !custom.venue_name || !custom.date || !custom.start_time) return setErr("공연명·공연장·날짜·시작 시각을 모두 넣어 주세요.");
     } else if (!concert) return setErr("공연을 골라 주세요.");
@@ -72,6 +96,7 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
   }
 
   function needClarify(): typeof clarify {
+    if (fanMode) return tr.mode === "train" && !tr.train_arrive ? { key: "train_arrive", q: "열차·버스는 몇 시에 도착하나요?", hint: "", fallback: "" } : null;
     if (tr.mode === "fan_bus" && !tr.drop_point.trim()) return { key: "drop_point", q: "팬 모임 버스는 어디에 내려 드리나요?", hint: "예: 코엑스 동문 앞", fallback: "공연장 앞" };
     if (tr.mode === "fan_bus" && !tr.return_time) return { key: "return_time", q: "귀가 버스는 몇 시에 출발하나요?", hint: "", fallback: "" };
     if (tr.mode === "train" && !tr.train_arrive) return { key: "train_arrive", q: "열차는 몇 시에 도착하나요?", hint: "", fallback: "" };
@@ -86,9 +111,10 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
     const consent = JSON.parse(ss.get("tt_consent") || "{}");
     try {
       const r = await postJSON<{ kid_token: string }>("/api/trips", {
-        concert_id: useCustom ? null : concertId,
-        custom_concert: useCustom ? custom : null,
-        parent_profile: parent, prefs,
+        concert_id: fanMode || useCustom ? null : concertId,
+        custom_concert: !fanMode && useCustom ? custom : null,
+        pilgrimage: fanMode ? { course_id: courseId, date: tripDate, start_time: tripStart } : null,
+        parent_profile: parent, prefs: fanMode ? { goods: false, photo: false, artist_places: true, fan_first: true, sightseeing: false } : prefs,
         transport: { ...tr, companions: tr.mode === "fan_bus" ? "fan_bus" : tr.companions },
         seat, src: ls.get("tt_src") ?? "", privacy_ok: !!consent.privacy, marketing_opt_in: !!consent.marketing,
       });
@@ -125,13 +151,19 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
           <div className="spin" aria-hidden="true" />
           <h1 className="h" style={{ fontSize: 22 }}>{who}께 맞는 하루를<br />짜고 있어요</h1>
           <div className="steps">
-            {[
+            {(fanMode ? [
+              `① 입력 정리 · ${course?.artist ?? ""} 성지 · ${fmtTimeKo(tripStart)} 출발, ${parent.walk === "15-" ? "여유로운" : parent.walk === "15-30" ? "적당한" : "넉넉한"} 걷기`,
+              `② 콘서트립에서 성지 ${course?.spots.length ?? 0}곳 불러오기`,
+              `③ 동선 최적화 · 가까운 곳부터, 걷기 ${parent.walk === "15-" ? "5분" : parent.walk === "15-30" ? "10분" : "15분"} 넘으면 택시`,
+              `④ 식성에 맞는 가수 단골집으로 점심${parent.food.length ? "" : ""}`,
+              "⑤ AI가 안내 문장을 쓰고 규칙 검사",
+            ] : [
               `① 입력 정리 · ${fmtTimeKo(startTime)} 공연, ${parent.walk === "15-" ? "여유로운" : parent.walk === "15-30" ? "적당한" : "넉넉한"} 걷기`,
               `② 시간 역산 · ${isNaN(S) ? "입장" : `${toHHMM(S - 40)} 입장`}부터 거꾸로 배치`,
               `③ 후보 거르기 · ${parent.walk === "15-" ? "걸어서 5분" : parent.walk === "15-30" ? "걸어서 10분" : "걸어서 15분"} 이내${parent.food.length ? " · 식성에 맞는 식당" : ""}`,
               "④ AI가 장소를 고르고 안내 문장을 써요",
               "⑤ 규칙 검사 · 목록 밖 장소·시각 겹침 확인",
-            ].map((t, i) => <div key={i} className={i < loadStage ? "ok" : ""} style={{ opacity: i <= loadStage ? 1 : 0.45 }}>{t}</div>)}
+            ]).map((t, i) => <div key={i} className={i < loadStage ? "ok" : ""} style={{ opacity: i <= loadStage ? 1 : 0.45 }}>{t}</div>)}
           </div>
           <p className="fine">15초 정도 걸려요.</p>
         </div>
@@ -144,6 +176,55 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
       {step === 1 && (
         <>
           <div className="top"><Brand /><Prog n={1} /></div>
+          <div className="chips" role="tablist" style={{ marginBottom: -4 }}>
+            <button type="button" role="tab" className="chip" aria-pressed={!fanMode} onClick={() => { setMode("concert"); setErr(""); }}>공연 보러 가세요</button>
+            <button type="button" role="tab" className="chip pu" aria-pressed={fanMode} onClick={() => { setMode("fan"); setErr(""); }}>공연 없이 성지순례 여행</button>
+          </div>
+        </>
+      )}
+      {step === 1 && fanMode && (
+        <>
+          <h1 className="h">어느 가수의 성지로 보내 드릴까요?</h1>
+          <p className="lead">가수가 다녀간 식당·여행지를 하루 코스로 묶어 드려요. 이번 주말 선물로 좋아요.</p>
+          <div className="chips">
+            {artists.map((a) => (
+              <button key={a.name} type="button" className="chip pu" aria-pressed={artist === a.name}
+                onClick={() => { setArtist(a.name); setCourseId(courses.find((c) => c.artist === a.name)?.id ?? ""); setErr(""); }}>{a.name}</button>
+            ))}
+          </div>
+          {courses.filter((c) => c.artist === artist).map((c) => (
+            <button key={c.id} type="button" className={`card ${c.id === courseId ? "sel" : ""}`} aria-pressed={c.id === courseId} onClick={() => setCourseId(c.id)} style={{ textAlign: "left" }}>
+              <div className="show">
+                <div className="poster" style={{ background: artists.find((a) => a.name === c.artist)?.color ?? "var(--purple)" }}>{c.artist}</div>
+                <div>
+                  <b>{c.title}</b>
+                  <small>{c.blurb}</small>
+                  <small style={{ marginTop: 4 }}>{c.spots.map((s) => s.name.replace(/\s*\(.*\)$/, "")).join(" · ")}</small>
+                  <span className="tag pu" style={{ marginTop: 6 }}>콘서트립에서 불러온 성지 {c.spots.length}곳</span>
+                </div>
+              </div>
+            </button>
+          ))}
+          <div className="card">
+            <span className="lab">언제 떠나세요?</span>
+            <div className="fld"><span>날짜</span><input className="inp sm" type="date" value={tripDate} onChange={(e) => setTripDate(e.target.value)} /></div>
+            <div className="fld"><span>시작 시각</span><input className="inp sm" type="time" value={tripStart} onChange={(e) => setTripStart(e.target.value)} /></div>
+            <div className="fld"><span>출발</span><input className="inp sm" value={tr.origin} onChange={(e) => T({ origin: e.target.value })} placeholder="예: 서울 송파구" /></div>
+            <div style={{ paddingTop: 10 }}>
+              <span className="lab">동행</span>
+              <div className="chips">
+                <Chip on={tr.companions === "alone"} onClick={() => T({ companions: "alone" })}>혼자</Chip>
+                <Chip on={tr.companions === "friends"} onClick={() => T({ companions: "friends" })}>친구분과</Chip>
+                <Chip on={tr.companions === "family"} onClick={() => T({ companions: "family" })}>두 분이 함께</Chip>
+              </div>
+            </div>
+          </div>
+          {err && <p className="err" role="alert">{err}</p>}
+          <button className="cta" onClick={next1}>다음</button>
+        </>
+      )}
+      {step === 1 && !fanMode && (
+        <>
           <h1 className="h">부모님이 어떤 공연에 가시나요?</h1>
           <p className="lead">티켓을 이미 구하셨다면 공연을 골라 주세요.</p>
           {concerts.map((c) => (
@@ -253,8 +334,8 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
       {step === 3 && (
         <>
           <div className="top"><button className="back" onClick={() => setStep(2)}>← 이전</button><Prog n={3} /></div>
-          <h1 className="h">어떤 여행을 좋아하세요?</h1>
-          <div className="card"><span className="lab">덕질 취향</span>
+          <h1 className="h">{fanMode ? "어떻게 가실까요?" : "어떤 여행을 좋아하세요?"}</h1>
+          {!fanMode && <div className="card"><span className="lab">덕질 취향</span>
             <div className="chips">
               <Chip tone="pk" on={prefs.goods} onClick={() => setPrefs({ ...prefs, goods: !prefs.goods })}>공식 굿즈 꼭 사기</Chip>
               <Chip tone="pk" on={prefs.photo} onClick={() => setPrefs({ ...prefs, photo: !prefs.photo })}>공연장 포토존</Chip>
@@ -271,10 +352,10 @@ export default function Wizard({ concerts }: { concerts: C[] }) {
                 {prefs.fan_first && <p className="fine" style={{ textAlign: "left", margin: "6px 0 0" }}>굿즈·포토존보다 먼저 넣고, 걸어가기 멀면 택시를 안내해요.</p>}
               </div>
             )}
-          </div>
-          <span className="lab" style={{ margin: "2px 0 -6px" }}>{city || "공연장"}까지 어떻게 가실까요?</span>
+          </div>}
+          <span className="lab" style={{ margin: "2px 0 -6px" }}>{fanMode ? `${course?.start ?? city}까지` : `${city || "공연장"}까지`} 어떻게 가실까요?</span>
           <div className="row2">
-            {([["fan_bus", "팬 모임 버스", "집결 장소·시간을 입력해 주세요"], ["train", "열차", "출발·도착 시각을 입력해 주세요"], ["shuttle", "공연 셔틀", "공지 링크나 시각을 넣어 주세요"], ["car", "자가용·택시", "공연장 주차 혼잡 주의"]] as const).map(([v, l, d]) => (
+            {(fanMode ? [["train", "열차·고속버스", "도착·돌아오는 시각을 넣어 주세요"], ["car", "자가용·택시", "성지 사이가 멀면 택시를 안내해요"]] as const : [["fan_bus", "팬 모임 버스", "집결 장소·시간을 입력해 주세요"], ["train", "열차", "출발·도착 시각을 입력해 주세요"], ["shuttle", "공연 셔틀", "공지 링크나 시각을 넣어 주세요"], ["car", "자가용·택시", "공연장 주차 혼잡 주의"]] as const).map(([v, l, d]) => (
               <button key={v} type="button" className="opt" aria-pressed={tr.mode === v} onClick={() => T({ mode: v })}><b>{l}</b><small>{d}</small></button>
             ))}
           </div>

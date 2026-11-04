@@ -1,0 +1,873 @@
+{
+ "_note": "공연 없이 떠나는 성지순례 여행(팬덤트립) 코스. places는 콘서트립 팬덤 장소 형식. 가수가 다녀간·추천한 식당, 가수가 방문한 여행지, 고향·노래 배경지만(공연장 제외). 좌표가 없는 곳은 서버가 카카오 주소 검색으로 한 번 찾아 저장한다. 출발점 좌표는 근사값. confidence low는 영상·블로그 한 곳 근거라 확인 필요. 2026-11-04 웹 조사.",
+ "provider": "concertrip",
+ "artists": [
+  {
+   "name": "임영웅",
+   "fandom": "영웅시대",
+   "color": "#3A8DDE",
+   "blurb": "고향 포천과 무명 시절 합정의 단골집"
+  },
+  {
+   "name": "이찬원",
+   "fandom": "찬스",
+   "color": "#F2A33A",
+   "blurb": "고향 대구의 단골집과 부모님 카페"
+  },
+  {
+   "name": "박서진",
+   "fandom": "닻별",
+   "color": "#E8B400",
+   "blurb": "고향 삼천포의 박서진길과 건어물 가게"
+  },
+  {
+   "name": "송가인",
+   "fandom": "어게인",
+   "color": "#E2557B",
+   "blurb": "고향 진도의 송가인마을과 공원"
+  },
+  {
+   "name": "영탁",
+   "fandom": "영탁앤블루스",
+   "color": "#2F7D6D",
+   "blurb": "고향 안동의 찜닭골목과 월영교"
+  },
+  {
+   "name": "조용필",
+   "fandom": "위대한 탄생",
+   "color": "#555B6E",
+   "blurb": "'돌아와요 부산항에' 노래 따라 부산"
+  }
+ ],
+ "courses": [
+  {
+   "id": "lyw-pocheon",
+   "artist": "임영웅",
+   "title": "웅지순례 · 고향 포천",
+   "region": "경기 포천",
+   "blurb": "추천 두부집, 알바하던 돈까스집, 팬 카페를 한 바퀴",
+   "start": {
+    "name": "포천시청",
+    "lat": 37.8949,
+    "lng": 127.2003
+   },
+   "place_ids": [
+    "fan_lyw_kongmaru",
+    "fan_lyw_artvalley",
+    "fan_lyw_8yoil",
+    "fan_lyw_daedo",
+    "fan_lyw_woongi"
+   ]
+  },
+  {
+   "id": "lyw-mapo",
+   "artist": "임영웅",
+   "title": "웅지순례 · 무명 시절 합정",
+   "region": "서울 마포",
+   "blurb": "합정 살던 시절 단골집이 걸어갈 거리에 모여 있어요",
+   "start": {
+    "name": "상수역",
+    "lat": 37.5478,
+    "lng": 126.9227
+   },
+   "place_ids": [
+    "fan_lyw_woori",
+    "fan_lyw_korea",
+    "fan_lyw_yeongdong",
+    "fan_lyw_doubleharmony"
+   ]
+  },
+  {
+   "id": "lcw-daegu",
+   "artist": "이찬원",
+   "title": "찬또 성지 · 대구 도심",
+   "region": "대구",
+   "blurb": "백반기행 단골집에서 점심, 저녁엔 막창",
+   "start": {
+    "name": "중앙로역",
+    "lat": 35.8708,
+    "lng": 128.5939
+   },
+   "place_ids": [
+    "fan_lcw_gukil",
+    "fan_lcw_ondol",
+    "fan_lcw_hoya"
+   ]
+  },
+  {
+   "id": "lcw-dalseong",
+   "artist": "이찬원",
+   "title": "찬또 성지 · 달성 누른국수와 카페 찬스",
+   "region": "대구 달성",
+   "blurb": "누른국수 점심, 부모님 카페 찬스, 메기매운탕",
+   "start": {
+    "name": "서대구역",
+    "lat": 35.8817,
+    "lng": 128.5427
+   },
+   "place_ids": [
+    "fan_lcw_donggok",
+    "fan_lcw_chance",
+    "fan_lcw_sonjungheon",
+    "fan_lcw_hoya"
+   ]
+  },
+  {
+   "id": "psj-samcheonpo",
+   "artist": "박서진",
+   "title": "닻별 성지 · 삼천포 박서진길",
+   "region": "경남 사천",
+   "blurb": "수산시장 점심, 박서진길 따라 건어물 가게와 노을",
+   "start": {
+    "name": "삼천포항",
+    "lat": 34.9255,
+    "lng": 128.0685
+   },
+   "place_ids": [
+    "fan_psj_market",
+    "fan_psj_daegyo",
+    "fan_psj_store",
+    "fan_psj_noeul",
+    "fan_psj_cablecar"
+   ]
+  },
+  {
+   "id": "sgi-jindo",
+   "artist": "송가인",
+   "title": "어게인 성지 · 고향 진도",
+   "region": "전남 진도",
+   "blurb": "송가인마을과 공원, 백반기행 갈비탕, 운림산방",
+   "start": {
+    "name": "진도공용버스터미널",
+    "lat": 34.484,
+    "lng": 126.263
+   },
+   "place_ids": [
+    "fan_sgi_village",
+    "fan_sgi_kkwabaegi",
+    "fan_sgi_park",
+    "fan_sgi_okhyang",
+    "fan_sgi_sinhodeung",
+    "fan_sgi_unrim"
+   ]
+  },
+  {
+   "id": "yt-andong",
+   "artist": "영탁",
+   "title": "영블스 성지 · 고향 안동",
+   "region": "경북 안동",
+   "blurb": "하회마을, 찜닭골목 점심, 월영교",
+   "start": {
+    "name": "안동역",
+    "lat": 36.5652,
+    "lng": 128.7107
+   },
+   "place_ids": [
+    "fan_yt_hahoe",
+    "fan_yt_jjimdak",
+    "fan_yt_woryeong"
+   ]
+  },
+  {
+   "id": "cyp-busan",
+   "artist": "조용필",
+   "title": "'돌아와요 부산항에' 노래 따라",
+   "region": "부산",
+   "blurb": "노래 속 부산항과 오륙도 바다",
+   "start": {
+    "name": "부산역",
+    "lat": 35.1151,
+    "lng": 129.0422
+   },
+   "place_ids": [
+    "fan_cyp_bukhang",
+    "fan_cyp_oryukdo"
+   ]
+  }
+ ],
+ "places": [
+  {
+   "id": "fan_lyw_kongmaru",
+   "name": "콩마루 (포천 군내면)",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "korean",
+    "mild",
+    "seating",
+    "indoor"
+   ],
+   "address": "경기도 포천시 군내면 포천로 1501",
+   "region": "경기 포천",
+   "lat": null,
+   "lng": null,
+   "description_ko": "임영웅이 추천한 손두부 전골집이에요",
+   "evidence_urls": [
+    "https://enter.etoday.co.kr/news/view/268478",
+    "https://www.topstarnews.net/news/articleView.html?idxno=15573602"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_lyw_8yoil",
+   "name": "8요일키친 본점 (포천 설운동)",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "western",
+    "seating",
+    "indoor"
+   ],
+   "address": "경기도 포천시 호국로 879",
+   "region": "경기 포천",
+   "lat": null,
+   "lng": null,
+   "description_ko": "가수 되기 전 아르바이트하던 돈까스집이에요",
+   "evidence_urls": [
+    "https://news.nate.com/view/20240413n02970",
+    "https://www.starnewskorea.com/music/2020/10/10/2020101018334044899"
+   ],
+   "source": "needs_check",
+   "confidence": "high",
+   "concertrip_url": "",
+   "hours": "11:00-21:30",
+   "closed": [
+    "목"
+   ]
+  },
+  {
+   "id": "fan_lyw_daedo",
+   "name": "대도 평양식 돌김치찌개 (포천 어룡동)",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "korean",
+    "seating",
+    "indoor"
+   ],
+   "address": "경기도 포천시 호국로 1343",
+   "region": "경기 포천",
+   "lat": null,
+   "lng": null,
+   "description_ko": "포천 살 때 일주일에 세 번 가던 김치찌개집이에요",
+   "evidence_urls": [
+    "https://www.topstarnews.net/news/articleView.html?idxno=15408804",
+    "https://www.diningcode.com/profile.php?rid=4JyjZBEmTV00"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": "",
+   "closed": [
+    "화"
+   ]
+  },
+  {
+   "id": "fan_lyw_woongi",
+   "name": "카페 웅이나무 (포천 소흘읍)",
+   "category": "cafe",
+   "fan_type": "fan_made",
+   "tags": [
+    "seating",
+    "indoor"
+   ],
+   "address": "경기도 포천시 소흘읍 솔모루로109번길 13",
+   "region": "경기 포천",
+   "lat": null,
+   "lng": null,
+   "description_ko": "영웅시대 팬들이 봉사로 운영하는 카페예요",
+   "evidence_urls": [
+    "http://www.m-i.kr/news/articleView.html?idxno=1250052",
+    "https://view.asiae.co.kr/article/2026061210212432877"
+   ],
+   "source": "needs_check",
+   "confidence": "high",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_lyw_artvalley",
+   "name": "포천아트밸리 (포천 신북면)",
+   "category": "sight",
+   "fan_type": "fan_made",
+   "tags": [],
+   "address": "경기도 포천시 신북면 아트밸리로 234",
+   "region": "경기 포천",
+   "lat": null,
+   "lng": null,
+   "description_ko": "웅지순례 때 팬들이 함께 들르는 고향 포천 명소예요",
+   "evidence_urls": [
+    "https://v.daum.net/v/ztLBUJSgc2?f=m"
+   ],
+   "source": "needs_check",
+   "confidence": "low",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_lyw_woori",
+   "name": "우리식당 (상수역)",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "korean",
+    "seating",
+    "indoor"
+   ],
+   "address": "서울 마포구 어울마당로 17-1",
+   "region": "서울 마포",
+   "lat": null,
+   "lng": null,
+   "description_ko": "무명 시절부터 다닌 부대찌개 단골집이에요",
+   "evidence_urls": [
+    "https://www.esquirekorea.co.kr/article/59598",
+    "https://www.youtube.com/watch?v=YTDIr7DnIK0"
+   ],
+   "source": "needs_check",
+   "confidence": "high",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_lyw_korea",
+   "name": "코리아식당 홍대점 (합정)",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "korean",
+    "quick",
+    "seating",
+    "indoor"
+   ],
+   "address": "서울 마포구 독막로 54",
+   "region": "서울 마포",
+   "lat": null,
+   "lng": null,
+   "description_ko": "합정 살 때 제육볶음을 즐겨 먹던 집이에요",
+   "evidence_urls": [
+    "https://www.esquirekorea.co.kr/article/59598",
+    "https://www.siksinhot.com/P/795384"
+   ],
+   "source": "needs_check",
+   "confidence": "high",
+   "concertrip_url": "",
+   "hours": "08:00-21:00"
+  },
+  {
+   "id": "fan_lyw_yeongdong",
+   "name": "영동감자탕 (홍대입구)",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "korean",
+    "seating",
+    "indoor"
+   ],
+   "address": "서울 마포구 월드컵북로5길 17",
+   "region": "서울 마포",
+   "lat": null,
+   "lng": null,
+   "description_ko": "임영웅이 다녀간 콩비지 감자탕집이에요",
+   "evidence_urls": [
+    "https://www.allurekorea.com/?p=250869",
+    "https://hotplacehunter.co.kr/msn/article/62806/"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": "",
+   "hours": "11:00-22:00",
+   "closed": [
+    "일"
+   ]
+  },
+  {
+   "id": "fan_lyw_doubleharmony",
+   "name": "카페 더블하모니 (동교동)",
+   "category": "cafe",
+   "fan_type": "artist_visited",
+   "tags": [
+    "seating",
+    "indoor"
+   ],
+   "address": "서울 마포구 동교로 99",
+   "region": "서울 마포",
+   "lat": null,
+   "lng": null,
+   "description_ko": "임영웅이 다녀간 시계 가득한 카페예요",
+   "evidence_urls": [
+    "https://www.allurekorea.com/?p=250869"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_lcw_gukil",
+   "name": "국일따로국밥 (대구 중구)",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "korean",
+    "quick",
+    "seating",
+    "indoor"
+   ],
+   "address": "대구광역시 중구 국채보상로 571",
+   "region": "대구 중구",
+   "lat": null,
+   "lng": null,
+   "description_ko": "1946년부터 이어 온 따로국밥집, 백반기행에 나왔어요",
+   "evidence_urls": [
+    "https://www.xportsnews.com/article/1416817",
+    "https://www.youtube.com/watch?v=4IB-Mt4GcPo"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_lcw_ondol",
+   "name": "온돌방식당 (대구 동성로)",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "korean",
+    "mild",
+    "seating",
+    "indoor"
+   ],
+   "address": "대구광역시 중구 동성로12길 72-9",
+   "region": "대구 중구",
+   "lat": null,
+   "lng": null,
+   "description_ko": "이찬원이 백반기행에서 먹은 언양불고기 백반집이에요",
+   "evidence_urls": [
+    "https://hotplacehunter.co.kr/sns/article/57342/",
+    "https://www.youtube.com/watch?v=4c7t0XKs1gs"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": "",
+   "hours": "11:30-21:30"
+  },
+  {
+   "id": "fan_lcw_hoya",
+   "name": "호야막창 (대구 달서구)",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "korean",
+    "seating",
+    "indoor"
+   ],
+   "address": "대구광역시 달서구 선원남로 151",
+   "region": "대구 달서구",
+   "lat": null,
+   "lng": null,
+   "description_ko": "부모님 막창집 노하우를 이은 막창집이에요",
+   "evidence_urls": [
+    "https://www.xportsnews.com/article/1416799",
+    "https://www.diningcode.com/profile.php?rid=y2F3NNUoSkwh"
+   ],
+   "source": "needs_check",
+   "confidence": "high",
+   "concertrip_url": "",
+   "hours": "17:00-24:00"
+  },
+  {
+   "id": "fan_lcw_donggok",
+   "name": "동곡원조할매손칼국수 (대구 달성 하빈)",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "korean",
+    "mild",
+    "seating",
+    "indoor"
+   ],
+   "address": "대구광역시 달성군 하빈면 달구벌대로55길 97-5",
+   "region": "대구 달성군",
+   "lat": null,
+   "lng": null,
+   "description_ko": "전현무계획에서 이찬원이 첫 맛집으로 소개한 누른국수집이에요",
+   "evidence_urls": [
+    "https://www.starnewskorea.com/broadcast-show/2026/08/26/2026082608254385550",
+    "https://www.topstarnews.net/news/articleView.html?idxno=16175314"
+   ],
+   "source": "needs_check",
+   "confidence": "high",
+   "concertrip_url": "",
+   "hours": "10:00-20:00",
+   "closed": [
+    "월"
+   ]
+  },
+  {
+   "id": "fan_lcw_chance",
+   "name": "카페 찬스 (대구 달성 옥포)",
+   "category": "cafe",
+   "fan_type": "artist_visited",
+   "tags": [
+    "seating",
+    "indoor"
+   ],
+   "address": "대구광역시 달성군 옥포읍 옥포로 301",
+   "region": "대구 달성군",
+   "lat": null,
+   "lng": null,
+   "description_ko": "이찬원 부모님이 연 카페, 사진과 굿즈가 가득해요",
+   "evidence_urls": [
+    "https://www.yeongnam.com/web/view.php?key=20230617010002171",
+    "https://www.xportsnews.com/article/1442800"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": "",
+   "hours": "10:30-21:00"
+  },
+  {
+   "id": "fan_lcw_sonjungheon",
+   "name": "손중헌원조논메기매운탕 (대구 달성 다사)",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "korean",
+    "seafood",
+    "seating",
+    "indoor"
+   ],
+   "address": "대구광역시 달성군 다사읍 부곡2길 7-9",
+   "region": "대구 달성군",
+   "lat": null,
+   "lng": null,
+   "description_ko": "이찬원이 고향 맛집으로 꼽은 메기매운탕집이에요",
+   "evidence_urls": [
+    "https://hotplacehunter.co.kr/sns/article/57342/"
+   ],
+   "source": "needs_check",
+   "confidence": "low",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_psj_market",
+   "name": "삼천포 용궁수산시장 (사천)",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "korean",
+    "seafood",
+    "seating"
+   ],
+   "address": "경남 사천시 삼천포 용궁수산시장",
+   "region": "경남 사천",
+   "lat": null,
+   "lng": null,
+   "description_ko": "박서진이 장 보던 고향 수산시장, 회 한 접시 드세요",
+   "evidence_urls": [
+    "https://www.youtube.com/watch?v=bE-lpJKQ7Ws",
+    "https://www.youtube.com/watch?v=wDBeLVPr5vg"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_psj_daegyo",
+   "name": "삼천포대교공원 · 박서진길",
+   "category": "photo",
+   "fan_type": "official",
+   "tags": [],
+   "address": "경남 사천시 삼천포대교공원",
+   "region": "경남 사천",
+   "lat": null,
+   "lng": null,
+   "description_ko": "사천시가 박서진 이름을 붙인 5.8km 바닷길, 선포식 장소예요",
+   "evidence_urls": [
+    "https://www.kukinews.com/article/view/kuk202309030027",
+    "https://www.metroseoul.co.kr/article/20230427500392"
+   ],
+   "source": "needs_check",
+   "confidence": "high",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_psj_store",
+   "name": "서진이네 건어물 (사천 실안)",
+   "category": "sight",
+   "fan_type": "official",
+   "tags": [],
+   "address": "경남 사천시 해안관광로 176",
+   "region": "경남 사천",
+   "lat": null,
+   "lng": null,
+   "description_ko": "박서진이 부모님께 차려 드린 건어물 가게예요",
+   "evidence_urls": [
+    "https://www.youtube.com/watch?v=LQ9JEHqLkRE",
+    "https://www.tvreport.co.kr/breaking/article/848126/"
+   ],
+   "source": "needs_check",
+   "confidence": "high",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_psj_noeul",
+   "name": "노을빛공원 (삼천포 실안)",
+   "category": "photo",
+   "fan_type": "fan_made",
+   "tags": [],
+   "address": "경남 사천시 노을빛공원",
+   "region": "경남 사천",
+   "lat": null,
+   "lng": null,
+   "description_ko": "건어물 가게 근처 노을 명소, 노랑 우체통이 있어요",
+   "evidence_urls": [
+    "https://www.youtube.com/watch?v=ZVbSn8e99bI"
+   ],
+   "source": "needs_check",
+   "confidence": "low",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_psj_cablecar",
+   "name": "사천바다케이블카",
+   "category": "sight",
+   "fan_type": "artist_visited",
+   "tags": [
+    "indoor"
+   ],
+   "address": "경남 사천시 사천바다케이블카",
+   "region": "경남 사천",
+   "lat": null,
+   "lng": null,
+   "description_ko": "박서진이 바다 위 노래자랑 MC를 본 케이블카예요",
+   "evidence_urls": [
+    "https://www.youtube.com/watch?v=45c7UPdNTwU"
+   ],
+   "source": "needs_check",
+   "confidence": "high",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_sgi_village",
+   "name": "송가인마을 · 생가 포토존 (진도 지산)",
+   "category": "photo",
+   "fan_type": "official",
+   "tags": [],
+   "address": "전라남도 진도군 지산면 소앵무길 41-1",
+   "region": "전남 진도",
+   "lat": null,
+   "lng": null,
+   "description_ko": "송가인이 자란 고향 마을, 생가 앞 포토존이 있어요",
+   "evidence_urls": [
+    "https://korean.visitkorea.or.kr/detail/ms_detail.do?cotid=994bfe05-35a0-4b27-943f-274f1962e3bc",
+    "https://isplus.com/article/view/isp202509270105"
+   ],
+   "source": "needs_check",
+   "confidence": "high",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_sgi_kkwabaegi",
+   "name": "꽈배기어라 (송가인마을 카페)",
+   "category": "cafe",
+   "fan_type": "fan_made",
+   "tags": [
+    "snack",
+    "seating",
+    "indoor"
+   ],
+   "address": "전라남도 진도군 지산면 소앵무길 42",
+   "region": "전남 진도",
+   "lat": null,
+   "lng": null,
+   "description_ko": "송가인 등신대와 포스터 가득한 마을 꽈배기 카페예요",
+   "evidence_urls": [
+    "https://www.cbci.co.kr/news/articleView.html?idxno=474507"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_sgi_park",
+   "name": "송가인공원 (진도 임회)",
+   "category": "sight",
+   "fan_type": "official",
+   "tags": [],
+   "address": "전라남도 진도군 임회면 고정리 965-9",
+   "region": "전남 진도",
+   "lat": null,
+   "lng": null,
+   "description_ko": "송가인 이름이 붙은 정원 공원, 조형물 앞에서 사진 찍어요",
+   "evidence_urls": [
+    "https://v.daum.net/v/20210205203045921",
+    "https://www.youtube.com/watch?v=WJWOdeD_yMA"
+   ],
+   "source": "needs_check",
+   "confidence": "high",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_sgi_okhyang",
+   "name": "옥향식당 (진도읍)",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "korean",
+    "mild",
+    "seating",
+    "indoor"
+   ],
+   "address": "전라남도 진도군 진도읍 교동5길 2",
+   "region": "전남 진도",
+   "lat": null,
+   "lng": null,
+   "description_ko": "송가인이 백반기행에서 먹은 57년 노포 뜸부기갈비탕집이에요",
+   "evidence_urls": [
+    "https://www.topstarnews.net/news/articleView.html?idxno=15834942"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": "",
+   "hours": "08:00-22:00"
+  },
+  {
+   "id": "fan_sgi_sinhodeung",
+   "name": "신호등회관 (진도읍)",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "korean",
+    "seafood",
+    "quick",
+    "seating",
+    "indoor"
+   ],
+   "address": "전라남도 진도군 진도읍 남동1길 66",
+   "region": "전남 진도",
+   "lat": null,
+   "lng": null,
+   "description_ko": "송가인이 고향 인생 맛집으로 꼽은 꽃게살비빔밥집이에요",
+   "evidence_urls": [
+    "https://www.khan.co.kr/article/202207300730001",
+    "https://www.starnewskorea.com/star/2023/03/07/2023030711533646035"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": "",
+   "hours": "10:00-20:30"
+  },
+  {
+   "id": "fan_sgi_unrim",
+   "name": "운림산방 (진도 의신)",
+   "category": "sight",
+   "fan_type": "artist_visited",
+   "tags": [],
+   "address": "전라남도 진도군 의신면 운림산방로 315",
+   "region": "전남 진도",
+   "lat": null,
+   "lng": null,
+   "description_ko": "송가인과 어머니가 KBS 무대에 섰던 진도 명소예요",
+   "evidence_urls": [
+    "https://www.signup.ondemandkorea.com/program-landing/kbs-korea-on-stage-jindo-ullimsanbang"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_yt_hahoe",
+   "name": "안동 하회마을",
+   "category": "sight",
+   "fan_type": "artist_visited",
+   "tags": [],
+   "address": "경북 안동시 풍천면 전서로 186",
+   "region": "경북 안동",
+   "lat": null,
+   "lng": null,
+   "description_ko": "영탁이 방송에서 다녀왔다고 말한 고향 명소예요",
+   "evidence_urls": [
+    "https://enews.imbc.com/News/ViewAmp/346158"
+   ],
+   "source": "needs_check",
+   "confidence": "low",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_yt_jjimdak",
+   "name": "안동 구시장 찜닭골목",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "korean",
+    "seating",
+    "indoor"
+   ],
+   "address": "경북 안동시 번영1길 47",
+   "region": "경북 안동",
+   "lat": null,
+   "lng": null,
+   "description_ko": "영탁이 고향 친구들과 찜닭을 먹은 골목이에요",
+   "evidence_urls": [
+    "https://enews.imbc.com/News/ViewAmp/433770",
+    "https://www.imaeil.com/page/view/2022042801234196292"
+   ],
+   "source": "needs_check",
+   "confidence": "high",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_yt_woryeong",
+   "name": "월영교 (안동)",
+   "category": "photo",
+   "fan_type": "artist_visited",
+   "tags": [],
+   "address": "경북 안동시 상아동 월영교",
+   "region": "경북 안동",
+   "lat": null,
+   "lng": null,
+   "description_ko": "영탁이 노래하고 데뷔 전 행사도 했던 다리예요",
+   "evidence_urls": [
+    "https://enews.imbc.com/News/ViewAmp/433770"
+   ],
+   "source": "needs_check",
+   "confidence": "high",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_cyp_bukhang",
+   "name": "부산항 북항 친수공원",
+   "category": "photo",
+   "fan_type": "fan_made",
+   "tags": [],
+   "address": "부산 동구 북항 친수공원",
+   "region": "부산",
+   "lat": null,
+   "lng": null,
+   "description_ko": "'돌아와요 부산항에' 제목 속 그 항구예요",
+   "evidence_urls": [
+    "https://www.seoul.co.kr/news/2015/02/28/20150228550001"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_cyp_oryukdo",
+   "name": "오륙도 스카이워크 (부산 남구)",
+   "category": "photo",
+   "fan_type": "fan_made",
+   "tags": [],
+   "address": "부산광역시 남구 오륙도로 137",
+   "region": "부산",
+   "lat": 35.1007,
+   "lng": 129.1244,
+   "description_ko": "'오륙도 돌아가는 연락선' 가사 속 바로 그 바다예요",
+   "evidence_urls": [
+    "https://www.seoul.co.kr/news/2015/02/28/20150228550001",
+    "https://www.wikitree.co.kr/articles/1044450"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": ""
+  }
+ ]
+}

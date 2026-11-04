@@ -1,0 +1,1051 @@
+{
+ "_note": "시연용 목데이터(공연장 시설·꿀팁). 실제 위치·운영과 다를 수 있어요. 운영자가 장소 관리에서 고친 값이 있으면 그걸 우선해요.",
+ "venues": {
+  "kspo": {
+   "name": "KSPO DOME (올림픽공원 체조경기장)",
+   "lat": 37.5193,
+   "lng": 127.1272,
+   "tips": [
+    "올림픽공원역(5호선) 3번 출구가 가장 가까워요. 몽촌토성역보다 덜 걸어요.",
+    "공연 끝나면 올림픽공원역이 아주 붐벼요. 한성백제역(9호선)으로 걸어가면 덜 붐벼요.",
+    "공원 안이 넓어서 입구에서 공연장까지 5~10분 걸어요. 편한 신발이 좋아요.",
+    "MD 부스는 공연장 앞 광장에 서요. 공연 3~4시간 전부터 줄이 생겨요."
+   ],
+   "places": [
+    {
+     "id": "mk_kspo_0",
+     "name": "1번 게이트 (엘리베이터 옆)",
+     "category": "gate",
+     "lat": 37.5184,
+     "lng": 127.1264,
+     "walk_min_from_venue": 2,
+     "tags": [
+      "elevator",
+      "accessible"
+     ],
+     "fan_type": "none",
+     "description_ko": "1층 객석 입구, 엘리베이터가 바로 옆이에요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kspo_1",
+     "name": "3번 게이트",
+     "category": "gate",
+     "lat": 37.519,
+     "lng": 127.1264,
+     "walk_min_from_venue": 3,
+     "tags": [],
+     "fan_type": "none",
+     "description_ko": "2층 객석 입구, 계단이 있어요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kspo_2",
+     "name": "공연장 1층 화장실",
+     "category": "toilet",
+     "lat": 37.5196,
+     "lng": 127.1264,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor",
+      "accessible"
+     ],
+     "fan_type": "none",
+     "description_ko": "입장 직전에는 줄이 길어요. 미리 다녀오세요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kspo_3",
+     "name": "로비 엘리베이터",
+     "category": "elevator",
+     "lat": 37.5202,
+     "lng": 127.1264,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor",
+      "elevator"
+     ],
+     "fan_type": "none",
+     "description_ko": "1번 게이트 옆, 2층 객석까지 바로 가요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kspo_4",
+     "name": "올림픽공원 평화의 광장 벤치",
+     "category": "rest",
+     "lat": 37.5184,
+     "lng": 127.1272,
+     "walk_min_from_venue": 3,
+     "tags": [
+      "seating"
+     ],
+     "fan_type": "none",
+     "description_ko": "공연장 앞 광장, 앉아서 쉬기 좋아요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kspo_5",
+     "name": "올림픽공원 뮤지엄 로비",
+     "category": "rest",
+     "lat": 37.519,
+     "lng": 127.1272,
+     "walk_min_from_venue": 6,
+     "tags": [
+      "indoor",
+      "seating"
+     ],
+     "fan_type": "none",
+     "description_ko": "실내라 따뜻해요. 의자가 있어요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kspo_6",
+     "name": "올림픽공원역 물품보관함",
+     "category": "locker",
+     "lat": 37.5196,
+     "lng": 127.1272,
+     "walk_min_from_venue": 8,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "none",
+     "description_ko": "3번 출구 앞, 큰 짐은 여기에 맡기세요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kspo_7",
+     "name": "공연장 현장 안내 부스",
+     "category": "info_desk",
+     "lat": 37.5202,
+     "lng": 127.1272,
+     "walk_min_from_venue": 2,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "none",
+     "description_ko": "티켓 수령·분실물·휠체어석 문의",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kspo_8",
+     "name": "공식 MD 부스 (공연장 앞 광장)",
+     "category": "goods",
+     "lat": 37.5184,
+     "lng": 127.128,
+     "walk_min_from_venue": 2,
+     "tags": [],
+     "fan_type": "official",
+     "description_ko": "공연 3시간 전 판매 시작, 카드 결제 가능",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kspo_9",
+     "name": "가수 대형 현수막 포토존",
+     "category": "photo",
+     "lat": 37.519,
+     "lng": 127.128,
+     "walk_min_from_venue": 2,
+     "tags": [],
+     "fan_type": "official",
+     "description_ko": "공연장 정면 계단 앞이에요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kspo_10",
+     "name": "올림픽공원 남2문 대형버스 하차",
+     "category": "bus_stop",
+     "lat": 37.5196,
+     "lng": 127.128,
+     "walk_min_from_venue": 7,
+     "tags": [],
+     "fan_type": "none",
+     "description_ko": "팬 모임 버스는 여기서 내려요",
+     "source": "needs_check",
+     "evidence_urls": []
+    }
+   ]
+  },
+  "gocheok": {
+   "name": "고척스카이돔",
+   "lat": 37.4982,
+   "lng": 126.867,
+   "tips": [
+    "구일역(1호선) 2번 출구에서 걸어서 5분이에요. 지하철이 가장 편해요.",
+    "주차장이 매우 좁아요. 자가용은 피하세요.",
+    "돔 구장이라 겨울에도 실내는 따뜻해요. 겉옷은 접어서 무릎에 두세요.",
+    "끝나고 구일역이 붐비면 개봉역 쪽 버스를 타도 돼요."
+   ],
+   "places": [
+    {
+     "id": "mk_gocheok_0",
+     "name": "1루 게이트 (엘리베이터 있음)",
+     "category": "gate",
+     "lat": 37.4973,
+     "lng": 126.8662,
+     "walk_min_from_venue": 3,
+     "tags": [
+      "elevator",
+      "accessible"
+     ],
+     "fan_type": "none",
+     "description_ko": "1층 지정석 입구, 엘리베이터 이용 가능",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_gocheok_1",
+     "name": "3루 게이트",
+     "category": "gate",
+     "lat": 37.4979,
+     "lng": 126.8662,
+     "walk_min_from_venue": 4,
+     "tags": [],
+     "fan_type": "none",
+     "description_ko": "3루 쪽 객석 입구",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_gocheok_2",
+     "name": "1층 콘코스 화장실",
+     "category": "toilet",
+     "lat": 37.4985,
+     "lng": 126.8662,
+     "walk_min_from_venue": 3,
+     "tags": [
+      "indoor",
+      "accessible"
+     ],
+     "fan_type": "none",
+     "description_ko": "게이트 들어가서 바로 오른쪽",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_gocheok_3",
+     "name": "1루 엘리베이터",
+     "category": "elevator",
+     "lat": 37.4991,
+     "lng": 126.8662,
+     "walk_min_from_venue": 3,
+     "tags": [
+      "indoor",
+      "elevator"
+     ],
+     "fan_type": "none",
+     "description_ko": "4·5층 객석까지 바로 가요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_gocheok_4",
+     "name": "1층 콘코스 쉼터",
+     "category": "rest",
+     "lat": 37.4973,
+     "lng": 126.867,
+     "walk_min_from_venue": 3,
+     "tags": [
+      "indoor",
+      "seating"
+     ],
+     "fan_type": "none",
+     "description_ko": "실내 의자가 있어요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_gocheok_5",
+     "name": "구일역 물품보관함",
+     "category": "locker",
+     "lat": 37.4979,
+     "lng": 126.867,
+     "walk_min_from_venue": 5,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "none",
+     "description_ko": "역 2번 출구 근처",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_gocheok_6",
+     "name": "고객 안내센터 (중앙 출입구)",
+     "category": "info_desk",
+     "lat": 37.4985,
+     "lng": 126.867,
+     "walk_min_from_venue": 2,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "none",
+     "description_ko": "티켓·분실물·휠체어 문의",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_gocheok_7",
+     "name": "공식 MD 부스 (외야 광장)",
+     "category": "goods",
+     "lat": 37.4991,
+     "lng": 126.867,
+     "walk_min_from_venue": 4,
+     "tags": [],
+     "fan_type": "official",
+     "description_ko": "공연 4시간 전부터 판매, 줄이 길어요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_gocheok_8",
+     "name": "돔 정면 포토월",
+     "category": "photo",
+     "lat": 37.4973,
+     "lng": 126.8678,
+     "walk_min_from_venue": 2,
+     "tags": [],
+     "fan_type": "official",
+     "description_ko": "중앙 출입구 앞 대형 포토월",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_gocheok_9",
+     "name": "고척돔 앞 경인로 대형버스 하차",
+     "category": "bus_stop",
+     "lat": 37.4979,
+     "lng": 126.8678,
+     "walk_min_from_venue": 5,
+     "tags": [],
+     "fan_type": "none",
+     "description_ko": "팬 모임 버스 하차 지점",
+     "source": "needs_check",
+     "evidence_urls": []
+    }
+   ]
+  },
+  "coex": {
+   "name": "코엑스 D홀",
+   "lat": 37.5126,
+   "lng": 127.0588,
+   "tips": [
+    "삼성역(2호선) 5·6번 출구로 나와 코엑스몰을 지나면 비 안 맞고 와요.",
+    "D홀은 코엑스 3층이에요. 동문 쪽 엘리베이터를 타면 편해요.",
+    "코엑스몰 안에 식당·카페가 많아요. 점심은 11시 반 전에 드시면 덜 붐벼요.",
+    "대절버스는 동문 앞에 내려 주고 떠나요. 귀가 버스 위치를 미리 확인하세요."
+   ],
+   "places": [
+    {
+     "id": "mk_coex_0",
+     "name": "코엑스몰 중앙 광장 의자",
+     "category": "rest",
+     "lat": 37.5117,
+     "lng": 127.058,
+     "walk_min_from_venue": 4,
+     "tags": [
+      "indoor",
+      "seating"
+     ],
+     "fan_type": "none",
+     "description_ko": "D홀 가는 길, 실내 의자가 많아요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_coex_1",
+     "name": "공식 MD 부스 (D홀 앞 로비)",
+     "category": "goods",
+     "lat": 37.5123,
+     "lng": 127.058,
+     "walk_min_from_venue": 2,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "official",
+     "description_ko": "공연 3시간 전 판매 시작",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_coex_2",
+     "name": "D홀 입구 포토월",
+     "category": "photo",
+     "lat": 37.5129,
+     "lng": 127.058,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "official",
+     "description_ko": "D홀 로비 정면",
+     "source": "needs_check",
+     "evidence_urls": []
+    }
+   ]
+  },
+  "kintex-1": {
+   "name": "킨텍스 제1전시장",
+   "lat": 37.6688,
+   "lng": 126.7451,
+   "tips": [
+    "GTX-A 킨텍스역 2번 출구로 나오면 제1전시장이 바로 보여요.",
+    "대화역(3호선)에서 무료 셔틀이 다녀요(평소 10분 간격).",
+    "전시장 안은 넓어서 홀까지 꽤 걸어요. 홀 번호를 미리 확인하세요.",
+    "끝나면 셔틀 줄이 길어요. 택시는 2번 게이트 앞 승강장이 편해요."
+   ],
+   "places": [
+    {
+     "id": "mk_kintex-1_0",
+     "name": "공식 MD 부스 (5홀 앞 로비)",
+     "category": "goods",
+     "lat": 37.6679,
+     "lng": 126.7443,
+     "walk_min_from_venue": 2,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "official",
+     "description_ko": "공연 3시간 전 판매 시작",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kintex-1_1",
+     "name": "5홀 입구 포토월",
+     "category": "photo",
+     "lat": 37.6685,
+     "lng": 126.7443,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "official",
+     "description_ko": "홀 입구 정면",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_kintex-1_2",
+     "name": "제1전시장 로비 쉼터",
+     "category": "rest",
+     "lat": 37.6691,
+     "lng": 126.7443,
+     "walk_min_from_venue": 2,
+     "tags": [
+      "indoor",
+      "seating"
+     ],
+     "fan_type": "none",
+     "description_ko": "실내 의자가 많아요",
+     "source": "needs_check",
+     "evidence_urls": []
+    }
+   ]
+  },
+  "bexco": {
+   "name": "벡스코 오디토리움",
+   "lat": 35.169,
+   "lng": 129.1361,
+   "tips": [
+    "센텀시티역(2호선) 1번 출구에서 걸어서 5분이에요. 벡스코역도 가까워요.",
+    "오디토리움은 제1전시장 2층이에요. 엘리베이터는 정문 쪽에 있어요.",
+    "신세계 센텀시티 백화점 지하 식당가가 가까워요(걸어서 7분).",
+    "끝나고 해운대 쪽 택시가 많이 잡혀요. 센텀시티역 방면이 수월해요."
+   ],
+   "places": [
+    {
+     "id": "mk_bexco_0",
+     "name": "오디토리움 1층 입구",
+     "category": "gate",
+     "lat": 35.1681,
+     "lng": 129.1353,
+     "walk_min_from_venue": 2,
+     "tags": [
+      "elevator",
+      "accessible"
+     ],
+     "fan_type": "none",
+     "description_ko": "1층 객석 입구, 엘리베이터 옆",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_bexco_1",
+     "name": "오디토리움 2층 입구",
+     "category": "gate",
+     "lat": 35.1687,
+     "lng": 129.1353,
+     "walk_min_from_venue": 3,
+     "tags": [],
+     "fan_type": "none",
+     "description_ko": "2층 객석, 계단 이용",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_bexco_2",
+     "name": "제1전시장 2층 화장실",
+     "category": "toilet",
+     "lat": 35.1693,
+     "lng": 129.1353,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor",
+      "accessible"
+     ],
+     "fan_type": "none",
+     "description_ko": "오디토리움 바로 옆",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_bexco_3",
+     "name": "정문 엘리베이터",
+     "category": "elevator",
+     "lat": 35.1699,
+     "lng": 129.1353,
+     "walk_min_from_venue": 2,
+     "tags": [
+      "indoor",
+      "elevator"
+     ],
+     "fan_type": "none",
+     "description_ko": "2층 오디토리움까지 바로 가요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_bexco_4",
+     "name": "제1전시장 로비 쉼터",
+     "category": "rest",
+     "lat": 35.1681,
+     "lng": 129.1361,
+     "walk_min_from_venue": 2,
+     "tags": [
+      "indoor",
+      "seating"
+     ],
+     "fan_type": "none",
+     "description_ko": "실내 의자가 있어요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_bexco_5",
+     "name": "센텀시티역 물품보관함",
+     "category": "locker",
+     "lat": 35.1687,
+     "lng": 129.1361,
+     "walk_min_from_venue": 5,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "none",
+     "description_ko": "1번 출구 근처",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_bexco_6",
+     "name": "벡스코 종합안내데스크",
+     "category": "info_desk",
+     "lat": 35.1693,
+     "lng": 129.1361,
+     "walk_min_from_venue": 2,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "none",
+     "description_ko": "제1전시장 1층 정문",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_bexco_7",
+     "name": "공식 MD 부스 (오디토리움 로비)",
+     "category": "goods",
+     "lat": 35.1699,
+     "lng": 129.1361,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "official",
+     "description_ko": "공연 2시간 전 판매 시작",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_bexco_8",
+     "name": "오디토리움 로비 포토월",
+     "category": "photo",
+     "lat": 35.1681,
+     "lng": 129.1369,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "official",
+     "description_ko": "로비 정면 대형 현수막",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_bexco_9",
+     "name": "벡스코 야외전시장 앞 대형버스 하차",
+     "category": "bus_stop",
+     "lat": 35.1687,
+     "lng": 129.1369,
+     "walk_min_from_venue": 5,
+     "tags": [],
+     "fan_type": "none",
+     "description_ko": "팬 모임 버스 하차 지점",
+     "source": "needs_check",
+     "evidence_urls": []
+    }
+   ]
+  },
+  "exco": {
+   "name": "엑스코 동관",
+   "lat": 35.907,
+   "lng": 128.6131,
+   "tips": [
+    "엑스코선이 생기기 전이라 지하철은 멀어요. 대구역·동대구역에서 택시가 편해요(15~20분).",
+    "주차장이 넓지만 공연 날은 일찍 차요. 공연 2시간 전엔 도착하세요.",
+    "동관 1층 로비가 넓고 의자가 많아요.",
+    "끝나면 택시가 몰려요. 엑스코 정문보다 동문 쪽이 잘 잡혀요."
+   ],
+   "places": [
+    {
+     "id": "mk_exco_0",
+     "name": "동관 1층 입구 (엘리베이터 옆)",
+     "category": "gate",
+     "lat": 35.9061,
+     "lng": 128.6123,
+     "walk_min_from_venue": 2,
+     "tags": [
+      "elevator",
+      "accessible"
+     ],
+     "fan_type": "none",
+     "description_ko": "1층 객석 입구",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_exco_1",
+     "name": "동관 1층 화장실",
+     "category": "toilet",
+     "lat": 35.9067,
+     "lng": 128.6123,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor",
+      "accessible"
+     ],
+     "fan_type": "none",
+     "description_ko": "로비 왼쪽",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_exco_2",
+     "name": "동관 로비 엘리베이터",
+     "category": "elevator",
+     "lat": 35.9073,
+     "lng": 128.6123,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor",
+      "elevator"
+     ],
+     "fan_type": "none",
+     "description_ko": "2층 객석까지",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_exco_3",
+     "name": "동관 1층 로비 의자",
+     "category": "rest",
+     "lat": 35.9079,
+     "lng": 128.6123,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor",
+      "seating"
+     ],
+     "fan_type": "none",
+     "description_ko": "넓고 따뜻해요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_exco_4",
+     "name": "엑스코 물품보관소",
+     "category": "locker",
+     "lat": 35.9061,
+     "lng": 128.6131,
+     "walk_min_from_venue": 4,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "none",
+     "description_ko": "서관 1층",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_exco_5",
+     "name": "엑스코 안내데스크",
+     "category": "info_desk",
+     "lat": 35.9067,
+     "lng": 128.6131,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "none",
+     "description_ko": "동관 1층",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_exco_6",
+     "name": "공식 MD 부스 (동관 로비)",
+     "category": "goods",
+     "lat": 35.9073,
+     "lng": 128.6131,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "official",
+     "description_ko": "공연 3시간 전 판매 시작",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_exco_7",
+     "name": "동관 앞 포토월",
+     "category": "photo",
+     "lat": 35.9079,
+     "lng": 128.6131,
+     "walk_min_from_venue": 2,
+     "tags": [],
+     "fan_type": "official",
+     "description_ko": "동관 정문 앞",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_exco_8",
+     "name": "엑스코 동쪽 주차장 대형버스 하차",
+     "category": "bus_stop",
+     "lat": 35.9061,
+     "lng": 128.6139,
+     "walk_min_from_venue": 4,
+     "tags": [],
+     "fan_type": "none",
+     "description_ko": "팬 모임 버스 하차 지점",
+     "source": "needs_check",
+     "evidence_urls": []
+    }
+   ]
+  },
+  "gwangju-wu": {
+   "name": "광주여대 유니버시아드체육관",
+   "lat": 35.1375,
+   "lng": 126.7915,
+   "tips": [
+    "지하철역과 멀어요. 광주송정역에서 택시로 10분쯤이에요.",
+    "체육관 주차장이 작아요. 셔틀이나 택시를 추천해요.",
+    "대학교 안이라 주변 식당이 적어요. 점심은 송정역 근처에서 드시고 오세요.",
+    "끝나고 택시 잡기 어려워요. 미리 콜택시를 불러 두세요."
+   ],
+   "places": [
+    {
+     "id": "mk_gwangju-wu_0",
+     "name": "체육관 1층 정문",
+     "category": "gate",
+     "lat": 35.1366,
+     "lng": 126.7907,
+     "walk_min_from_venue": 2,
+     "tags": [
+      "accessible"
+     ],
+     "fan_type": "none",
+     "description_ko": "1층 플로어석 입구",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_gwangju-wu_1",
+     "name": "체육관 2층 입구",
+     "category": "gate",
+     "lat": 35.1372,
+     "lng": 126.7907,
+     "walk_min_from_venue": 3,
+     "tags": [],
+     "fan_type": "none",
+     "description_ko": "2층 스탠드석, 계단 이용",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_gwangju-wu_2",
+     "name": "체육관 1층 화장실",
+     "category": "toilet",
+     "lat": 35.1378,
+     "lng": 126.7907,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "none",
+     "description_ko": "정문 들어가서 오른쪽",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_gwangju-wu_3",
+     "name": "체육관 엘리베이터",
+     "category": "elevator",
+     "lat": 35.1384,
+     "lng": 126.7907,
+     "walk_min_from_venue": 2,
+     "tags": [
+      "indoor",
+      "elevator"
+     ],
+     "fan_type": "none",
+     "description_ko": "정문 왼쪽",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_gwangju-wu_4",
+     "name": "체육관 1층 로비 의자",
+     "category": "rest",
+     "lat": 35.1366,
+     "lng": 126.7915,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor",
+      "seating"
+     ],
+     "fan_type": "none",
+     "description_ko": "입장 전 쉬기 좋아요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_gwangju-wu_5",
+     "name": "현장 매표소·안내 부스",
+     "category": "info_desk",
+     "lat": 35.1372,
+     "lng": 126.7915,
+     "walk_min_from_venue": 2,
+     "tags": [],
+     "fan_type": "none",
+     "description_ko": "티켓 수령·분실물 문의",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_gwangju-wu_6",
+     "name": "공식 MD 부스 (체육관 앞)",
+     "category": "goods",
+     "lat": 35.1378,
+     "lng": 126.7915,
+     "walk_min_from_venue": 2,
+     "tags": [],
+     "fan_type": "official",
+     "description_ko": "공연 3시간 전 판매 시작",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_gwangju-wu_7",
+     "name": "체육관 앞 포토존",
+     "category": "photo",
+     "lat": 35.1384,
+     "lng": 126.7915,
+     "walk_min_from_venue": 2,
+     "tags": [],
+     "fan_type": "official",
+     "description_ko": "정문 옆 대형 현수막",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_gwangju-wu_8",
+     "name": "체육관 앞 대형버스 하차",
+     "category": "bus_stop",
+     "lat": 35.1366,
+     "lng": 126.7923,
+     "walk_min_from_venue": 3,
+     "tags": [],
+     "fan_type": "none",
+     "description_ko": "팬 모임 버스 하차 지점",
+     "source": "needs_check",
+     "evidence_urls": []
+    }
+   ]
+  },
+  "goyang-gym": {
+   "name": "고양체육관",
+   "lat": 37.6757,
+   "lng": 126.7427,
+   "tips": [
+    "대화역(3호선) 5번 출구에서 걸어서 10분쯤이에요.",
+    "고양종합운동장과 붙어 있어요. 체육관 쪽 입구로 오세요.",
+    "주변에 식당이 적어요. 대화역이나 킨텍스 쪽에서 식사하고 오세요.",
+    "끝나면 대화역까지 사람이 몰려요. 천천히 걸어가세요."
+   ],
+   "places": [
+    {
+     "id": "mk_goyang-gym_0",
+     "name": "체육관 1층 입구 (엘리베이터 옆)",
+     "category": "gate",
+     "lat": 37.6748,
+     "lng": 126.7419,
+     "walk_min_from_venue": 2,
+     "tags": [
+      "elevator",
+      "accessible"
+     ],
+     "fan_type": "none",
+     "description_ko": "1층 객석 입구",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_goyang-gym_1",
+     "name": "체육관 1층 화장실",
+     "category": "toilet",
+     "lat": 37.6754,
+     "lng": 126.7419,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor",
+      "accessible"
+     ],
+     "fan_type": "none",
+     "description_ko": "로비 양쪽에 있어요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_goyang-gym_2",
+     "name": "로비 엘리베이터",
+     "category": "elevator",
+     "lat": 37.676,
+     "lng": 126.7419,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor",
+      "elevator"
+     ],
+     "fan_type": "none",
+     "description_ko": "2층 객석까지",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_goyang-gym_3",
+     "name": "체육관 로비 의자",
+     "category": "rest",
+     "lat": 37.6766,
+     "lng": 126.7419,
+     "walk_min_from_venue": 1,
+     "tags": [
+      "indoor",
+      "seating"
+     ],
+     "fan_type": "none",
+     "description_ko": "실내 의자가 있어요",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_goyang-gym_4",
+     "name": "대화역 물품보관함",
+     "category": "locker",
+     "lat": 37.6748,
+     "lng": 126.7427,
+     "walk_min_from_venue": 10,
+     "tags": [
+      "indoor"
+     ],
+     "fan_type": "none",
+     "description_ko": "5번 출구 근처",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_goyang-gym_5",
+     "name": "현장 안내 부스",
+     "category": "info_desk",
+     "lat": 37.6754,
+     "lng": 126.7427,
+     "walk_min_from_venue": 2,
+     "tags": [],
+     "fan_type": "none",
+     "description_ko": "티켓 수령·분실물 문의",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_goyang-gym_6",
+     "name": "공식 MD 부스 (체육관 앞 광장)",
+     "category": "goods",
+     "lat": 37.676,
+     "lng": 126.7427,
+     "walk_min_from_venue": 2,
+     "tags": [],
+     "fan_type": "official",
+     "description_ko": "공연 3시간 전 판매 시작",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_goyang-gym_7",
+     "name": "체육관 앞 포토월",
+     "category": "photo",
+     "lat": 37.6766,
+     "lng": 126.7427,
+     "walk_min_from_venue": 2,
+     "tags": [],
+     "fan_type": "official",
+     "description_ko": "정문 앞 대형 현수막",
+     "source": "needs_check",
+     "evidence_urls": []
+    },
+    {
+     "id": "mk_goyang-gym_8",
+     "name": "고양종합운동장 주차장 대형버스 하차",
+     "category": "bus_stop",
+     "lat": 37.6748,
+     "lng": 126.7435,
+     "walk_min_from_venue": 5,
+     "tags": [],
+     "fan_type": "none",
+     "description_ko": "팬 모임 버스 하차 지점",
+     "source": "needs_check",
+     "evidence_urls": []
+    }
+   ]
+  }
+ }
+}
