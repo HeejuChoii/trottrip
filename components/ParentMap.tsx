@@ -27,6 +27,9 @@ export default function ParentMap(p: Props) {
   const [mapOk, setMapOk] = useState<boolean | null>(p.kakaoKey ? null : false);
   const [me, setMe] = useState<{ lat: number; lng: number } | null>(null);
   const [locErr, setLocErr] = useState("");
+  // 우리 지도 안 길찾기: 내 위치 → 다음 장소 (도보·택시 예상, 카카오내비가 켜져 있으면 실제 차 길)
+  const [route, setRoute] = useState<{ walk: number; taxi: number; km: number; road: boolean } | null>(null);
+  const lines = useRef<any[]>([]);
 
   const target = useMemo(() => {
     if (p.focus) {
@@ -109,6 +112,32 @@ export default function ParentMap(p: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 내 위치를 찾으면 다음 장소까지 선을 긋고 시간을 계산한다
+  useEffect(() => {
+    const dest = target?.place;
+    if (!me || !dest || dest.lat == null || dest.lng == null || !map.current || !window.kakao?.maps) return;
+    const k = window.kakao.maps;
+    for (const l of lines.current) l.setMap(null);
+    lines.current = [];
+    const R = 6371, r = Math.PI / 180;
+    const h = Math.sin(((dest.lat - me.lat) * r) / 2) ** 2 + Math.cos(me.lat * r) * Math.cos(dest.lat * r) * Math.sin(((dest.lng - me.lng) * r) / 2) ** 2;
+    const km = 2 * R * Math.asin(Math.sqrt(h)) * 1.3;
+    const walk = Math.max(1, Math.round((km / 3.5) * 60)); // 어르신 걸음 시속 3.5km
+    const taxi = Math.max(5, Math.round(5 + (km / 22) * 60));
+    setRoute({ walk, taxi, km, road: false });
+    lines.current.push(new k.Polyline({ map: map.current, path: [new k.LatLng(me.lat, me.lng), new k.LatLng(dest.lat, dest.lng)], strokeWeight: 4, strokeColor: "#FA2D48", strokeOpacity: 0.8, strokeStyle: "shortdash" }));
+    const b = new k.LatLngBounds(); b.extend(new k.LatLng(me.lat, me.lng)); b.extend(new k.LatLng(dest.lat, dest.lng));
+    map.current.setBounds(b, 60, 40, 60, 40);
+    // 걸어가기 멀면 실제 차 길(카카오내비)을 받아 그린다. 안 켜져 있으면 직선만
+    if (walk > 15) {
+      fetch(`/api/p/${p.token}/route?from=${me.lat},${me.lng}&to=${dest.lat},${dest.lng}`).then((x) => x.json()).then((j: { ok: boolean; km?: number; min?: number; path?: [number, number][] }) => {
+        if (!j.ok || !j.path?.length || !map.current) return;
+        lines.current.push(new k.Polyline({ map: map.current, path: j.path.map(([a, c]) => new k.LatLng(a, c)), strokeWeight: 6, strokeColor: "#14C1AD", strokeOpacity: 0.9 }));
+        setRoute({ walk, taxi: Math.max(5, (j.min ?? taxi) + 3), km: j.km ?? km, road: true });
+      }).catch(() => undefined);
+    }
+  }, [me, target, p.token]);
+
   const t = target?.place;
   const nav = t && t.lat != null
     ? me
@@ -139,9 +168,16 @@ export default function ParentMap(p: Props) {
           {!p.pins.length && <p className="note">지도에 표시할 장소를 준비 중이에요.</p>}
         </div>
       )}
-      <button className="bigbtn line" onClick={locate} style={{ fontSize: 19 }}>내 위치 보기</button>
+      {route && t ? (
+        <div className="card" style={{ fontSize: 18, lineHeight: 1.6 }}>
+          <b>{t.name.replace(/\s*\(.*\)$/, "")}까지</b><br />
+          🚶 걸어서 약 {route.walk}분 · 🚕 택시 약 {route.taxi}분 <small style={{ color: "var(--sub)" }}>({route.km.toFixed(1)}km{route.road ? " · 실제 도로" : ""})</small>
+          {route.walk > 15 && <><br /><small style={{ color: "var(--sub)" }}>걸어가기 멀어요. 택시를 타시는 게 편해요.</small></>}
+        </div>
+      ) : t ? <p className="note" style={{ margin: 0 }}>‘내 위치 보기’를 누르면 여기서 {t.name.replace(/\s*\(.*\)$/, "")}까지 길과 시간을 보여 드려요.</p> : null}
+      <button className="bigbtn line" onClick={locate} style={{ fontSize: 19 }}>{route ? "내 위치 다시 찾기" : "내 위치 보기"}</button>
       {locErr && <p className="note">{locErr}</p>}
-      {nav && <a className="cta" href={nav} target="_blank" rel="noopener noreferrer">카카오맵으로 길 안내 보기</a>}
+      {nav && <a className="ghost" style={{ textAlign: "center", textDecoration: "none", display: "block" }} href={nav} target="_blank" rel="noopener noreferrer">카카오맵에서 자세한 길 안내 ↗</a>}
       <p className="note">내 위치는 이 휴대폰에서만 보여요. {kidHonorific(p.kidLabel)}께 보내지 않아요.</p>
       <BottomBar token={p.token} pilgrim={p.pilgrim} current="map" />
     </main>

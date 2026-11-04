@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { isAdmin } from "@/lib/admin";
 import { deleteTtPlace, getConcert, listTtPlaces, replaceTtPlacesByOrigin, upsertConcert, upsertTtPlaces } from "@/lib/db";
-import { geocode, importNearby, kakaoConfigured, walkMinFromDistance } from "@/lib/kakao-local";
+import { geocode, importNearby, importSights, kakaoConfigured, walkMinFromDistance } from "@/lib/kakao-local";
 import { extractNotice, NoticeSchema } from "@/lib/notice-extract";
 import { labelSpice } from "@/lib/label-ai";
 import { bad, body, ok } from "@/lib/http";
@@ -56,6 +56,17 @@ export async function POST(req: Request) {
   const concert = typeof b.concert_id === "string" ? await getConcert(b.concert_id) : null;
   try {
     switch (b.action) {
+      case "kakao_sights": {
+        // 1박 둘째 날용: 공연장 근처 관광명소·문화시설 (식당 불러오기와 따로 저장)
+        if (!concert) return bad("공연을 찾을 수 없어요", 404);
+        if (!kakaoConfigured()) return bad("KAKAO_REST_API_KEY를 먼저 설정해 주세요");
+        if (!concert.venue_key || concert.venue_lat == null || concert.venue_lng == null) return bad("공연장 키와 위도·경도를 먼저 넣어 주세요");
+        const radius = Math.min(Math.max(Number(b.radius) || 6000, 1000), 20000);
+        const sights = await importSights(concert.venue_lat, concert.venue_lng, radius);
+        const now = new Date().toISOString();
+        await upsertTtPlaces(sights.map((p) => ({ id: `${concert.venue_key}__${p.id}`, venue_key: concert.venue_key, concert_id: null, origin: "research" as const, data: { ...p, id: `${concert.venue_key}__${p.id}` }, updated_at: now })));
+        return ok({ count: sights.length, names: sights.slice(0, 8).map((p) => p.name) });
+      }
       case "kakao_import": {
         if (!concert) return bad("공연을 찾을 수 없어요", 404);
         if (!kakaoConfigured()) return bad("KAKAO_REST_API_KEY를 먼저 설정해 주세요");

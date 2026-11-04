@@ -3,7 +3,7 @@ import "server-only";
 import { randomBytes } from "crypto";
 import { getConcert, getPlaces, getTripBy, listTtPlaces, mockVenue, upsertTtPlaces } from "./db.ts";
 import { courseSpots, geoQueries, getCourse, pilgrimView, km, type PilgrimCourse } from "./pilgrim.ts";
-import { geocode, importNearby, kakaoConfigured } from "./kakao-local.ts";
+import { geocode, importNearby, importSights, kakaoConfigured } from "./kakao-local.ts";
 import { sightsNear } from "./sights.ts";
 import type { Concert, ConcertView, Place, Trip } from "./types.ts";
 import type { PlanInput } from "./planner.ts";
@@ -98,6 +98,14 @@ export async function pilgrimPlaces(course: PilgrimCourse): Promise<Place[]> {
 export async function ensureVenueFood(concert: Concert | null): Promise<void> {
   if (!concert?.venue_key || concert.venue_lat == null || concert.venue_lng == null || !kakaoConfigured()) return;
   const rows = await listTtPlaces({ venue_key: concert.venue_key }).catch(() => []);
+  // 1박이면 둘째 날 가볼 곳도 필요: 관광지가 없으면 한 번 불러와 둔다
+  if (!rows.some((r) => r.data.category === "sight")) {
+    try {
+      const sights = await importSights(concert.venue_lat, concert.venue_lng, 6000);
+      const now = new Date().toISOString();
+      await upsertTtPlaces(sights.map((p) => ({ id: `${concert.venue_key}__${p.id}`, venue_key: concert.venue_key, concert_id: null, origin: "research" as const, data: { ...p, id: `${concert.venue_key}__${p.id}` }, updated_at: now })));
+    } catch (e) { console.warn("[venue] 관광지 불러오기 실패:", e instanceof Error ? e.message : e); }
+  }
   if (rows.some((r) => r.data.category === "restaurant")) return;
   try {
     const found = await importNearby(concert.venue_lat, concert.venue_lng, 800);
