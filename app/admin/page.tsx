@@ -1,5 +1,5 @@
 import { isAdmin } from "@/lib/admin";
-import { listConcerts, placeCounts, storageHealth, storageMode, supabaseKeyKind } from "@/lib/db";
+import { ensureSeedConcerts, listConcerts, placeCounts, storageHealth, storageMode, supabaseKeyKind } from "@/lib/db";
 import { computeMetrics } from "@/lib/metrics";
 import { listUsage } from "@/lib/db";
 import { budgetUsd } from "@/lib/usage";
@@ -17,6 +17,8 @@ export const metadata = { title: "운영자 · 트롯트립", robots: { index: f
 // A1 운영자 화면 (F15)
 export default async function Page() {
   if (!(await isAdmin())) return <AdminLogin configured={!!process.env.ADMIN_PASSWORD} />;
+  // 새 시드 공연(가수 8명)을 등록하고, 실제 일정으로 바뀐 가상 공연은 숨긴다
+  await ensureSeedConcerts().catch(() => undefined);
   const [m, concerts, counts, usage, health] = await Promise.all([computeMetrics(), listConcerts(false), placeCounts(), listUsage().catch(() => []), storageHealth()]);
   const keyKind = supabaseKeyKind();
   const spent = usage.reduce((a, r) => a + Number(r.cost_usd), 0);
