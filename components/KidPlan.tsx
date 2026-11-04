@@ -108,6 +108,15 @@ export default function KidPlan(props: Props) {
   async function sendKakao(toSelf = false) {
     if (!(await saveShare())) return;
     const url = toSelf ? kidUrl : parentUrl;
+    // 컴퓨터 브라우저: 카카오톡 공유가 PC 카카오톡 앱을 직접 열려다 "설치하세요"가 뜨는 경우가 있어,
+    // 링크를 복사하고 카카오톡 PC 대화창에 붙여 넣도록 안내한다(휴대폰은 카카오톡 공유창)
+    const mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (!mobile) {
+      try { await navigator.clipboard.writeText(url); } catch { window.prompt("이 링크를 복사해 주세요", url); }
+      setToast("링크를 복사했어요. 카카오톡 PC 대화창에 붙여 넣으면 미리보기 카드가 함께 떠요.");
+      if (!toSelf) { track("share_kakao", kidToken, undefined, { via: "pc_copy" }); askSurvey(); }
+      return;
+    }
     if (kakao && window.Kakao) {
       try {
         window.Kakao.Share.sendDefault({
