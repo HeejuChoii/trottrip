@@ -12,6 +12,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
   let trip;
   let err = "";
   try { trip = await getOrCreateDemoTrip(fresh === "1"); } catch (e) { err = e instanceof Error ? e.message : "시연 일정을 만들지 못했어요"; }
+  if (err && /row-level security|permission denied|공연/.test(err)) err += " — /admin 맨 위의 'DB 연결 확인' 안내를 봐 주세요(Vercel SUPABASE_SERVICE_KEY가 service_role 키인지).";
   if (!trip) return <main className="shell"><Brand /><p className="err">{err}</p></main>;
   const p = `/p/${trip.parent_token}`;
   const d = "2026-12-25";
