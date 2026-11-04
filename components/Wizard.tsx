@@ -8,8 +8,15 @@ import type { Concert, ParentProfile, Prefs, Transport } from "@/lib/types";
 import { shortTitle } from "@/lib/planner";
 import { eunNeun } from "@/lib/text";
 
-type C = Concert & { place_count: number };
-export interface CourseCard { id: string; artist: string; title: string; region: string; blurb: string; start: string; spots: { name: string; kind: string }[] }
+type C = Concert & { place_count: number; poster?: string | null };
+export interface CourseCard { id: string; artist: string; title: string; region: string; blurb: string; start: string; poster?: string | null; spots: { name: string; kind: string }[] }
+
+/** 포스터가 있으면 이미지, 없으면 가수 색 상자에 이름 */
+function Poster({ src, color, label }: { src?: string | null; color: string; label: string }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  if (src) return <img className="poster" src={src} alt={`${label} 포스터`} referrerPolicy="no-referrer" style={{ padding: 0, objectFit: "cover", background: color }} />;
+  return <div className="poster" style={{ background: color }}>{label}</div>;
+}
 export interface ArtistCard { name: string; fandom: string; color: string; blurb: string }
 
 function Chip({ on, onClick, children, tone }: { on: boolean; onClick: () => void; children: React.ReactNode; tone?: "pk" | "pu" }) {
@@ -195,7 +202,7 @@ export default function Wizard({ concerts, artists = [], courses = [], initialMo
           {courses.filter((c) => c.artist === artist).map((c) => (
             <button key={c.id} type="button" className={`card ${c.id === courseId ? "sel" : ""}`} aria-pressed={c.id === courseId} onClick={() => setCourseId(c.id)} style={{ textAlign: "left" }}>
               <div className="show">
-                <div className="poster" style={{ background: artists.find((a) => a.name === c.artist)?.color ?? "var(--purple)" }}>{c.artist}</div>
+                <Poster src={c.poster} color={artists.find((a) => a.name === c.artist)?.color ?? "var(--purple)"} label={c.artist} />
                 <div>
                   <b>{c.title}</b>
                   <small>{c.blurb}</small>
@@ -232,7 +239,7 @@ export default function Wizard({ concerts, artists = [], courses = [], initialMo
             <button key={c.id} type="button" className={`card ${!useCustom && c.id === concertId ? "sel" : ""}`} aria-pressed={!useCustom && c.id === concertId}
               onClick={() => { setConcertId(c.id); setUseCustom(false); setErr(""); }}>
               <div className="show">
-                <div className="poster" style={{ background: c.color }}>{c.artist_display || shortTitle(c.title).slice(0, 6)}</div>
+                <Poster src={c.poster} color={c.color} label={c.artist_display || shortTitle(c.title).slice(0, 6)} />
                 <div>
                   <b>{c.title}</b>
                   <small>{c.city ? `${c.city} ` : ""}{c.venue_name} · {fmtDateKo(c.date)} {fmtTimeKo(c.start_time)}</small>

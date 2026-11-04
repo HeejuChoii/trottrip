@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import KidPlan from "@/components/KidPlan";
 import { loadTrip } from "@/lib/trip";
 import { EMPTY_TICKET } from "@/lib/schemas";
+import { listPosters, posterFor } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 export const metadata = { robots: { index: false, follow: false }, title: "완성된 일정 · 트롯트립" };
@@ -27,6 +28,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
       transport={trip.transport}
       ticket={{ ...EMPTY_TICKET, ...(trip.ticket ?? {}) }}
       checklist={trip.checklist ?? {}}
+      poster={posterFor(await listPosters(), { id: trip.concert_id, artist_display: concert.artist_display })}
     />
   );
 }

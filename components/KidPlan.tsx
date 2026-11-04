@@ -28,6 +28,7 @@ interface Props {
   transport: Transport;
   ticket: TicketInfo;
   checklist: Record<string, boolean>;
+  poster?: string | null;
 }
 
 /** 굿즈·포토존·팬덤 스팟(가수가 다녀간 식당 포함)은 분홍 카드 */
@@ -184,7 +185,11 @@ export default function KidPlan(props: Props) {
   return (
     <main className="shell">
       <div className="top"><Brand /><Link className="back" href={`/k/${kidToken}/status`}>진행 상황 보기 →</Link></div>
-      <h1 className="h" style={{ fontSize: 22 }}>{plan.title}</h1>
+      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {props.poster && <img src={props.poster} alt="포스터" referrerPolicy="no-referrer" style={{ width: 64, height: 86, objectFit: "cover", borderRadius: 10, flex: "none" }} />}
+        <h1 className="h" style={{ fontSize: 22 }}>{plan.title}</h1>
+      </div>
       <p className="lead">{plan.summary}</p>
       <p className="note" style={{ textAlign: "left", margin: "-4px 0 0" }}>{pil ? `${concert.city} · ${fmtDateKo(concert.date)} ${fmtTimeKo(concert.start_time)} ${concert.venue_name}에서 출발` : `${concert.venue_name} · ${fmtDateKo(concert.date)} ${fmtTimeKo(concert.start_time)} 시작`}</p>
       {pil && <p className="note" style={{ textAlign: "left", margin: 0 }}><span className="tag pu">콘서트립에서 불러온 팬덤 스팟</span> 공연 없이 떠나는 {concert.artist_display} 팬덤 스팟 여행이에요</p>}
