@@ -285,5 +285,5 @@ export interface ConcertView {
   /** 공연장 꿀팁 (data/venue-mock.json, 시연용) */
   tips?: string[];
   /** 성지순례 여행이면 코스 정보 (공연장·입장·티켓 없음) */
-  pilgrim?: { course_id: string; region: string; provider: string } | null;
+  pilgrim?: { course_id: string; region: string; provider: string; arrive_note?: string } | null;
 }

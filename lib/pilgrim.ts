@@ -17,6 +17,8 @@ export interface PilgrimCourse {
   blurb: string;
   start: { name: string; lat: number; lng: number };
   place_ids: string[];
+  /** 출발점까지 오는 법 (예: 마라도 배편) */
+  arrive_note?: string;
 }
 type RawPlace = Partial<Place> & {
   id: string; name: string; category: Place["category"]; lat: number | null; lng: number | null; region?: string; status_note?: string;
@@ -29,6 +31,8 @@ type RawPlace = Partial<Place> & {
 const D = data as unknown as { provider: string; artists: PilgrimArtist[]; courses: PilgrimCourse[]; places: RawPlace[] };
 
 export const PILGRIM_PROVIDER = D.provider; // "concertrip": 콘서트립 팬덤 장소 DB 형식
+/** 데이터 버전(내용이 바뀌면 달라짐) — 일정 캐시 키에 넣어 고친 데이터가 바로 반영되게 한다 */
+export const PILGRIM_REV = (() => { const t = JSON.stringify(data); let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return String(h); })();
 
 export function pilgrimArtists(): PilgrimArtist[] { return D.artists; }
 export function pilgrimCourses(artist?: string): PilgrimCourse[] {
@@ -82,7 +86,7 @@ export function pilgrimView(c: PilgrimCourse, date: string, start_time: string):
     id: null, title: c.title, artist_display: c.artist, color: a?.color ?? "#14C1AD", city: c.region,
     venue_name: c.start.name, venue_lat: c.start.lat, venue_lng: c.start.lng, date, start_time, est_end_time: null,
     notice_text: "", gate_map: {}, zone_image_url: null, official_map_url: null, info_desk_place_id: null, custom: false,
-    pilgrim: { course_id: c.id, region: c.region, provider: PILGRIM_PROVIDER },
+    pilgrim: { course_id: c.id, region: c.region, provider: PILGRIM_PROVIDER, arrive_note: c.arrive_note },
   };
 }
 
@@ -226,9 +230,11 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
   const arriveText = t.mode === "train" ? `${t.train_to || view.venue_name}에 내리세요. ${view.venue_name}에서 시작해요.`
     : t.mode === "car" ? `${view.venue_name} 근처에 차를 두고 시작하세요.`
     : `${view.venue_name}에서 시작해요.`;
+  const boat = view.pilgrim?.arrive_note;
+  const arriveFull = boat ? `${boat} ${view.venue_name}에서 시작해요.` : arriveText;
   items.push({
     id: nid(), start: toHHMM(T0), end: toHHMM(T0 + 10), type: "arrive", title: `${view.venue_name} 도착`,
-    place_id: null, walk_min: null, parent_text: arriveText, done_label: "도착했어요",
+    place_id: null, walk_min: null, parent_text: arriveFull, done_label: "도착했어요",
     kid_note: t.mode === "train" && t.train_depart ? `${t.train_from} ${t.train_depart} 출발` : "", source: "user_input",
   });
   const legText = (lg: ReturnType<typeof leg> | null, from: string, rough = false) => !lg ? "" : rough ? ` ${from}에서 택시나 차로 이동하세요.` : lg.mode === "walk"
@@ -282,6 +288,7 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
     place_id: null, walk_min: back.mode === "walk" ? back.min : null,
     parent_text: t.mode === "train"
       ? `${t.train_return_depart ? `${t.train_return_depart} 열차예요. ` : ""}${back.mode === "taxi" ? `택시로 ${back.min}분쯤 걸려요. ` : ""}승차권을 꺼내 두세요.`
+      : boat ? `오늘 일정 끝! ${view.venue_name}으로 돌아가 나가는 배를 타세요. 마지막 배 시간을 꼭 확인하세요.`
       : `오늘 일정 끝! ${back.mode === "taxi" ? `${view.venue_name}까지 택시로 ${back.min}분쯤 걸려요.` : "조심히 들어가세요."}`,
     done_label: t.mode === "train" ? "열차 탔어요" : "출발했어요", kid_note: "", source: "user_input",
   });

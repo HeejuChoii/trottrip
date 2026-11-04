@@ -1,5 +1,5 @@
 {
- "_note": "공연 없이 떠나는 성지순례 여행(팬덤트립) 코스. places는 콘서트립 팬덤 장소 형식. 가수가 다녀간·추천한 식당, 가수가 방문한 여행지, 고향·노래 배경지만(공연장 제외). 좌표가 없는 곳은 서버가 카카오 주소 검색으로 한 번 찾아 저장한다. 출발점 좌표는 근사값. confidence low는 영상·블로그 한 곳 근거라 확인 필요. 2026-11-04 웹 조사.",
+ "_note": "공연 없이 떠나는 성지순례 여행(팬덤트립) 코스. places는 콘서트립 팬덤 장소 형식. 가수가 다녀간·추천한 식당, 가수가 방문한 여행지, 고향·노래 배경지만(공연장 제외). 좌표가 없는 곳은 서버가 카카오 주소 검색으로 한 번 찾아 저장한다. 출발점 좌표는 근사값. confidence low는 영상·블로그 한 곳 근거라 확인 필요. 2026-11-04 웹 조사. 2026-11-04 브라우저로 카카오맵 영업 상태·주소 확인 반영(우리식당·카페 찬스·송가인공원·박서진 시장·영탁 찜닭·김건모 마라도).",
  "provider": "concertrip",
  "artists": [
   {
@@ -31,6 +31,12 @@
    "fandom": "영탁앤블루스",
    "color": "#2F7D6D",
    "blurb": "고향 안동의 찜닭골목과 월영교"
+  },
+  {
+   "name": "김건모",
+   "fandom": "",
+   "color": "#6B5BD6",
+   "blurb": "미우새에서 간 마라도 짜장면 투어"
   },
   {
    "name": "조용필",
@@ -117,7 +123,7 @@
    "artist": "박서진",
    "title": "닻별 성지 · 삼천포 박서진길",
    "region": "경남 사천",
-   "blurb": "수산시장 점심, 박서진길 따라 건어물 가게와 노을",
+   "blurb": "시장 김밥·수산시장, 박서진길 따라 건어물 가게와 노을, 저녁엔 포차",
    "start": {
     "name": "삼천포항",
     "lat": 34.9255,
@@ -125,10 +131,13 @@
    },
    "place_ids": [
     "fan_psj_market",
+    "fan_psj_gimbap",
     "fan_psj_daegyo",
     "fan_psj_store",
     "fan_psj_noeul",
-    "fan_psj_cablecar"
+    "fan_psj_cablecar",
+    "fan_psj_honeytown",
+    "fan_psj_haetteun"
    ]
   },
   {
@@ -156,7 +165,7 @@
    "artist": "영탁",
    "title": "영블스 성지 · 고향 안동",
    "region": "경북 안동",
-   "blurb": "하회마을, 찜닭골목 점심, 월영교",
+   "blurb": "하회마을, 방송에 나온 찜닭집 점심, 월영교",
    "start": {
     "name": "안동역",
     "lat": 36.5652,
@@ -164,7 +173,8 @@
    },
    "place_ids": [
     "fan_yt_hahoe",
-    "fan_yt_jjimdak",
+    "fan_yt_yujin",
+    "fan_yt_millennium",
     "fan_yt_woryeong"
    ]
   },
@@ -182,6 +192,26 @@
    "place_ids": [
     "fan_cyp_bukhang",
     "fan_cyp_oryukdo"
+   ]
+  },
+  {
+   "id": "kgm-marado",
+   "artist": "김건모",
+   "title": "미우새 마라도 짜장면 투어",
+   "region": "제주 마라도",
+   "blurb": "김건모가 미우새에서 돈 마라도 짜장면집과 최남단비",
+   "start": {
+    "name": "마라도 살레덕 선착장",
+    "lat": 33.1213,
+    "lng": 126.2676
+   },
+   "arrive_note": "운진항(대정읍)에서 마라도 가는 배를 타세요(약 25분). 날씨가 나쁘면 배가 안 뜰 수 있어요.",
+   "place_ids": [
+    "fan_kgm_wonjo",
+    "fan_kgm_cheolgabang",
+    "fan_kgm_haenyeochon",
+    "fan_kgm_leechangmyeong",
+    "fan_kgm_marado_sign"
    ]
   }
  ],
@@ -322,9 +352,14 @@
     "https://www.esquirekorea.co.kr/article/59598",
     "https://www.youtube.com/watch?v=YTDIr7DnIK0"
    ],
-   "source": "needs_check",
+   "source": "verified",
    "confidence": "high",
-   "concertrip_url": ""
+   "concertrip_url": "",
+   "hours": "11:00-21:00",
+   "closed": [
+    "일"
+   ],
+   "note": "카카오맵 영업중 확인(2026-11-04)"
   },
   {
    "id": "fan_lyw_korea",
@@ -509,7 +544,7 @@
     "seating",
     "indoor"
    ],
-   "address": "대구광역시 달성군 옥포읍 옥포로 301",
+   "address": "대구광역시 달성군 옥포읍 옥포로 301 3층",
    "region": "대구 달성군",
    "lat": null,
    "lng": null,
@@ -518,10 +553,11 @@
     "https://www.yeongnam.com/web/view.php?key=20230617010002171",
     "https://www.xportsnews.com/article/1442800"
    ],
-   "source": "needs_check",
+   "source": "verified",
    "confidence": "medium",
    "concertrip_url": "",
-   "hours": "10:30-21:00"
+   "hours": "10:30-22:00",
+   "note": "카카오맵 영업중 확인(2026-11-04)"
   },
   {
    "id": "fan_lcw_sonjungheon",
@@ -692,7 +728,7 @@
    "category": "sight",
    "fan_type": "official",
    "tags": [],
-   "address": "전라남도 진도군 임회면 고정리 965-9",
+   "address": "전라남도 진도군 임회면 고정리 965-7",
    "region": "전남 진도",
    "lat": null,
    "lng": null,
@@ -703,7 +739,8 @@
    ],
    "source": "needs_check",
    "confidence": "high",
-   "concertrip_url": ""
+   "concertrip_url": "",
+   "note": "2025년 리모델링 후 2026년 9월 방문 사진·무료입장 표시(카카오맵)"
   },
   {
    "id": "fan_sgi_okhyang",
@@ -792,29 +829,6 @@
    "concertrip_url": ""
   },
   {
-   "id": "fan_yt_jjimdak",
-   "name": "안동 구시장 찜닭골목",
-   "category": "restaurant",
-   "fan_type": "artist_visited",
-   "tags": [
-    "korean",
-    "seating",
-    "indoor"
-   ],
-   "address": "경북 안동시 번영1길 47",
-   "region": "경북 안동",
-   "lat": null,
-   "lng": null,
-   "description_ko": "영탁이 고향 친구들과 찜닭을 먹은 골목이에요",
-   "evidence_urls": [
-    "https://enews.imbc.com/News/ViewAmp/433770",
-    "https://www.imaeil.com/page/view/2022042801234196292"
-   ],
-   "source": "needs_check",
-   "confidence": "high",
-   "concertrip_url": ""
-  },
-  {
    "id": "fan_yt_woryeong",
    "name": "월영교 (안동)",
    "category": "photo",
@@ -864,6 +878,244 @@
    "evidence_urls": [
     "https://www.seoul.co.kr/news/2015/02/28/20150228550001",
     "https://www.wikitree.co.kr/articles/1044450"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_psj_haetteun",
+   "name": "해뜨는집 (삼천포 용궁포차촌)",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "korean",
+    "seafood",
+    "seating"
+   ],
+   "address": "경남 사천시 어시장길 122",
+   "region": "경남 사천",
+   "lat": null,
+   "lng": null,
+   "description_ko": "박서진이 인정한 삼천포 포장마차, 살림남 촬영지예요",
+   "evidence_urls": [
+    "https://www.youtube.com/watch?v=TvupGXKGrwY",
+    "https://www.youtube.com/watch?v=AU9mY5qBocc"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": "",
+   "hours": "17:00-03:00"
+  },
+  {
+   "id": "fan_psj_gimbap",
+   "name": "김밥이모집 (용궁수산시장 7번 출구)",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "korean",
+    "snack",
+    "quick",
+    "mild"
+   ],
+   "address": "경남 사천시 용궁수산시장 7번 출구 앞",
+   "region": "경남 사천",
+   "lat": null,
+   "lng": null,
+   "description_ko": "박서진이 어릴 때부터 먹던 시장 김밥집이에요",
+   "evidence_urls": [
+    "https://www.youtube.com/watch?v=TvupGXKGrwY",
+    "https://www.youtube.com/watch?v=kF351Uz_YHo"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": ""
+  },
+  {
+   "id": "fan_psj_honeytown",
+   "name": "하니타운 (삼천포 서부시장 빵집)",
+   "category": "cafe",
+   "fan_type": "artist_visited",
+   "tags": [
+    "snack",
+    "seating",
+    "indoor"
+   ],
+   "address": "경남 사천시 서부시장길 6",
+   "region": "경남 사천",
+   "lat": null,
+   "lng": null,
+   "description_ko": "박서진 추억이 담긴 서부시장 빵집이에요",
+   "evidence_urls": [
+    "https://www.youtube.com/watch?v=TvupGXKGrwY"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": "",
+   "hours": "08:00-22:00"
+  },
+  {
+   "id": "fan_yt_yujin",
+   "name": "유진찜닭 (안동 구시장)",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "korean",
+    "seating",
+    "indoor"
+   ],
+   "address": "경북 안동시 번영길 12",
+   "region": "경북 안동",
+   "lat": null,
+   "lng": null,
+   "description_ko": "영탁이 구해줘 홈즈에서 먹은 구시장 찜닭집이에요",
+   "evidence_urls": [
+    "https://enews.imbc.com/News/ViewAmp/433770"
+   ],
+   "source": "needs_check",
+   "confidence": "high",
+   "concertrip_url": "",
+   "hours": "09:00-21:00",
+   "closed": [
+    "월"
+   ]
+  },
+  {
+   "id": "fan_yt_millennium",
+   "name": "밀레니엄안동찜닭 (안동 구시장)",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "korean",
+    "seating",
+    "indoor"
+   ],
+   "address": "경북 안동시 번영길 9",
+   "region": "경북 안동",
+   "lat": null,
+   "lng": null,
+   "description_ko": "영탁이 신랑수업에서 고향 친구들과 찜닭을 먹은 집이에요",
+   "evidence_urls": [
+    "https://www.imaeil.com/page/view/2022042801234196292"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": "",
+   "hours": "10:00-21:00",
+   "closed": [
+    "토",
+    "일"
+   ]
+  },
+  {
+   "id": "fan_kgm_wonjo",
+   "name": "원조마라도짜장면집",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "chinese",
+    "seafood",
+    "quick"
+   ],
+   "address": "제주 서귀포시 대정읍 마라로101번길 46",
+   "region": "제주 마라도",
+   "lat": null,
+   "lng": null,
+   "description_ko": "김건모가 미우새에서 들른 마라도 원조 짜장면집이에요",
+   "evidence_urls": [
+    "https://www.busan.com/view/busan/view.php?code=20170428000041",
+    "https://mobile.busan.com/view/busan/view.php?code=20170514000082"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": "",
+   "hours": "10:00-16:00",
+   "closed": [
+    "일"
+   ]
+  },
+  {
+   "id": "fan_kgm_cheolgabang",
+   "name": "철가방을든해녀",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "chinese",
+    "seafood",
+    "quick"
+   ],
+   "address": "제주 서귀포시 대정읍 마라로 85",
+   "region": "제주 마라도",
+   "lat": null,
+   "lng": null,
+   "description_ko": "해녀가 끓이는 톳짜장, 미우새 마라도 짜장 투어 집이에요",
+   "evidence_urls": [
+    "https://www.busan.com/view/busan/view.php?code=20170428000041"
+   ],
+   "source": "needs_check",
+   "confidence": "medium",
+   "concertrip_url": "",
+   "hours": "10:00-16:00"
+  },
+  {
+   "id": "fan_kgm_haenyeochon",
+   "name": "마라도해녀촌자장",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "chinese",
+    "seafood",
+    "quick"
+   ],
+   "address": "제주 서귀포시 대정읍 마라로 41",
+   "region": "제주 마라도",
+   "lat": null,
+   "lng": null,
+   "description_ko": "미우새 마라도 짜장 투어에 나온 해녀촌 짜장집이에요",
+   "evidence_urls": [
+    "https://www.busan.com/view/busan/view.php?code=20170428000041"
+   ],
+   "source": "needs_check",
+   "confidence": "low",
+   "concertrip_url": "",
+   "hours": "10:00-16:00"
+  },
+  {
+   "id": "fan_kgm_leechangmyeong",
+   "name": "이창명짜장면시키신분",
+   "category": "restaurant",
+   "fan_type": "artist_visited",
+   "tags": [
+    "chinese",
+    "seafood",
+    "quick"
+   ],
+   "address": "제주 서귀포시 대정읍 마라로 48",
+   "region": "제주 마라도",
+   "lat": null,
+   "lng": null,
+   "description_ko": "'짜장면 시키신 분' 광고로 유명한 마라도 짜장집이에요",
+   "evidence_urls": [
+    "https://www.busan.com/view/busan/view.php?code=20170428000041"
+   ],
+   "source": "needs_check",
+   "confidence": "low",
+   "concertrip_url": "",
+   "hours": "10:00-16:00"
+  },
+  {
+   "id": "fan_kgm_marado_sign",
+   "name": "마라도 최남단비",
+   "category": "photo",
+   "fan_type": "fan_made",
+   "tags": [],
+   "address": "제주 서귀포시 대정읍 마라로 마라도 최남단비",
+   "region": "제주 마라도",
+   "lat": null,
+   "lng": null,
+   "description_ko": "대한민국 최남단 표지석, 짜장 투어 뒤 사진 명소예요",
+   "evidence_urls": [
+    "https://mobile.busan.com/view/busan/view.php?code=20170514000082"
    ],
    "source": "needs_check",
    "confidence": "medium",

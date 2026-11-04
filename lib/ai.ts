@@ -14,7 +14,10 @@ import { getCachedPlan, setCachedPlan } from "./db.ts";
 import { budgetLeft, recordUsage } from "./usage.ts";
 import { toHHMM, toMin } from "./time.ts";
 import { CATEGORY_LABEL } from "./concertrip.ts";
-import { buildPilgrimPlan } from "./pilgrim.ts";
+import { buildPilgrimPlan, PILGRIM_REV } from "./pilgrim.ts";
+import venueMock from "../data/venue-mock.json" with { type: "json" };
+
+const MOCK_REV = (() => { const t = JSON.stringify(venueMock); let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return String(h); })();
 
 export const MODEL = process.env.ANTHROPIC_MODEL || "claude-opus-5-5";
 export function aiEnabled() { return !!process.env.ANTHROPIC_API_KEY; }
@@ -86,7 +89,7 @@ const REFINE_RULES = `규칙
 export function planHash(input: PlanInput, lessWalk = false): string {
   const { concert, parent, prefs, transport, seat, places } = input;
   const key = JSON.stringify({
-    v: 2, lessWalk,
+    v: 3, lessWalk, data: concert.pilgrim ? PILGRIM_REV : MOCK_REV,
     concert: [concert.id, concert.title, concert.date, concert.start_time, concert.est_end_time, concert.gate_map],
     places: places.map((p) => `${p.id}:${p.updated_at}`).sort(),
     parent, prefs, transport, seat,
