@@ -16,11 +16,8 @@ interface LocalDB {
   chats: ChatRow[];
   tt_places?: TtPlaceRow[];
   plan_cache?: { hash: string; plan: Plan; created_at: string }[];
-  notice_checks?: NoticeCheckRow[];
   api_usage?: UsageRow[];
 }
-
-export interface NoticeCheckRow { id: string; concert_id: string; result: Record<string, unknown>; status: "new" | "applied" | "dismissed" | "failed"; created_at: string }
 
 export interface UsageRow { id: string; kind: string; model: string; input_tokens: number; output_tokens: number; cost_usd: number; created_at: string }
 
@@ -346,29 +343,4 @@ export async function listUsage(): Promise<UsageRow[]> {
 
 export async function sumUsage(): Promise<number> {
   return (await listUsage()).reduce((a, r) => a + Number(r.cost_usd), 0);
-}
-
-// ---------- notice_checks (공지 자동 확인 제안) ----------
-export async function addNoticeCheck(concert_id: string, result: Record<string, unknown>, status: NoticeCheckRow["status"] = "new"): Promise<NoticeCheckRow> {
-  const row: NoticeCheckRow = { id: randomUUID(), concert_id, result, status, created_at: new Date().toISOString() };
-  const s = supa();
-  if (s) { must(await s.from("notice_checks").insert(row)); return row; }
-  const db = await local();
-  (db.notice_checks ??= []).push(row);
-  await flush();
-  return row;
-}
-
-export async function listNoticeChecks(concert_id: string, limit = 5): Promise<NoticeCheckRow[]> {
-  const s = supa();
-  if (s) return must(await s.from("notice_checks").select("*").eq("concert_id", concert_id).order("created_at", { ascending: false }).limit(limit)) as NoticeCheckRow[];
-  return ((await local()).notice_checks ?? []).filter((r) => r.concert_id === concert_id).sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, limit);
-}
-
-export async function setNoticeCheckStatus(id: string, status: NoticeCheckRow["status"]): Promise<void> {
-  const s = supa();
-  if (s) { must(await s.from("notice_checks").update({ status }).eq("id", id)); return; }
-  const db = await local();
-  const r = (db.notice_checks ?? []).find((x) => x.id === id);
-  if (r) { r.status = status; await flush(); }
 }

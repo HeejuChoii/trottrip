@@ -3,11 +3,10 @@
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import { isAdmin } from "@/lib/admin";
-import { addNoticeCheck, deleteTtPlace, getConcert, listTtPlaces, replaceTtPlacesByOrigin, setNoticeCheckStatus, upsertConcert, upsertTtPlaces } from "@/lib/db";
+import { deleteTtPlace, getConcert, listTtPlaces, replaceTtPlacesByOrigin, upsertConcert, upsertTtPlaces } from "@/lib/db";
 import { geocode, importNearby, kakaoConfigured, walkMinFromDistance } from "@/lib/kakao-local";
 import { extractNotice, NoticeSchema } from "@/lib/notice-extract";
 import { labelSpice } from "@/lib/label-ai";
-import { findNoticeOnWeb } from "@/lib/notice-watch";
 import { bad, body, ok } from "@/lib/http";
 import research from "@/data/venue-research.json";
 import { PLACE_CATEGORIES, PLACE_TAGS, FAN_TYPES, type Concert, type Place, type TtPlaceRow } from "@/lib/types";
@@ -144,22 +143,6 @@ export async function POST(req: Request) {
         });
         await upsertTtPlaces(rows);
         return ok({ count: rows.length });
-      }
-      case "notice_search": {
-        if (!concert) return bad("공연을 찾을 수 없어요", 404);
-        try {
-          const f = await findNoticeOnWeb(concert);
-          const row = await addNoticeCheck(concert.id, f as unknown as Record<string, unknown>);
-          return ok({ check: row });
-        } catch (e) {
-          const row = await addNoticeCheck(concert.id, { error: e instanceof Error ? e.message : String(e) }, "failed");
-          return ok({ check: row });
-        }
-      }
-      case "notice_check_status": {
-        if (typeof b.id !== "string" || !["applied", "dismissed"].includes(String(b.status))) return bad("잘못된 요청");
-        await setNoticeCheckStatus(b.id, b.status as "applied" | "dismissed");
-        return ok({ ok: true });
       }
       case "list": {
         if (!concert) return bad("공연을 찾을 수 없어요", 404);

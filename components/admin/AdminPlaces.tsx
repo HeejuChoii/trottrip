@@ -12,9 +12,7 @@ const TAG_LABEL: Record<PlaceTag, string> = { korean: "한식", chinese: "중식
 type Form = { id?: string; scope: "venue" | "concert"; name: string; category: PlaceCategory; description_ko: string; walk: string; lat: string; lng: string; address: string; tags: PlaceTag[]; fan_type: Place["fan_type"]; evidence: string; source: Place["source"] };
 const emptyForm = (scope: "venue" | "concert"): Form => ({ scope, name: "", category: "toilet", description_ko: "", walk: "", lat: "", lng: "", address: "", tags: [], fan_type: "none", evidence: "", source: "needs_check" });
 
-type Check = { id: string; status: string; created_at: string; result: { error?: string; text?: string; sources?: { title: string; url: string }[]; extract?: NoticeExtract } };
-
-export default function AdminPlaces({ concert, places, scopeOf, kakao, ai, checks = [] }: { concert: Concert; places: Place[]; scopeOf: Record<string, string>; kakao: boolean; ai: boolean; checks?: Check[] }) {
+export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { concert: Concert; places: Place[]; scopeOf: Record<string, string>; kakao: boolean; ai: boolean }) {
   const router = useRouter();
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState("");
@@ -110,34 +108,6 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai, check
           <button className="mini-btn" disabled={!ai || !!busy || notice.length < 20} onClick={async () => { const r = await run<{ extract: NoticeExtract }>("ex", { action: "notice_extract", text: notice }); if (r) setEx(r.extract); }}>{busy === "ex" ? "정리 중…" : "정리하기"}</button>
           {!ai && <small className="err">ANTHROPIC_API_KEY가 필요해요</small>}
         </div>
-      </div>
-
-      <div className="card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <span style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <b>🔎 공지 자동 확인 (웹 검색)</b>
-          <button className="mini-btn" disabled={!ai || !!busy} onClick={() => run("search", { action: "notice_search" }, () => "웹에서 공지를 찾아 아래에 제안으로 올렸어요")}>{busy === "search" ? "찾는 중… (1분 정도)" : "지금 웹에서 찾기"}</button>
-        </span>
-        <small style={{ color: "var(--sub)", lineHeight: 1.5 }}>공연 14일 전부터 매일 아침 AI가 예매처·공식 SNS·기사에서 입장 시간·게이트·MD 부스·셔틀 공지를 찾아요. 결과는 바로 반영되지 않고 여기 제안으로 쌓여요. 확인 후 &quot;적용&quot;을 누르면 공지 붙여 넣기와 같은 정리 화면이 열려요.</small>
-        {checks.length === 0 && <small>아직 확인 기록이 없어요.</small>}
-        {checks.map((c) => (
-          <div key={c.id} style={{ borderTop: "1px solid var(--line)", paddingTop: 8, fontSize: 13.5, lineHeight: 1.6 }}>
-            <b>{new Date(c.created_at).toLocaleString("ko-KR")}</b> · {({ new: "새 제안", applied: "적용함", dismissed: "무시함", failed: "실패" } as Record<string, string>)[c.status] ?? c.status}
-            {c.result.error && <div className="err">{c.result.error}</div>}
-            {c.result.extract && (
-              <>
-                <div>{c.result.extract.summary}</div>
-                <div>입장 시작: {c.result.extract.entry_start || "공지 없음"} · MD: {c.result.extract.md_hours || "공지 없음"} · 게이트: {c.result.extract.gate_map.length ? c.result.extract.gate_map.map((g) => `${g.zone}→${g.gate}`).join(", ") : "공지 없음"} · 장소 {c.result.extract.places.length}곳</div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{(c.result.sources ?? []).slice(0, 6).map((s) => <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer">{s.title.slice(0, 24) || "출처"}</a>)}</div>
-                {c.status === "new" && (
-                  <span style={{ display: "flex", gap: 6, marginTop: 4 }}>
-                    <button className="mini-btn" style={{ background: "var(--deep)", color: "#fff" }} onClick={() => { setEx(c.result.extract!); setNoticeScope("concert"); setNoticeUrl(c.result.sources?.[0]?.url ?? ""); run("st", { action: "notice_check_status", id: c.id, status: "applied" }); scrollTo(0, 0); }}>적용(정리 화면 열기)</button>
-                    <button className="mini-btn" onClick={() => run("st", { action: "notice_check_status", id: c.id, status: "dismissed" }, () => "무시했어요")}>무시</button>
-                  </span>
-                )}
-              </>
-            )}
-          </div>
-        ))}
       </div>
 
       {ex && (
