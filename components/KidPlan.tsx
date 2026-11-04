@@ -4,7 +4,7 @@ import Link from "next/link";
 import Brand from "./Brand";
 import { useKakao } from "./useKakao";
 import { ls, postJSON, track } from "@/lib/client";
-import { fmtDateKo, fmtTimeKo, isHHMM } from "@/lib/time";
+import { addDays, fmtDateKo, fmtTimeKo, isHHMM } from "@/lib/time";
 import { shareTitle, sourceName } from "@/lib/text";
 import { CATEGORY_LABEL, FAN_LABEL } from "@/lib/concertrip";
 import type { ConcertView, ParentProfile, Place, Plan, PlanItem, Prefs, TicketInfo, Transport } from "@/lib/types";
@@ -242,10 +242,14 @@ export default function KidPlan(props: Props) {
 
       <a className="actbtn" href={`/k/${kidToken}/map`} style={{ textAlign: "center" }}>🗺 지도에서 동선 보기</a>
       <div className="tl">
-        {items.map((it) => {
+        {items.map((it, idx) => {
           const p = it.place_id ? byId.get(it.place_id) : undefined;
+          const d = it.day ?? 1;
+          const newDay = d > 1 && (items[idx - 1]?.day ?? 1) !== d;
           return (
-            <div key={it.id} className={`ti ${tone(it, p)}`}>
+            <div key={it.id} style={{ display: "contents" }}>
+            {newDay && <div className="lab" style={{ margin: "12px 0 2px", fontSize: 14, color: "var(--pinkD)" }}>둘째 날 · {fmtDateKo(addDays(concert.date, d - 1))}</div>}
+            <div className={`ti ${tone(it, p)}`}>
               <div className="t">{it.start}</div>
               <div className="dot" />
               <div className="box">
@@ -268,6 +272,7 @@ export default function KidPlan(props: Props) {
                   <div style={{ marginTop: 6 }}><button className="mini-btn" disabled={busy === it.id} onClick={() => swap(it.id)}>{SWAP_LABEL[it.type]}</button></div>
                 )}
               </div>
+            </div>
             </div>
           );
         })}

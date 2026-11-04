@@ -4,7 +4,7 @@
 import type { ConcertView, ParentProfile, Place, Plan, Prefs, Transport } from "./types.ts";
 import { ENTER_BEFORE_MIN, maxWalkFor, restaurantMatches, type PlanInput } from "./planner.ts";
 import { estimateSteps } from "./steps.ts";
-import { isHHMM, toMin } from "./time.ts";
+import { absMin, isHHMM, toMin } from "./time.ts";
 
 const P0: ParentProfile = {
   honorific: "어머니", age_band: "60s", walk: "15-30", steps_usual: 0, food: ["korean"], food_other: "",
@@ -40,7 +40,7 @@ export function checkPlan(plan: Plan, input: PlanInput): string[] {
   const v: string[] = [];
   const ids = new Map(input.places.map((p) => [p.id, p]));
   const S = toMin(input.concert.start_time);
-  const items = [...plan.items].sort((a, b) => toMin(a.start) - toMin(b.start));
+  const items = [...plan.items].sort((a, b) => absMin(a) - absMin(b));
   const maxWalk = maxWalkFor(input.parent.walk);
   for (const it of items) {
     if (!isHHMM(it.start) || !isHHMM(it.end)) v.push(`${it.id} 시각 형식 오류`);

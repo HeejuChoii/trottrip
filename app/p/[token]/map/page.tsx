@@ -25,6 +25,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       kakaoKey={process.env.NEXT_PUBLIC_KAKAO_JS_KEY ?? ""}
       kidLabel={d.trip.kid_label}
       pilgrim={!!d.concert.pilgrim}
+      extraPins={d.trip.plan!.pins ?? []}
     />
   );
 }

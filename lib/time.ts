@@ -73,3 +73,22 @@ export function fmtDuration(min: number): string {
   const m = min % 60;
   return m ? `${h}시간 ${m}분` : `${h}시간`;
 }
+
+/** 여러 날 일정의 절대 분: (며칠째-1)×1440 + 시각 */
+export function absMin(it: { start: string; day?: number }): number {
+  return ((it.day ?? 1) - 1) * 1440 + toMin(it.start);
+}
+export function absEnd(it: { start: string; end: string; day?: number }): number {
+  const s = toMin(it.start), e = toMin(it.end);
+  return ((it.day ?? 1) - 1) * 1440 + (e < s ? e + 1440 : e);
+}
+/** 두 날짜(YYYY-MM-DD) 사이 일수 b - a */
+export function daysBetween(a: string, b: string): number {
+  const x = Date.parse(`${a}T00:00:00Z`), y = Date.parse(`${b}T00:00:00Z`);
+  return isNaN(x) || isNaN(y) ? 0 : Math.round((y - x) / 86400000);
+}
+/** 날짜에 n일 더하기 */
+export function addDays(d: string, n: number): string {
+  const t = Date.parse(`${d}T00:00:00Z`);
+  return isNaN(t) ? d : new Date(t + n * 86400000).toISOString().slice(0, 10);
+}
