@@ -28,7 +28,15 @@ async function kakaoGet(path: string, params: Record<string, string | number>): 
   if (!key) throw new Error("KAKAO_REST_API_KEY가 설정되지 않았어요");
   const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)]));
   const res = await fetch(`${BASE}/${path}?${qs}`, { headers: { Authorization: `KakaoAK ${key}` }, cache: "no-store", signal: AbortSignal.timeout(8000) });
-  if (!res.ok) throw new Error(`카카오 로컬 응답 오류 ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    let msg = "";
+    try { msg = (JSON.parse(body) as { message?: string }).message ?? ""; } catch { msg = body.slice(0, 200); }
+    const hint = /OPEN_MAP_AND_LOCAL|disabled/i.test(msg)
+      ? " → 카카오 디벨로퍼스 [제품 설정 → 카카오맵]에서 '사용 설정'을 켜 주세요(로컬 검색도 여기에 포함)."
+      : res.status === 401 ? " → KAKAO_REST_API_KEY가 REST API 키가 맞는지 확인해 주세요." : "";
+    throw new Error(`카카오 로컬 오류 ${res.status}: ${msg}${hint}`);
+  }
   return res.json();
 }
 

@@ -7,6 +7,7 @@ import { deleteTtPlace, getConcert, listTtPlaces, replaceTtPlacesByOrigin, upser
 import { geocode, importNearby, kakaoConfigured, walkMinFromDistance } from "@/lib/kakao-local";
 import { extractNotice, NoticeSchema } from "@/lib/notice-extract";
 import { bad, body, ok } from "@/lib/http";
+import research from "@/data/venue-research.json";
 import { PLACE_CATEGORIES, PLACE_TAGS, FAN_TYPES, type Concert, type Place, type TtPlaceRow } from "@/lib/types";
 
 export const maxDuration = 60;
@@ -118,6 +119,17 @@ export async function POST(req: Request) {
         }
         await upsertTtPlaces(rows);
         return ok({ gate_map, places: rows.length });
+      }
+      case "import_research": {
+        if (!concert?.venue_key) return bad("공연장 키(venue_key)가 있는 공연에서 눌러 주세요");
+        const list = (research as { venues: Record<string, unknown[]> }).venues[concert.venue_key] ?? [];
+        if (!list.length) return bad(`'${concert.venue_key}' 공연장의 조사 자료가 아직 없어요`);
+        const rows = list.map((x) => {
+          const p = PlaceInput.parse({ ...(x as object), source: "needs_check" });
+          return toRow(concert, "venue", "research", { ...p, id: String((x as { id: string }).id) });
+        });
+        await upsertTtPlaces(rows);
+        return ok({ count: rows.length });
       }
       case "list": {
         if (!concert) return bad("공연을 찾을 수 없어요", 404);
