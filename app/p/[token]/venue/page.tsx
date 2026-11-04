@@ -5,6 +5,7 @@ import { BottomBar } from "@/components/ParentHome";
 import { gateForSeat } from "@/lib/planner";
 import { EMPTY_TICKET } from "@/lib/schemas";
 import { fmtDateLongKo, fmtTimeKo } from "@/lib/time";
+import { tipsFor } from "@/lib/text";
 import type { PlaceCategory } from "@/lib/types";
 
 const PICKUP: Record<string, string> = { mobile: "휴대폰(모바일 티켓)으로 들어가요", onsite: "공연장에서 티켓을 받아요(현장 수령)", paper: "종이 티켓을 꼭 챙기세요", "": "" };
@@ -35,6 +36,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
   const enterGate = enter?.place_id ? places.find((p) => p.id === enter.place_id) : undefined;
   const gateText = gate ?? enterGate?.name ?? null;
   const t = { ...EMPTY_TICKET, ...(trip.ticket ?? {}) };
+  const tips = tipsFor(concert.tips, trip.transport.mode);
   const ret = trip.plan!.items.find((i) => i.type === "return");
   const retPlace = ret?.place_id ? places.find((p) => p.id === ret.place_id) : undefined;
   const mapLink = (id?: string | null) => (id ? `/p/${token}/map?place=${encodeURIComponent(id)}&route=1` : null);
@@ -102,14 +104,14 @@ export default async function Page({ params }: { params: Promise<{ token: string
       {concert.official_map_url && <a className="bigbtn line" href={concert.official_map_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 18 }}>공식 좌석 배치도 보기</a>}
       {concert.notice_text && (
         <details className="card" style={{ fontSize: 17, lineHeight: 1.5 }}>
-          <summary style={{ cursor: "pointer" }}><b>공지</b> · {firstSentence(concert.notice_text)} <span style={{ color: "var(--deep)", fontWeight: 700 }}>더 보기</span></summary>
+          <summary style={{ cursor: "pointer" }}><b>공지</b><span className="sum-more"> · {firstSentence(concert.notice_text)} <span style={{ color: "var(--deep)", fontWeight: 700 }}>더 보기</span></span></summary>
           <p style={{ margin: "8px 0 0" }}>{concert.notice_text}</p>
         </details>
       )}
-      {concert.tips && concert.tips.length > 0 && (
+      {tips.length > 0 && (
         <details className="card" style={{ fontSize: 17, lineHeight: 1.55 }}>
-          <summary style={{ cursor: "pointer" }}><b>💡 공연장 꿀팁</b> · {firstSentence(concert.tips[0])} <span style={{ color: "var(--deep)", fontWeight: 700 }}>더 보기</span></summary>
-          <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>{concert.tips.map((t) => <li key={t}>{t}</li>)}</ul>
+          <summary style={{ cursor: "pointer" }}><b>💡 공연장 꿀팁</b><span className="sum-more"> · {firstSentence(tips[0])} <span style={{ color: "var(--deep)", fontWeight: 700 }}>더 보기</span></span></summary>
+          <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>{tips.map((t) => <li key={t}>{t}</li>)}</ul>
         </details>
       )}
       <div className="fac">

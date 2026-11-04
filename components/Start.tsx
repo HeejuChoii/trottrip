@@ -39,7 +39,7 @@ export default function Start() {
         {err && <p className="err" role="alert" style={{ margin: 0 }}>{err}</p>}
       </div>
       <button className="cta" onClick={() => start()}>공연 날 하루 짜기</button>
-      <button className="cta acc" onClick={() => start(true)}>공연 없이 팬덤 스팟 여행 선물하기</button>
+      <button className="cta acc" style={{ fontSize: 16.5, letterSpacing: "-.02em" }} onClick={() => start(true)}>공연 없이 팬덤 스팟(성지순례) 여행 선물하기</button>
       <p className="fine" style={{ marginTop: -4 }}>가수가 다녀간 식당·여행지를 하루 코스로 · 이번 주말 선물로</p>
       <p className="fine">로그인 없이 바로 시작해요. 해커톤 기간 얼리버드는 무료예요.</p>
     </main>

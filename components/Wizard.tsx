@@ -178,7 +178,7 @@ export default function Wizard({ concerts, artists = [], courses = [], initialMo
           <div className="top"><Brand /><Prog n={1} /></div>
           <div className="chips" role="tablist" style={{ marginBottom: -4 }}>
             <button type="button" role="tab" className="chip" aria-pressed={!fanMode} onClick={() => { setMode("concert"); setErr(""); }}>공연 보러 가세요</button>
-            <button type="button" role="tab" className="chip pu" aria-pressed={fanMode} onClick={() => { setMode("fan"); setErr(""); }}>공연 없이 팬덤 스팟 여행</button>
+            <button type="button" role="tab" className="chip pu" aria-pressed={fanMode} onClick={() => { setMode("fan"); setErr(""); }}>공연 없이 팬덤 스팟(성지순례) 여행</button>
           </div>
         </>
       )}
@@ -236,7 +236,6 @@ export default function Wizard({ concerts, artists = [], courses = [], initialMo
                 <div>
                   <b>{c.title}</b>
                   <small>{c.city ? `${c.city} ` : ""}{c.venue_name} · {fmtDateKo(c.date)} {fmtTimeKo(c.start_time)}</small>
-                  {c.place_count === 0 && <span className="tag in">장소 정보 준비 중</span>}
                   {c.ticket_url && <a href={c.ticket_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="tag ok" style={{ marginLeft: 4, textDecoration: "none" }}>예매처 보기 ↗</a>}
                 </div>
               </div>

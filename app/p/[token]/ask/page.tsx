@@ -10,5 +10,5 @@ export default async function Page({ params }: { params: Promise<{ token: string
   const d = await getParentData(token);
   if (!d || d.expired) notFound();
   const chats = await listChats(d.trip.id);
-  return <ParentAsk token={token} kidH={kidHonorific(d.trip.kid_label)} history={chats.map((c) => ({ role: c.role, text: c.text }))} />;
+  return <ParentAsk token={token} kidH={kidHonorific(d.trip.kid_label)} history={chats.map((c) => ({ role: c.role, text: c.text }))} mode={d.trip.transport.mode} pilgrim={!!d.concert.pilgrim} />;
 }

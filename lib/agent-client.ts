@@ -4,7 +4,7 @@ import "server-only";
 import { createHmac, randomUUID } from "crypto";
 import type { LoadedTrip } from "./trip.ts";
 import { gateForSeat } from "./planner.ts";
-import { kidHonorific } from "./text.ts";
+import { kidHonorific, tipsFor } from "./text.ts";
 
 export function agentEnabled() {
   return !!process.env.AGENT_URL && !!process.env.AGENT_SHARED_SECRET;
@@ -20,6 +20,12 @@ export class AgentLimitError extends Error {}
 
 export async function askAgent(loaded: LoadedTrip, q: string, now: string, done: Set<string>, infoDesk: string | null): Promise<AgentAnswer> {
   const { trip, concert, places } = loaded;
+  // 챗봇 서버 스키마는 그대로 두고, 공지 칸에 교통편·(교통편에 맞는) 공연장 꿀팁을 덧붙여 근거로 준다
+  const t = trip.transport;
+  const ride = t.mode === "train" ? `기차: ${t.train_from} ${t.train_depart} 출발 → ${t.train_to} ${t.train_arrive} 도착, 돌아오는 기차 ${t.train_to}에서 ${t.train_return_depart || "시각 미정"} 출발. 버스가 아니라 기차로 다녀오세요.`
+    : t.mode === "fan_bus" ? `팬 모임 버스: 집결 ${t.meet_place} ${t.meet_time}, 귀가 버스 ${t.return_place} ${t.return_time}.`
+    : t.mode === "shuttle" ? `공연 셔틀: ${t.shuttle_info}` : "자가용·택시로 이동.";
+  const notice = [concert.notice_text, `교통편 — ${ride}`, ...tipsFor(concert.tips, t.mode).map((x) => `꿀팁 — ${x}`)].filter(Boolean).join("\n");
   const payload = {
     trip_id: trip.id,
     message_id: randomUUID(),
@@ -28,7 +34,7 @@ export async function askAgent(loaded: LoadedTrip, q: string, now: string, done:
     parent_honorific: trip.parent_profile.honorific,
     kid_honorific: kidHonorific(trip.kid_label),
     kid_phone: trip.kid_phone,
-    concert: { title: concert.title, venue: concert.venue_name, date: concert.date, start_time: concert.start_time, est_end_time: concert.est_end_time, notice: concert.notice_text },
+    concert: { title: concert.title, venue: concert.venue_name, date: concert.date, start_time: concert.start_time, est_end_time: concert.est_end_time, notice },
     seat: trip.seat,
     gate: gateForSeat(trip.seat, concert.gate_map),
     info_desk: infoDesk,
