@@ -21,38 +21,56 @@ const gocheok = { city: "서울", venue_name: "고척스카이돔", venue_key: "
 const bexco = { city: "부산", venue_name: "벡스코 오디토리움", venue_key: "bexco", venue_lat: 35.1690, venue_lng: 129.1361 };
 const exco = { city: "대구", venue_name: "엑스코 동관", venue_key: "exco", venue_lat: 35.9070, venue_lng: 128.6131 };
 const gwangjuWu = { city: "광주", venue_name: "광주여대 유니버시아드체육관", venue_key: "gwangju-wu", venue_lat: 35.1375, venue_lng: 126.7915 };
-const goyangGym = { city: "고양", venue_name: "고양체육관", venue_key: "goyang-gym", venue_lat: 37.6757, venue_lng: 126.7427 };
+const kintex2 = { city: "고양", venue_name: "킨텍스 제2전시장 9A홀", venue_key: "kintex-2", venue_lat: 37.6655, venue_lng: 126.7496 };
+const dcc2 = { city: "대전", venue_name: "대전컨벤션센터 제2전시장", venue_key: "dcc-2", venue_lat: 36.3748, venue_lng: 127.3935 };
+const excoWest = { city: "대구", venue_name: "엑스코 서관 전시1홀", venue_key: "exco", venue_lat: 35.9066, venue_lng: 128.6115 };
+const inspire = { city: "인천", venue_name: "인스파이어 아레나", venue_key: "inspire", venue_lat: 37.4648, venue_lng: 126.3891 };
+const bexco1 = { city: "부산", venue_name: "벡스코 제1전시장", venue_key: "bexco", venue_lat: 35.1690, venue_lng: 129.1361 };
 
 export const SEED_CONCERTS: Concert[] = [
   { ...base, ...coex, id: "psj-coex-1225", title: "박서진 〈MY NAME IS SEOJIN:갓〉", artist_display: "박서진", color: "#C21F72", date: "2026-12-25", start_time: "17:00", est_end_time: "19:30", notice_text: PSJ_NOTICE },
   { ...base, ...coex, id: "psj-coex-1226", title: "박서진 〈MY NAME IS SEOJIN:갓〉", artist_display: "박서진", color: "#C21F72", date: "2026-12-26", start_time: "17:00", est_end_time: "19:30", notice_text: PSJ_NOTICE },
   { ...base, ...kintex, id: "lcw-kintex-1218", title: "이찬원 〈찬스 감사제〉", artist_display: "이찬원", color: "#5E46C9", date: "2026-12-18", start_time: "19:30", est_end_time: "22:00", notice_text: LCW_NOTICE },
   { ...base, ...kintex, id: "lcw-kintex-1219", title: "이찬원 〈찬스 감사제〉", artist_display: "이찬원", color: "#5E46C9", date: "2026-12-19", start_time: "18:00", est_end_time: "20:30", notice_text: LCW_NOTICE },
-  // ↓ 시연용: 8명 가수 공연. 이승철 광주(11/14)·조용필 KSPO(11/27~29)는 보도로 확인한 일정, 나머지는 시연용 가상 공연(날짜·시각 재확인 필요)
+  // ↓ 8명 가수 공연. 이승철·조용필·김건모·영탁은 공식 공지·예매처 기준 일정(시각이 없는 회차와 게이트·MD 시간은 시연용 가정),
+  //   임영웅 고척·송가인 벡스코는 다가오는 공연이 없어 시연용 가상 공연
   { ...base, ...gocheok, id: "lyw-gocheok-1227", title: "임영웅 〈IM HERO 2026 앙코르〉", artist_display: "임영웅", color: "#3A8DDE", date: "2026-12-27", start_time: "18:00", est_end_time: "21:00",
     notice_text: "입장은 공연 1시간 전부터예요. A·B구역은 1루 게이트, C·D구역은 3루 게이트로 들어오세요. 공식 MD는 외야 광장에서 오후 2시부터 팔아요.",
     gate_map: { A: "1루 게이트", B: "1루 게이트", C: "3루 게이트", D: "3루 게이트" }, ticket_url: "https://nol.yanolja.com/ticket/search?keyword=%EC%9E%84%EC%98%81%EC%9B%85" },
   { ...base, ...bexco, id: "sgi-bexco-1213", title: "송가인 〈가인달 2026 전국투어 - 부산〉", artist_display: "송가인", color: "#E2557B", date: "2026-12-13", start_time: "15:00", est_end_time: "17:30",
     notice_text: "1층은 1층 입구, 2층은 2층 입구로 들어오세요. 공식 MD는 오디토리움 로비에서 공연 2시간 전부터 팔아요.",
     gate_map: { "1층": "오디토리움 1층 입구", "2층": "오디토리움 2층 입구" }, ticket_url: "https://nol.yanolja.com/ticket/search?keyword=%EC%86%A1%EA%B0%80%EC%9D%B8" },
-  { ...base, ...exco, id: "yt-exco-1206", title: "영탁 〈TAK SHOW 5 - 대구〉", artist_display: "영탁", color: "#2F7D6D", date: "2026-12-06", start_time: "18:00", est_end_time: "20:30",
-    notice_text: "입장은 공연 1시간 전부터, 동관 1층 입구로 들어오세요. 공식 MD는 동관 로비에서 오후 3시부터 팔아요.",
-    gate_map: { R: "동관 1층 입구", S: "동관 1층 입구" }, ticket_url: "https://nol.yanolja.com/ticket/search?keyword=%EC%98%81%ED%83%81" },
   { ...base, ...gwangjuWu, id: "lsc-gwangju-1114", title: "이승철 40주년 콘서트 〈THE VOICE〉 - 광주", artist_display: "이승철", color: "#E07A1F", date: "2026-11-14", start_time: "16:00", est_end_time: "18:30",
     notice_text: "플로어석은 1층 정문, 스탠드석은 2층 입구로 들어오세요. 공식 MD는 체육관 앞에서 오후 1시부터 팔아요.",
     gate_map: { "플로어": "체육관 1층 정문", "스탠드": "체육관 2층 입구" }, ticket_url: "https://ticket.yes24.com/" },
+  { ...base, ...dcc2, id: "lsc-daejeon-1122", title: "이승철 40주년 콘서트 〈THE VOICE〉 - 대전", artist_display: "이승철", color: "#E07A1F", date: "2026-11-22", start_time: "17:00", est_end_time: "19:30",
+    notice_text: "플로어 A·B구역은 1번 입구, C·D구역은 2번 입구로 들어오세요. 공식 MD는 제2전시장 로비에서 오후 2시부터 팔아요.", gate_map: { "A": "1번 입구", "B": "1번 입구", "C": "2번 입구", "D": "2번 입구" }, ticket_url: "https://m.ticket.yes24.com/Perf/59533" },
+  { ...base, ...excoWest, id: "lsc-exco-1128", title: "이승철 40주년 콘서트 〈THE VOICE〉 - 대구", artist_display: "이승철", color: "#E07A1F", date: "2026-11-28", start_time: "17:00", est_end_time: "19:30",
+    notice_text: "서관 전시1홀 입구로 들어오세요. 공식 MD는 서관 로비에서 오후 2시부터 팔아요.", gate_map: { "A": "서관 1홀 1번 입구", "B": "서관 1홀 1번 입구", "C": "서관 1홀 2번 입구" }, ticket_url: "https://m.ticket.yes24.com/Perf/59533" },
+  { ...base, ...kspo, id: "lsc-kspo-1204", title: "이승철 40주년 콘서트 〈THE VOICE〉 - 서울", artist_display: "이승철", color: "#E07A1F", date: "2026-12-04", start_time: "19:30", est_end_time: "22:00",
+    notice_text: "1층은 1번 게이트, 2층은 3번 게이트로 들어오세요. 공식 MD는 공연장 앞 광장에서 오후 4시부터 팔아요.", gate_map: { "1층": "1번 게이트 (엘리베이터 옆)", "2층": "3번 게이트" }, ticket_url: "https://m.ticket.yes24.com/Perf/59533" },
   { ...base, ...kspo, id: "lsc-kspo-1205", title: "이승철 40주년 콘서트 〈THE VOICE〉 - 서울", artist_display: "이승철", color: "#E07A1F", date: "2026-12-05", start_time: "18:00", est_end_time: "20:30",
-    notice_text: "1층은 1번 게이트, 2층은 3번 게이트로 들어오세요. 공식 MD는 공연장 앞 광장에서 오후 3시부터 팔아요.",
-    gate_map: { "1층": "1번 게이트 (엘리베이터 옆)", "2층": "3번 게이트" }, ticket_url: "https://ticket.yes24.com/" },
-  { ...base, ...goyangGym, id: "kgm-goyang-1121", title: "김건모 35TH ANNIVERSARY LIVE TOUR - 고양", artist_display: "김건모", color: "#6B5BD6", date: "2026-11-21", start_time: "18:00", est_end_time: "20:30",
-    notice_text: "입장은 공연 1시간 전부터, 체육관 1층 입구로 들어오세요. 공식 MD는 체육관 앞 광장에서 오후 3시부터 팔아요.",
-    gate_map: { A: "체육관 1층 입구 (엘리베이터 옆)", B: "체육관 1층 입구 (엘리베이터 옆)" }, ticket_url: "https://ticket.yes24.com/" },
-  { ...base, ...kspo, id: "cyp-kspo-1127", title: "2026 조용필 & 위대한탄생 콘서트 - 서울", artist_display: "조용필", color: "#555B6E", date: "2026-11-27", start_time: "20:00", est_end_time: "22:30",
-    notice_text: "1층은 1번 게이트, 2층은 3번 게이트로 들어오세요. 공식 MD는 공연장 앞 광장에서 오후 4시부터 팔아요.",
-    gate_map: { "1층": "1번 게이트 (엘리베이터 옆)", "2층": "3번 게이트" }, ticket_url: "https://ticket.yes24.com/" },
+    notice_text: "1층은 1번 게이트, 2층은 3번 게이트로 들어오세요. 공식 MD는 공연장 앞 광장에서 오후 3시부터 팔아요.", gate_map: { "1층": "1번 게이트 (엘리베이터 옆)", "2층": "3번 게이트" }, ticket_url: "https://m.ticket.yes24.com/Perf/59533" },
+  { ...base, ...inspire, id: "lsc-inspire-1212", title: "이승철 40주년 콘서트 〈THE VOICE〉 - 인천", artist_display: "이승철", color: "#E07A1F", date: "2026-12-12", start_time: "16:00", est_end_time: "18:30",
+    notice_text: "인스파이어 아레나 1층 로비로 들어오세요. 공식 MD는 아레나 로비에서 오후 1시부터 팔아요.", gate_map: { "1층": "아레나 1층 입구", "2층": "아레나 2층 입구" }, ticket_url: "https://www.inspireresorts.com/ko/entertainment/performance/2026-lee-seung-chul-40th-concert-incheon" },
+  { ...base, ...bexco1, id: "lsc-bexco-1224", title: "이승철 40주년 콘서트 〈THE VOICE〉 - 부산", artist_display: "이승철", color: "#E07A1F", date: "2026-12-24", start_time: "17:00", est_end_time: "19:30",
+    notice_text: "제1전시장 홀 입구로 들어오세요. 공식 MD는 제1전시장 로비에서 오후 2시부터 팔아요.", gate_map: { "A": "제1전시장 1번 입구", "B": "제1전시장 1번 입구", "C": "제1전시장 2번 입구" }, ticket_url: "https://m.ticket.yes24.com/Perf/59533" },
+  { ...base, ...kspo, id: "cyp-kspo-1127", title: "2026 조용필 & 위대한탄생 콘서트 - 서울", artist_display: "조용필", color: "#555B6E", date: "2026-11-27", start_time: "19:00", est_end_time: "21:30",
+    notice_text: "1층은 1번 게이트, 2층은 3번 게이트로 들어오세요. 공식 MD는 공연장 앞 광장에서 오후 3시부터 팔아요. 티켓 VIP 17.6만·R 16.5만·S 14.3만·A 11만 원.", gate_map: { "1층": "1번 게이트 (엘리베이터 옆)", "2층": "3번 게이트" }, ticket_url: "https://m.ticket.yes24.com/Genre/GenreBridge.aspx?genre=15456&id=1576" },
   { ...base, ...kspo, id: "cyp-kspo-1128", title: "2026 조용필 & 위대한탄생 콘서트 - 서울", artist_display: "조용필", color: "#555B6E", date: "2026-11-28", start_time: "18:00", est_end_time: "20:30",
-    notice_text: "1층은 1번 게이트, 2층은 3번 게이트로 들어오세요. 공식 MD는 공연장 앞 광장에서 오후 2시부터 팔아요.",
-    gate_map: { "1층": "1번 게이트 (엘리베이터 옆)", "2층": "3번 게이트" }, ticket_url: "https://ticket.yes24.com/" },
+    notice_text: "1층은 1번 게이트, 2층은 3번 게이트로 들어오세요. 공식 MD는 공연장 앞 광장에서 오후 2시부터 팔아요. 티켓 VIP 17.6만·R 16.5만·S 14.3만·A 11만 원.", gate_map: { "1층": "1번 게이트 (엘리베이터 옆)", "2층": "3번 게이트" }, ticket_url: "https://m.ticket.yes24.com/Genre/GenreBridge.aspx?genre=15456&id=1576" },
+  { ...base, ...kspo, id: "cyp-kspo-1129", title: "2026 조용필 & 위대한탄생 콘서트 - 서울", artist_display: "조용필", color: "#555B6E", date: "2026-11-29", start_time: "17:00", est_end_time: "19:30",
+    notice_text: "1층은 1번 게이트, 2층은 3번 게이트로 들어오세요. 공식 MD는 공연장 앞 광장에서 오후 1시부터 팔아요. 티켓 VIP 17.6만·R 16.5만·S 14.3만·A 11만 원.", gate_map: { "1층": "1번 게이트 (엘리베이터 옆)", "2층": "3번 게이트" }, ticket_url: "https://m.ticket.yes24.com/Genre/GenreBridge.aspx?genre=15456&id=1576" },
+  { ...base, ...gwangjuWu, id: "kgm-gwangju-1205", title: "김건모 35TH ANNIVERSARY LIVE TOUR - 광주", artist_display: "김건모", color: "#6B5BD6", date: "2026-12-05", start_time: "17:00", est_end_time: "19:30",
+    notice_text: "플로어석은 1층 정문, 스탠드석은 2층 입구로 들어오세요. 공식 MD는 체육관 앞에서 오후 2시부터 팔아요.", gate_map: { "플로어": "체육관 1층 정문", "스탠드": "체육관 2층 입구" }, ticket_url: "https://ticket.yes24.com/" },
+  { ...base, ...kintex2, id: "kgm-kintex2-1226", title: "김건모 35TH ANNIVERSARY LIVE TOUR - 고양", artist_display: "김건모", color: "#6B5BD6", date: "2026-12-26", start_time: "17:00", est_end_time: "19:30",
+    notice_text: "제2전시장 9A홀 입구로 들어오세요. 공식 MD는 9홀 로비에서 오후 2시부터 팔아요.", gate_map: { "A": "9A홀 1번 입구", "B": "9A홀 1번 입구", "C": "9A홀 2번 입구" }, ticket_url: "https://ticket.yes24.com/" },
+  { ...base, ...exco, id: "yt-daegu-1128", title: "영탁 〈TAK SHOW 5 - 대구〉", artist_display: "영탁", color: "#2F7D6D", date: "2026-11-28", start_time: "18:00", est_end_time: "20:30",
+    notice_text: "입장은 공연 1시간 전부터, 동관 1층 입구로 들어오세요. 공식 MD는 동관 로비에서 오후 3시부터 팔아요.", gate_map: { "R": "동관 1층 입구", "S": "동관 1층 입구" }, ticket_url: "https://weverse.io/youngtak/notice/38252" },
+  { ...base, ...exco, id: "yt-daegu-1129", title: "영탁 〈TAK SHOW 5 - 대구〉", artist_display: "영탁", color: "#2F7D6D", date: "2026-11-29", start_time: "15:00", est_end_time: "17:30",
+    notice_text: "입장은 공연 1시간 전부터, 동관 1층 입구로 들어오세요. 공식 MD는 동관 로비에서 낮 12시부터 팔아요.", gate_map: { "R": "동관 1층 입구", "S": "동관 1층 입구" }, ticket_url: "https://weverse.io/youngtak/notice/38252" },
+  { ...base, ...bexco1, id: "yt-bexco-0116", title: "영탁 〈TAK SHOW 5 - 부산〉", artist_display: "영탁", color: "#2F7D6D", date: "2027-01-16", start_time: "15:00", est_end_time: "17:30",
+    notice_text: "벡스코 제1전시장 3홀로 들어오세요. 일반예매는 11월 12일(목) 오후 8시에 열려요.", gate_map: { "R": "3홀 1번 입구", "S": "3홀 2번 입구" }, ticket_url: "https://weverse.io/youngtak/notice/38479" },
   { ...base, ...kintex, id: "lcw-kintex-1220", title: "이찬원 〈찬스 감사제〉", artist_display: "이찬원", color: "#5E46C9", date: "2026-12-20", start_time: "15:00", est_end_time: "17:30", notice_text: LCW_NOTICE },
 ];
 

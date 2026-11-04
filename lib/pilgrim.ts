@@ -44,6 +44,11 @@ function toPlace(r: RawPlace): Place {
   } as Place;
 }
 
+/** 모든 성지 (관리자 좌표·평점 붙여넣기용) */
+export function allSpots(): Place[] {
+  return D.places.map(toPlace);
+}
+
 /** 코스의 팬덤 장소 (콘서트립 형식) */
 export function courseSpots(c: PilgrimCourse): Place[] {
   const byId = new Map(D.places.map((p) => [p.id, p]));

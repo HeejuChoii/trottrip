@@ -50,6 +50,11 @@ export interface Place {
   ai_staple?: "rice" | "noodle" | "bread" | "mixed" | "unknown";
   /** AI 추정: 회·초밥처럼 날것이 대표 메뉴인지 */
   ai_raw?: boolean | null;
+  /** 평점(운영자가 지도 화면에서 확인해 넣은 값, 5점 만점) */
+  rating?: number | null;
+  rating_count?: number | null;
+  /** 평점 출처 (예: "카카오맵") */
+  rating_src?: string;
 }
 
 /** 장소 출처: 콘서트립(팬덤 장소), 카카오 로컬(식당·카페), 운영자 입력, 공연 공지에서 추출, 웹 조사 */

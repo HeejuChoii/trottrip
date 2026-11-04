@@ -42,3 +42,22 @@ export function parentShort(honorific: string): string {
 export function eunNeun(word: string): string {
   return hasBatchim(word) ? "은" : "는";
 }
+
+const SOURCE_NAMES: [RegExp, string][] = [
+  [/youtube\.com|youtu\.be/, "유튜브"], [/blog\.naver|m\.blog\.naver/, "네이버 블로그"], [/cafe\.naver/, "네이버 카페"],
+  [/x\.com|twitter\.com/, "X(트위터)"], [/instagram\.com/, "인스타그램"], [/weverse\.io/, "위버스"], [/fanmaum/, "팬마음"],
+  [/tistory\.com/, "티스토리"], [/brunch\.co\.kr/, "브런치"], [/namu\.wiki/, "나무위키"],
+  [/starnewskorea/, "스타뉴스"], [/topstarnews/, "톱스타뉴스"], [/xportsnews/, "엑스포츠뉴스"], [/esquirekorea/, "에스콰이어"],
+  [/allurekorea/, "얼루어"], [/hotplacehunter/, "핫플헌터"], [/diningcode/, "다이닝코드"], [/siksinhot/, "식신"], [/tabling/, "테이블링"],
+  [/polle\.com/, "폴레"], [/triple\.guide/, "트리플"], [/visitkorea/, "대한민국 구석구석"], [/v\.daum\.net|news\.daum/, "다음 뉴스"],
+  [/news\.nate|m\.news\.nate/, "네이트 뉴스"], [/imbc\.com/, "MBC"], [/kbs\.co\.kr/, "KBS"], [/sbs\.co\.kr/, "SBS"], [/ytn\.co\.kr/, "YTN"],
+  [/khan\.co\.kr/, "경향신문"], [/imaeil\.com/, "매일신문"], [/yeongnam\.com/, "영남일보"], [/isplus\.com/, "일간스포츠"],
+  [/etoday/, "이투데이"], [/asiae/, "아시아경제"], [/seoul\.co\.kr/, "서울신문"], [/wikitree/, "위키트리"], [/kukinews/, "쿠키뉴스"],
+  [/metroseoul/, "메트로신문"], [/tvreport/, "TV리포트"], [/nocutnews/, "노컷뉴스"], [/newsis/, "뉴시스"], [/kbmaeil/, "경북매일"],
+];
+
+/** 근거 링크 이름: 유튜브·네이버 블로그·스타뉴스… (모르는 곳은 도메인) */
+export function sourceName(url: string): string {
+  for (const [re, n] of SOURCE_NAMES) if (re.test(url)) return n;
+  try { return new URL(url).hostname.replace(/^www\.|^m\./, ""); } catch { return "근거"; }
+}

@@ -8,6 +8,7 @@ import { concertripConfigured } from "@/lib/concertrip";
 import AdminLogin from "@/components/admin/AdminLogin";
 import AdminConcerts from "@/components/admin/AdminConcerts";
 import AdminEval from "@/components/admin/AdminEval";
+import AdminPilgrim from "@/components/admin/AdminPilgrim";
 import DeckCard from "@/components/admin/DeckCard";
 
 export const dynamic = "force-dynamic";
@@ -76,6 +77,7 @@ export default async function Page() {
         </div>
       </div>
 
+      <AdminPilgrim venues={[...new Set(concerts.filter((c) => c.active).map((c) => c.venue_name))]} />
       <AdminEval />
 
       <h2 className="h" style={{ fontSize: 20 }}>공연 · 콘서트립 장소</h2>

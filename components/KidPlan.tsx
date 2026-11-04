@@ -5,7 +5,7 @@ import Brand from "./Brand";
 import { useKakao } from "./useKakao";
 import { ls, postJSON, track } from "@/lib/client";
 import { fmtDateKo, fmtTimeKo, isHHMM } from "@/lib/time";
-import { shareTitle } from "@/lib/text";
+import { shareTitle, sourceName } from "@/lib/text";
 import { CATEGORY_LABEL, FAN_LABEL } from "@/lib/concertrip";
 import type { ConcertView, ParentProfile, Place, Plan, PlanItem, Prefs, TicketInfo, Transport } from "@/lib/types";
 import { estimateSteps, fmtMin } from "@/lib/steps";
@@ -281,7 +281,9 @@ export default function KidPlan(props: Props) {
               <b>{p.name}</b> <span className="tag pk">{FAN_LABEL[p.fan_type]}</span>{(p.origin ?? "concertrip") === "concertrip" && <span className="tag pu" style={{ marginLeft: 4 }}>콘서트립에서 불러옴</span>}
               <p>{p.description_ko || CATEGORY_LABEL[p.category]}{p.walk_min_from_venue != null ? ` · 공연장에서 도보 ${p.walk_min_from_venue}분` : ""}</p>
               <p style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                {p.evidence_urls.map((u, i) => <a key={u} href={u} target="_blank" rel="noopener noreferrer">근거 {i + 1}</a>)}
+                {p.evidence_urls.length > 0 && <span style={{ color: "var(--sub)" }}>근거</span>}
+                {p.evidence_urls.map((u) => <a key={u} href={u} target="_blank" rel="noopener noreferrer">{sourceName(u)}</a>)}
+                {p.link_url && <a href={p.link_url} target="_blank" rel="noopener noreferrer">카카오맵</a>}
                 {p.concertrip_url && <a href={p.concertrip_url} target="_blank" rel="noopener noreferrer">콘서트립에서 자세히 보기</a>}
               </p>
             </div>

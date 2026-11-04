@@ -190,6 +190,13 @@ export async function listTtPlaces(scope: { venue_key?: string | null; concert_i
   return ((await local()).tt_places ?? []).filter((r) => (!!scope.venue_key && r.venue_key === scope.venue_key) || (!!scope.concert_id && r.concert_id === scope.concert_id));
 }
 
+/** 전체 tt_places (평점 붙여넣기 매칭용, 수백 건 규모) */
+export async function listAllTtPlaces(): Promise<TtPlaceRow[]> {
+  const s = supa();
+  if (s) return must(await s.from("tt_places").select("*").limit(5000)) as TtPlaceRow[];
+  return (await local()).tt_places ?? [];
+}
+
 export async function upsertTtPlaces(rows: TtPlaceRow[]): Promise<void> {
   if (!rows.length) return;
   const s = supa();
