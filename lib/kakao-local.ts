@@ -109,3 +109,55 @@ export async function geocode(query: string, near?: { lat: number; lng: number }
   if (!d) return null;
   return { name: d.place_name, lat: Number(d.y), lng: Number(d.x), address: d.road_address_name || d.address_name, distance_m: d.distance ? Number(d.distance) : null, url: d.place_url };
 }
+
+/** 관광지 성격: 카카오 분류 → 전시·산책·시장·역사·바다·실내 */
+export function likesFromCategory(cat: string, name: string): string[] {
+  const t = `${cat} ${name}`;
+  const out = new Set<string>();
+  if (/미술관|박물관|전시|갤러리|기념관|과학관|문화원|아트/.test(t)) { out.add("전시"); out.add("실내"); }
+  if (/공원|산책|둘레길|호수|숲|정원|수목원|전망|길$|거리/.test(t)) out.add("산책");
+  if (/시장/.test(t)) out.add("시장");
+  if (/궁|사찰|절|문화재|유적|향교|고택|한옥|성곽|서원|역사/.test(t)) out.add("역사");
+  if (/해수욕장|해변|바다|해안|항구|섬/.test(t)) out.add("바다");
+  if (/도서관|쇼핑|몰|백화점|아쿠아리움/.test(t)) out.add("실내");
+  return [...out];
+}
+
+/** 공연장 반경 radius(m) 안 관광명소(AT4)·문화시설(CT1) — 1박 둘째 날 가볼 만한 곳 */
+export async function importSights(lat: number, lng: number, radius = 6000): Promise<Place[]> {
+  const out: Place[] = [];
+  for (const [code, pages] of [["AT4", 2], ["CT1", 1]] as const) {
+    for (let page = 1; page <= pages; page++) {
+      const r = await kakaoGet("category.json", { category_group_code: code, x: lng, y: lat, radius: Math.min(radius, 20000), sort: "accuracy", page, size: 15 });
+      for (const d of r.documents) {
+        if (/영화관|공연장|극장|노래방|PC방|모텔|호텔/.test(d.category_name)) continue;
+        const likes = likesFromCategory(d.category_name, d.place_name);
+        out.push({
+          id: `ks_${d.id}`, concert_ids: [], name: d.place_name, category: "sight", lat: Number(d.y), lng: Number(d.x),
+          address: d.road_address_name || d.address_name, walk_min_from_venue: null, tags: likes.includes("실내") ? ["indoor"] : [],
+          fan_type: "none", description_ko: d.category_name.split(" > ").slice(-1)[0], evidence_urls: d.place_url ? [d.place_url] : [],
+          source: "needs_check", updated_at: new Date().toISOString(), concertrip_url: "", origin: "research",
+          category_detail: d.category_name, link_url: d.place_url || undefined, likes,
+        });
+      }
+      if (r.meta.is_end) break;
+    }
+  }
+  return out;
+}
+
+/** 자동차 길찾기(카카오모빌리티). 카카오 디벨로퍼스에서 '카카오내비'를 켜야 쓸 수 있다 */
+export async function carRoute(from: { lat: number; lng: number }, to: { lat: number; lng: number }): Promise<{ km: number; min: number; path: [number, number][] } | null> {
+  const key = process.env.KAKAO_REST_API_KEY;
+  if (!key) return null;
+  const qs = new URLSearchParams({ origin: `${from.lng},${from.lat}`, destination: `${to.lng},${to.lat}`, priority: "RECOMMEND" });
+  const res = await fetch(`https://apis-navi.kakaomobility.com/v1/directions?${qs}`, { headers: { Authorization: `KakaoAK ${key}` }, cache: "no-store", signal: AbortSignal.timeout(8000) });
+  if (!res.ok) throw new Error(`카카오내비 ${res.status}: ${(await res.text().catch(() => "")).slice(0, 160)}`);
+  const j = await res.json() as { routes?: { result_code: number; summary?: { distance: number; duration: number }; sections?: { roads: { vertexes: number[] }[] }[] }[] };
+  const r = j.routes?.[0];
+  if (!r || r.result_code !== 0 || !r.summary) return null;
+  const path: [number, number][] = [];
+  for (const s of r.sections ?? []) for (const road of s.roads) for (let i = 0; i + 1 < road.vertexes.length; i += 2) path.push([road.vertexes[i + 1], road.vertexes[i]]);
+  const step = Math.max(1, Math.floor(path.length / 400)); // 지도에 그리기 충분한 만큼만
+  return { km: r.summary.distance / 1000, min: Math.round(r.summary.duration / 60), path: path.filter((_, i) => i % step === 0 || i === path.length - 1) };
+}

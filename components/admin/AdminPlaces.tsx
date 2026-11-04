@@ -85,6 +85,7 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { c
           <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
             반경 <select className="inp sm" value={radius} onChange={(e) => setRadius(Number(e.target.value))}>{[500, 800, 1200, 2000].map((r) => <option key={r} value={r}>{r}m</option>)}</select>
             <button className="mini-btn" disabled={!kakao || !!busy} onClick={() => run<{ restaurants: number; cafes: number; labeled: number }>("kakao", { action: "kakao_import", radius }, (r) => `식당 ${r.restaurants}곳, 카페 ${r.cafes}곳 불러왔어요 · AI 맵기 라벨 ${r.labeled}곳`)}>{busy === "kakao" ? "불러오는 중…" : "불러오기"}</button>
+            <button className="mini-btn" disabled={!kakao || !!busy} onClick={() => run<{ count: number; names: string[] }>("sights", { action: "kakao_sights", radius: 6000 }, (r) => `가볼 만한 곳 ${r.count}곳 불러왔어요: ${r.names.join(", ")}…`)}>{busy === "sights" ? "불러오는 중…" : "가볼 만한 곳(관광지·전시) 불러오기"}</button>
             <button className="mini-btn" disabled={!ai || !!busy} onClick={() => run<{ labeled: number }>("label", { action: "label_spice" }, (r) => `AI 맵기 라벨 ${r.labeled}곳`)}>{busy === "label" ? "라벨 다는 중…" : "AI 라벨(맵기·국물·밥/면·날것) 다시 달기"}</button>
           </span>
           {!kakao && <small className="err">KAKAO_REST_API_KEY 환경변수가 필요해요</small>}
