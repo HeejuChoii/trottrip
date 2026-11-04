@@ -59,7 +59,7 @@ export default function ParentAsk({ token, kidH, history }: { token: string; kid
         <div ref={endRef} />
       </div>
       <div className="qchips">{CHIPS.map((c) => <button key={c} onClick={() => ask(c)} disabled={busy}>{c}</button>)}</div>
-      {speech.supported && <button className={`mic ${speech.listening ? "on" : ""}`} onClick={() => speech.listening ? speech.stop() : speech.start()} disabled={busy}>{speech.listening ? "듣고 있어요… (누르면 끝)" : "🎤 말로 물어보기"}</button>}
+      {speech.supported && <button className={`mic ${speech.listening ? "on" : ""}`} onClick={() => speech.listening ? speech.stop() : speech.start()} disabled={busy}>{speech.listening ? "듣고 있어요… (누르면 끝)" : "🗣️ 말로 물어보기"}</button>}
       <form onSubmit={(e) => { e.preventDefault(); ask(text); }} style={{ display: "flex", gap: 8 }}>
         <input className="inp" style={{ fontSize: 18 }} value={text} onChange={(e) => setText(e.target.value)} placeholder={speech.supported ? "글로 물어보기" : "여기에 적어 주세요"} aria-label="질문" />
         <button className="mini-btn" style={{ fontSize: 17, padding: "0 14px" }} disabled={busy}>보내기</button>

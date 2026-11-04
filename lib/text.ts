@@ -24,10 +24,10 @@ export function kidHonorific(label: string): string {
 }
 
 /** "희주(딸)이 보낸 공연 날 안내장" / "딸이 보낸 공연 날 안내장" */
-export function shareTitle(kidLabel: string, kidName: string): string {
+export function shareTitle(kidLabel: string, kidName: string, pilgrim = false): string {
   const label = (kidLabel || "자녀").trim();
   const who = kidName?.trim() ? `${kidName.trim()}(${label})` : label;
-  return `${who}${iGa(label)} 보낸 공연 날 안내장`;
+  return `${who}${iGa(label)} 보낸 ${pilgrim ? "팬덤 스팟 여행" : "공연 날"} 안내장`;
 }
 
 /** 부모님 호칭 → 자녀 진행 화면 "엄마는 지금" */

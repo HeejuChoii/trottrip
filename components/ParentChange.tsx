@@ -32,7 +32,7 @@ export default function ParentChange({ token, kidH, kidLabel, pilgrim }: { token
       <button className="bigbtn line" disabled={!!busy} onClick={() => send("long_line")}>{busy === "long_line" ? "바꾸는 중…" : "줄이 너무 길어요"}</button>
       <button className="bigbtn line" disabled={!!busy} onClick={() => send("late")}>{busy === "late" ? "바꾸는 중…" : "조금 늦어질 것 같아요"}</button>
       {speech.supported && !typing
-        ? <button className="bigbtn line" disabled={!!busy} onClick={() => speech.listening ? speech.stop() : speech.start()}>{speech.listening ? "듣고 있어요… (누르면 끝)" : "🎤 말로 하기"}</button>
+        ? <button className="bigbtn line" disabled={!!busy} onClick={() => speech.listening ? speech.stop() : speech.start()}>{speech.listening ? "듣고 있어요… (누르면 끝)" : "🗣️ 말로 하기"}</button>
         : null}
       {(typing || !speech.supported) && (
         <form onSubmit={(e) => { e.preventDefault(); if (text.trim()) send("free", text); }} style={{ display: "flex", gap: 8 }}>

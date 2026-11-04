@@ -152,8 +152,8 @@ export default function Wizard({ concerts, artists = [], courses = [], initialMo
           <h1 className="h" style={{ fontSize: 22 }}>{who}께 맞는 하루를<br />짜고 있어요</h1>
           <div className="steps">
             {(fanMode ? [
-              `① 입력 정리 · ${course?.artist ?? ""} 성지 · ${fmtTimeKo(tripStart)} 출발, ${parent.walk === "15-" ? "여유로운" : parent.walk === "15-30" ? "적당한" : "넉넉한"} 걷기`,
-              `② 콘서트립에서 성지 ${course?.spots.length ?? 0}곳 불러오기`,
+              `① 입력 정리 · ${course?.artist ?? ""} 팬덤 스팟 · ${fmtTimeKo(tripStart)} 출발, ${parent.walk === "15-" ? "여유로운" : parent.walk === "15-30" ? "적당한" : "넉넉한"} 걷기`,
+              `② 콘서트립에서 팬덤 스팟 ${course?.spots.length ?? 0}곳 불러오기`,
               `③ 동선 최적화 · 가까운 곳부터, 걷기 ${parent.walk === "15-" ? "5분" : parent.walk === "15-30" ? "10분" : "15분"} 넘으면 택시`,
               `④ 식성에 맞는 가수 단골집으로 점심${parent.food.length ? "" : ""}`,
               "⑤ AI가 안내 문장을 쓰고 규칙 검사",
@@ -178,13 +178,13 @@ export default function Wizard({ concerts, artists = [], courses = [], initialMo
           <div className="top"><Brand /><Prog n={1} /></div>
           <div className="chips" role="tablist" style={{ marginBottom: -4 }}>
             <button type="button" role="tab" className="chip" aria-pressed={!fanMode} onClick={() => { setMode("concert"); setErr(""); }}>공연 보러 가세요</button>
-            <button type="button" role="tab" className="chip pu" aria-pressed={fanMode} onClick={() => { setMode("fan"); setErr(""); }}>공연 없이 성지순례 여행</button>
+            <button type="button" role="tab" className="chip pu" aria-pressed={fanMode} onClick={() => { setMode("fan"); setErr(""); }}>공연 없이 팬덤 스팟 여행</button>
           </div>
         </>
       )}
       {step === 1 && fanMode && (
         <>
-          <h1 className="h">어느 가수의 성지로 보내 드릴까요?</h1>
+          <h1 className="h">어느 가수의 팬덤 스팟으로 보내 드릴까요?</h1>
           <p className="lead">가수가 다녀간 식당·여행지를 하루 코스로 묶어 드려요. 이번 주말 선물로 좋아요.</p>
           <div className="chips">
             {artists.map((a) => (
@@ -200,7 +200,7 @@ export default function Wizard({ concerts, artists = [], courses = [], initialMo
                   <b>{c.title}</b>
                   <small>{c.blurb}</small>
                   <small style={{ marginTop: 4 }}>{c.spots.map((s) => s.name.replace(/\s*\(.*\)$/, "")).join(" · ")}</small>
-                  <span className="tag pu" style={{ marginTop: 6 }}>콘서트립에서 불러온 성지 {c.spots.length}곳</span>
+                  <span className="tag pu" style={{ marginTop: 6 }}>콘서트립 팬덤 스팟 {c.spots.length}곳</span>
                 </div>
               </div>
             </button>
@@ -208,14 +208,15 @@ export default function Wizard({ concerts, artists = [], courses = [], initialMo
           <div className="card">
             <span className="lab">언제 떠나세요?</span>
             <div className="fld"><span>날짜</span><input className="inp sm" type="date" value={tripDate} onChange={(e) => setTripDate(e.target.value)} /></div>
-            <div className="fld"><span>시작 시각</span><input className="inp sm" type="time" value={tripStart} onChange={(e) => setTripStart(e.target.value)} /></div>
-            <div className="fld"><span>출발</span><input className="inp sm" value={tr.origin} onChange={(e) => T({ origin: e.target.value })} placeholder="예: 서울 송파구" /></div>
+            <div className="fld"><span>집에서 출발</span><input className="inp sm" type="time" value={tripStart} onChange={(e) => setTripStart(e.target.value)} /></div>
+            <div className="fld"><span>출발지</span><input className="inp sm" value={tr.origin} onChange={(e) => T({ origin: e.target.value })} placeholder="예: 서울 노원구" /></div>
+            <p className="fine" style={{ textAlign: "left", margin: "6px 0 0" }}>자가용·택시로 가시면 출발지에서 첫 장소까지 운전 시간을 넣어 드려요.</p>
             <div style={{ paddingTop: 10 }}>
               <span className="lab">동행</span>
               <div className="chips">
                 <Chip on={tr.companions === "alone"} onClick={() => T({ companions: "alone" })}>혼자</Chip>
                 <Chip on={tr.companions === "friends"} onClick={() => T({ companions: "friends" })}>친구분과</Chip>
-                <Chip on={tr.companions === "family"} onClick={() => T({ companions: "family" })}>두 분이 함께</Chip>
+                <Chip on={tr.companions === "family"} onClick={() => T({ companions: "family" })}>가족과 함께</Chip>
               </div>
             </div>
           </div>
@@ -355,7 +356,7 @@ export default function Wizard({ concerts, artists = [], courses = [], initialMo
           </div>}
           <span className="lab" style={{ margin: "2px 0 -6px" }}>{fanMode ? `${course?.start ?? city}까지` : `${city || "공연장"}까지`} 어떻게 가실까요?</span>
           <div className="row2">
-            {(fanMode ? [["train", "열차·고속버스", "도착·돌아오는 시각을 넣어 주세요"], ["car", "자가용·택시", "성지 사이가 멀면 택시를 안내해요"]] as const : [["fan_bus", "팬 모임 버스", "집결 장소·시간을 입력해 주세요"], ["train", "열차", "출발·도착 시각을 입력해 주세요"], ["shuttle", "공연 셔틀", "공지 링크나 시각을 넣어 주세요"], ["car", "자가용·택시", "공연장 주차 혼잡 주의"]] as const).map(([v, l, d]) => (
+            {(fanMode ? [["train", "열차·고속버스", "도착·돌아오는 시각을 넣어 주세요"], ["car", "자가용·택시", "스팟 사이가 멀면 택시를 안내해요"]] as const : [["fan_bus", "팬 모임 버스", "집결 장소·시간을 입력해 주세요"], ["train", "열차", "출발·도착 시각을 입력해 주세요"], ["shuttle", "공연 셔틀", "공지 링크나 시각을 넣어 주세요"], ["car", "자가용·택시", "공연장 주차 혼잡 주의"]] as const).map(([v, l, d]) => (
               <button key={v} type="button" className="opt" aria-pressed={tr.mode === v} onClick={() => T({ mode: v })}><b>{l}</b><small>{d}</small></button>
             ))}
           </div>
@@ -375,21 +376,37 @@ export default function Wizard({ concerts, artists = [], courses = [], initialMo
               <div className="fld"><span>출발 시각</span><input className="inp sm" type="time" value={tr.train_depart} onChange={(e) => T({ train_depart: e.target.value })} /></div>
               <div className="fld"><span>도착 시각</span><input className="inp sm" type="time" value={tr.train_arrive} onChange={(e) => T({ train_arrive: e.target.value })} /></div>
               <div className="fld"><span>돌아오는 열차</span><input className="inp sm" type="time" value={tr.train_return_depart} onChange={(e) => T({ train_return_depart: e.target.value })} /></div>
-              <p className="fine" style={{ textAlign: "left", margin: "8px 0 0" }}>시간표는 연동되지 않아요. 예매한 열차 시각을 넣어 주세요.</p>
+              <p className="fine" style={{ textAlign: "left", margin: "8px 0 6px" }}>아직 표가 없으면 먼저 예매하고 시각을 넣어 주세요. 코레일·SRT는 외부 앱에서 바로 예매하는 기능을 열어 두지 않아 예매처로 이동해요.</p>
+              <div className="linkrow">
+                <a href="https://www.letskorail.com/" target="_blank" rel="noopener noreferrer">🚄 코레일 ↗</a>
+                <a href="https://etk.srail.kr/" target="_blank" rel="noopener noreferrer">🚅 SRT ↗</a>
+                <a href="https://www.kobus.co.kr/" target="_blank" rel="noopener noreferrer">🚌 고속버스 ↗</a>
+              </div>
             </div>
           )}
           {tr.mode === "shuttle" && (
             <div className="card"><span className="lab">셔틀 공지 링크 또는 시각</span>
-              {concert?.shuttle_url
-                ? <a className="actbtn" style={{ marginBottom: 8 }} href={concert.shuttle_url} target="_blank" rel="noopener noreferrer">🚌 이 공연 셔틀 예약하러 가기 ↗</a>
-                : <p className="fine" style={{ textAlign: "left", margin: "0 0 8px" }}>공연 셔틀은 <a href="https://www.kakaomobility.com/service-kakaot/shuttle" target="_blank" rel="noopener noreferrer">카카오 T 셔틀</a> · <a href="https://queenssmile.co.kr" target="_blank" rel="noopener noreferrer">퀸즈스마일</a> · 버스타다 앱에서 공연명으로 찾아보세요.</p>}
+              {concert?.shuttle_url && <a className="actbtn" style={{ marginBottom: 8 }} href={concert.shuttle_url} target="_blank" rel="noopener noreferrer">🚌 이 공연 셔틀 예약하러 가기 ↗</a>}
+              <p className="fine" style={{ textAlign: "left", margin: "0 0 6px" }}>아직 예약 전이면 공연명으로 찾아 예약하세요.</p>
+              <div className="linkrow" style={{ marginBottom: 8 }}>
+                <a href="https://www.kakaomobility.com/service-kakaot/shuttle" target="_blank" rel="noopener noreferrer">카카오 T 셔틀 ↗</a>
+                <a href="https://queenssmile.co.kr" target="_blank" rel="noopener noreferrer">퀸즈스마일 ↗</a>
+                <a href="https://www.bustada.com" target="_blank" rel="noopener noreferrer">버스타다 ↗</a>
+              </div>
               <textarea className="inp" rows={2} value={tr.shuttle_info} onChange={(e) => T({ shuttle_info: e.target.value })} placeholder="공지가 아직 없으면 비워 두세요" /></div>
           )}
           <div className="card"><span className="lab">숙박</span>
             <div className="chips">
               <Chip on={tr.stay === "day"} onClick={() => T({ stay: "day" })}>당일 귀가</Chip>
               <Chip on={tr.stay === "overnight"} onClick={() => T({ stay: "overnight" })}>1박</Chip>
-            </div></div>
+            </div>
+            {tr.stay === "overnight" && (
+              <>
+                <div className="fld"><span>숙소 이름</span><input className="inp sm" value={tr.stay_name ?? ""} onChange={(e) => T({ stay_name: e.target.value })} placeholder="예: 신라스테이 삼성" /></div>
+                <div className="fld"><span>카카오맵 링크(선택)</span><input className="inp sm" value={tr.stay_link ?? ""} onChange={(e) => T({ stay_link: e.target.value })} placeholder="링크나 주소" /></div>
+                <p className="fine" style={{ textAlign: "left", margin: "6px 0 0" }}>{fanMode ? "하루 일정 끝에" : "공연이 끝나면"} 숙소 체크인 안내와 길찾기 버튼을 넣어 드려요.</p>
+              </>
+            )}</div>
           {err && <p className="err" role="alert">{err}</p>}
           <button className="cta" onClick={submit}>AI로 효도여행 만들기</button>
         </>

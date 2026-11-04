@@ -138,7 +138,7 @@ export default function ParentMap(p: Props) {
       {locErr && <p className="note">{locErr}</p>}
       {nav && <a className="cta" href={nav} target="_blank" rel="noopener noreferrer">카카오맵으로 길 안내 보기</a>}
       <p className="note">내 위치는 이 휴대폰에서만 보여요. {kidHonorific(p.kidLabel)}께 보내지 않아요.</p>
-      <BottomBar token={p.token} pilgrim={p.pilgrim} />
+      <BottomBar token={p.token} pilgrim={p.pilgrim} current="map" />
     </main>
   );
 }

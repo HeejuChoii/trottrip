@@ -66,17 +66,15 @@ export function courseSpots(c: PilgrimCourse): Place[] {
   return c.place_ids.map((id) => byId.get(id)).filter((p): p is RawPlace => !!p).map(toPlace);
 }
 
-/** 장소의 휴무·주의 메모 (자녀 화면) */
-export function statusNote(id: string): string {
-  const p = D.places.find((x) => x.id === id);
-  if (!p) return "";
+/** 장소의 영업시간·휴무 메모 (자녀 화면) */
+export function statusNote(p: Pick<Place, "hours" | "closed">): string {
   return [p.hours ? `영업 ${p.hours.replace("-", "~")}` : "", p.closed?.length ? `${p.closed.join("·")} 휴무` : ""].filter(Boolean).join(" · ");
 }
 
 const DOW = ["일", "월", "화", "수", "목", "금", "토"];
-/** 그 날짜·시각에 열려 있나 (정보가 없으면 연 것으로 본다) */
-export function openAt(id: string, date: string, startMin: number, endMin = startMin + 30): boolean {
-  const p = D.places.find((x) => x.id === id.replace(/^geo__/, ""));
+/** 그 날짜·시각에 열려 있나 (영업시간·휴무일 정보가 없으면 연 것으로 본다). id만 주면 데이터 파일 값으로 본다 */
+export function openAt(place: string | Pick<Place, "id" | "hours" | "closed">, date: string, startMin: number, endMin = startMin + 30): boolean {
+  const p = typeof place === "string" ? D.places.find((x) => x.id === place.replace(/^geo__/, "")) : place;
   if (!p) return true;
   const d = new Date(`${date}T12:00:00+09:00`);
   if (p.closed?.length && !isNaN(d.getTime()) && p.closed.includes(DOW[d.getUTCDay()])) return false;
@@ -134,6 +132,21 @@ export interface PilgrimInput {
   /** 코스 팬덤 장소 + 근처 식당·카페(카카오) */
   places: Place[];
   lessWalk?: boolean;
+  /** 자가용·택시로 집에서 출발할 때 출발지 좌표(카카오로 찾음). 없으면 출발지 이름만 쓴다 */
+  originLL?: { lat: number; lng: number } | null;
+}
+
+/** 자가용 이동 시간(분): 도로는 직선의 1.3배, 시내 35km/h·장거리 70km/h, 주차·여유 10분 */
+export function driveMin(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const d = km(a, b) * 1.3;
+  return Math.round((d / (d > 30 ? 70 : 35)) * 60) + 10;
+}
+
+/** 숙소 길찾기 링크: 자녀가 넣은 카카오맵 링크가 있으면 그것, 없으면 이름으로 카카오맵 검색 */
+export function stayLink(t: Pick<Transport, "stay_name" | "stay_link">): string | null {
+  if (t.stay_link && /^https?:\/\//.test(t.stay_link)) return t.stay_link;
+  const q = (t.stay_link || t.stay_name || "").trim();
+  return q ? `https://map.kakao.com/link/search/${encodeURIComponent(q)}` : null;
 }
 
 const SPOT_MIN = 35;
@@ -160,10 +173,10 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
 
   // 1) 둘러볼 곳(식당이 아닌 곳)과 식당 후보
   const date = view.date;
-  const sights = fan.filter((p) => p.category !== "restaurant" && openAt(p.id, date, 10 * 60, 17 * 60) || (p.category !== "restaurant" && openAt(p.id, date, 14 * 60)));
-  const lunchOpen = (p: Place) => openAt(p.id, date, 11 * 60 + 30, 13 * 60);
+  const sights = fan.filter((p) => p.category !== "restaurant" && openAt(p, date, 10 * 60, 17 * 60) || (p.category !== "restaurant" && openAt(p, date, 14 * 60)));
+  const lunchOpen = (p: Place) => openAt(p, date, 11 * 60 + 30, 13 * 60);
   const fanFood = fan.filter((p) => p.category === "restaurant" && lunchOpen(p));
-  const dinnerFood = fan.filter((p) => p.category === "restaurant" && !lunchOpen(p) && openAt(p.id, date, 17 * 60 + 30, 18 * 60 + 30) && (restaurantMatches(p, parent) || parent.food.includes("any")));
+  const dinnerFood = fan.filter((p) => p.category === "restaurant" && !lunchOpen(p) && openAt(p, date, 17 * 60 + 30, 18 * 60 + 30) && (restaurantMatches(p, parent) || parent.food.includes("any")));
   const okFood = fanFood.filter((p) => restaurantMatches(p, parent) || (parent.food.includes("any") && !isSpicyByName(p)));
   const nSpots = spotsFor(parent.walk, input.lessWalk);
   // 점심 먼저: 식성에 맞는 가수 단골집 → 근처 식당(카카오) → 단골집(식성 확인 필요)
@@ -183,7 +196,13 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
   const lunchPlace = lunch ?? lunchFanUnfit;
 
   // 2) 시작 시각
-  let T0 = isHHMM(view.start_time) ? toMin(view.start_time) : 10 * 60;
+  // 자녀가 넣은 시각은 "집에서 출발하는 시각" — 자가용이면 출발지에서 첫 장소까지 운전 시간을 더한다
+  const departAt = isHHMM(view.start_time) ? toMin(view.start_time) : 9 * 60;
+  const origin = t.origin.trim();
+  const drive = t.mode !== "train" && origin && !view.pilgrim?.arrive_note
+    ? (input.originLL ? { min: driveMin(input.originLL, start), rough: false } : { min: 60, rough: true })
+    : null;
+  let T0 = drive ? departAt + drive.min : departAt;
   if (t.mode === "train" && isHHMM(t.train_arrive)) T0 = toMin(t.train_arrive) + 10;
 
   // 3) 점심을 몇 번째에 넣을지: 11:40에 가장 가깝고 덜 돌아가는 자리
@@ -239,6 +258,14 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
     : `${view.venue_name}에서 시작해요.`;
   const boat = view.pilgrim?.arrive_note;
   const arriveFull = boat ? `${boat} ${view.venue_name}에서 시작해요.` : arriveText;
+  if (drive) {
+    items.push({
+      id: nid(), start: toHHMM(departAt), end: toHHMM(departAt + 10), type: "arrive", title: `출발 · ${origin}`,
+      place_id: null, walk_min: null,
+      parent_text: `${origin}에서 출발해요. ${view.venue_name}까지 차로 ${drive.rough ? "1시간쯤" : `${drive.min}분쯤`} 걸려요.`,
+      done_label: "출발했어요", kid_note: drive.rough ? "이동 시간 추정(출발지 좌표 확인 필요)" : `차로 약 ${drive.min}분`, source: "user_input",
+    });
+  }
   items.push({
     id: nid(), start: toHHMM(T0), end: toHHMM(T0 + 10), type: "arrive", title: `${view.venue_name} 도착`,
     place_id: null, walk_min: null, parent_text: arriveFull, done_label: "도착했어요",
@@ -253,10 +280,10 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
     const lg = x.leg;
     const rough = !!p && approx.has(p.id);
     const moveNote = lg ? (rough ? "이동 시간 확인 필요" : lg.mode === "walk" ? `도보 ${lg.min}분` : `택시 약 ${lg.min}분`) : "";
-    const status = p ? statusNote(p.id) : "";
+    const status = p ? statusNote(p) : "";
     if (x.stop.kind === "spot" && p) {
       items.push({
-        id: nid(), start: toHHMM(x.start), end: toHHMM(x.end), type: "photo", title: `성지 · ${p.name}`,
+        id: nid(), start: toHHMM(x.start), end: toHHMM(x.end), type: "photo", title: `${view.artist_display} 스팟 · ${p.name}`,
         place_id: p.id, walk_min: lg?.mode === "walk" ? lg.min : null,
         parent_text: `${p.description_ko || p.name}.${legText(lg, prevName, rough)} ${p.category === "restaurant" ? "가게 앞에서 사진 한 장 남기세요. 출출하시면 간단히 드셔도 좋아요." : p.category === "cafe" ? "앉아서 차 한잔하며 쉬어 가세요." : "사진 한 장 남기세요."}`,
         done_label: "다녀왔어요", kid_note: ["팬덤 장소", moveNote, status].filter(Boolean).join(" · "), source: p.source,
@@ -287,15 +314,29 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
     const m = toMin(parent.medicine_time);
     items.push({ id: nid(), start: toHHMM(m), end: toHHMM(m + 5), type: "medicine", title: "약 드실 시간", place_id: null, walk_min: null, parent_text: "챙겨 오신 약을 드세요.", done_label: "약 먹었어요", kid_note: "", source: "user_input" });
   }
+  // 1박이고 숙소를 넣었으면: 마지막은 귀가 대신 숙소 체크인
+  const stay = t.stay === "overnight" && (t.stay_name || t.stay_link) ? (t.stay_name || "숙소") : null;
+  if (stay) {
+    const at = Math.max(sch.end + 20, 15 * 60);
+    const url = stayLink(t);
+    items.push({
+      id: nid(), start: toHHMM(at), end: toHHMM(at + 30), type: "return", title: `숙소 체크인 · ${stay}`,
+      place_id: null, walk_min: null,
+      parent_text: `${stay}에 가서 체크인하고 짐 푸세요. 오늘 푹 쉬세요.`,
+      done_label: "체크인했어요", kid_note: "1박", source: "user_input",
+      ...(url ? { link: { label: "🧭 숙소 길찾기 (카카오맵)", url } } : {}),
+    });
+  }
   // 귀가
   const back = leg(sch.last, start, maxWalk);
   const retStart = t.mode === "train" && isHHMM(t.train_return_depart) ? Math.max(sch.end + back.min, toMin(t.train_return_depart) - 20) : sch.end + back.min;
-  items.push({
+  if (!stay) items.push({
     id: nid(), start: toHHMM(retStart), end: toHHMM(retStart + 20), type: "return", title: t.mode === "train" ? `귀가 · ${t.train_to || view.venue_name}역` : "집으로",
     place_id: null, walk_min: back.mode === "walk" ? back.min : null,
     parent_text: t.mode === "train"
       ? `${t.train_return_depart ? `${t.train_return_depart} 열차예요. ` : ""}${back.mode === "taxi" ? `택시로 ${back.min}분쯤 걸려요. ` : ""}승차권을 꺼내 두세요.`
       : boat ? `오늘 일정 끝! ${view.venue_name}으로 돌아가 나가는 배를 타세요. 마지막 배 시간을 꼭 확인하세요.`
+      : drive && input.originLL ? `오늘 일정 끝! ${origin}까지 차로 ${driveMin(sch.last, input.originLL)}분쯤 걸려요. 조심히 들어가세요.`
       : `오늘 일정 끝! ${back.mode === "taxi" ? `${view.venue_name}까지 택시로 ${back.min}분쯤 걸려요.` : "조심히 들어가세요."}`,
     done_label: t.mode === "train" ? "열차 탔어요" : "출발했어요", kid_note: "", source: "user_input",
   });
@@ -305,8 +346,8 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
   const taxis = sch.out.filter((x) => x.leg?.mode === "taxi").length;
   const extra = fan.filter((p) => !items.some((i) => i.place_id === p.id)).map((p) => p.id);
   return {
-    title: `${who}의 ${view.artist_display} 성지순례 · ${view.city}`,
-    summary: [`성지 ${spots}곳`, lunch ? (lunchPick ? "가수 단골집에서 식사" : "식성 맞춘 식당") : "식사 시간 확보", taxis ? `먼 구간 ${taxis}번은 택시` : "걸어서 다녀요"].join(" · "),
+    title: `${who}의 ${view.artist_display} 팬덤 스팟 여행 · ${view.city}`,
+    summary: [`팬덤 스팟 ${spots}곳`, lunch ? (lunchPick ? "가수 단골집에서 식사" : "식성 맞춘 식당") : "식사 시간 확보", taxis ? `먼 구간 ${taxis}번은 택시` : "걸어서 다녀요"].join(" · "),
     items,
     extra_day: extra.length ? { title: "시간이 남으면 더 들러 볼 곳", place_ids: extra } : null,
     generated_by: "rules",

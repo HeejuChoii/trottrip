@@ -15,7 +15,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
   const ret = d.trip.plan!.items.find((i) => i.type === "return");
   // 성지순례 여행은 공연이 없으니 귀가 시각이 되어야 귀가 화면으로 바뀐다
   const showEnd = d.concert.pilgrim ? ret?.start ?? "23:59" : d.concert.est_end_time || show?.end || toHHMM(toMin(d.concert.start_time) + 150);
-  const placeNames = Object.fromEntries(d.places.map((p) => [p.id, { name: p.name, walk: p.walk_min_from_venue }]));
+  const placeNames = Object.fromEntries(d.places.map((p) => [p.id, { name: p.name, walk: p.walk_min_from_venue, lat: p.lat, lng: p.lng }]));
   return (
     <ParentHome
       token={token}

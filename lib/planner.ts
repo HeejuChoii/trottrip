@@ -334,7 +334,19 @@ export function buildRulePlan(input: PlanInput): Plan {
     : transport.mode === "train" && isHHMM(transport.train_return_depart) ? toMin(transport.train_return_depart) - 40
     : showEnd + 30;
   const retPlace = transport.mode === "fan_bus" ? transport.return_place || ret?.name || "" : transport.mode === "train" ? transport.train_to || transport.train_from : "";
-  items.push(item({
+  // 1박이고 숙소를 넣었으면: 공연 뒤 숙소 체크인
+  const stayName = transport.stay === "overnight" && (transport.stay_name || transport.stay_link) ? (transport.stay_name || "숙소") : null;
+  if (stayName) {
+    const q = (transport.stay_link || stayName).trim();
+    const url = /^https?:\/\//.test(q) ? q : `https://map.kakao.com/link/search/${encodeURIComponent(q)}`;
+    items.push(item({
+      start: toHHMM(showEnd + 20), end: toHHMM(showEnd + 50), type: "return", title: `숙소 체크인 · ${stayName}`,
+      place_id: null, walk_min: null,
+      parent_text: `공연이 끝나면 ${stayName}로 가서 체크인하고 짐 푸세요. 출구가 붐비면 잠시 기다렸다 나오셔도 돼요.`,
+      done_label: "체크인했어요", kid_note: "1박", source: "user_input",
+      link: { label: "🧭 숙소 길찾기 (카카오맵)", url },
+    }));
+  } else items.push(item({
     start: toHHMM(Math.max(retTime, showEnd + 10)), end: toHHMM(Math.max(retTime, showEnd + 10) + 20), type: "return",
     title: transport.mode === "fan_bus" ? "귀가 버스" : transport.mode === "train" ? "귀가 열차" : "귀가",
     place_id: transport.mode === "fan_bus" ? ret?.id ?? null : null, walk_min: walkOf(ret),

@@ -10,8 +10,8 @@ export async function generateMetadata({ params }: { params: Promise<{ token: st
   const { token } = await params;
   const d = await getParentData(token);
   if (!d) return { title: "트롯트립", robots: { index: false } };
-  const title = shareTitle(d.trip.kid_label, d.trip.kid_name);
-  const description = `${d.concert.title} · ${fmtDateKo(d.concert.date)} · 앱 설치 없이 바로 보세요`;
+  const title = shareTitle(d.trip.kid_label, d.trip.kid_name, !!d.concert.pilgrim);
+  const description = `${d.concert.pilgrim ? `${d.concert.artist_display} 팬덤 스팟 여행 · ${d.concert.city}` : d.concert.title} · ${fmtDateKo(d.concert.date)} · 앱 설치 없이 바로 보세요`;
   const image = `/api/og?t=${token}`;
   return {
     title, description, robots: { index: false, follow: false },
