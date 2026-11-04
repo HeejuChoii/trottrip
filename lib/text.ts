@@ -70,3 +70,24 @@ export function tipsFor(tips: string[] | undefined, mode: string): string[] {
     return true;
   });
 }
+
+/** 자녀·부모님 화면 문장 다듬기: 영어 필드명·태그·주소(URL)가 그대로 보이지 않게 한다 */
+const FIELD_KO: Record<string, string> = {
+  near_toilet: "화장실 가까이", elevator_first: "엘리베이터 우선", rest_often: "자주 쉬기", fan_first: "팬덤 장소 우선",
+  artist_places: "가수가 다녀간 곳", needs_check: "", verified: "", user_input: "", mild: "덜 매운", seafood: "해산물", quick: "빨리 식사",
+  korean: "한식", chinese: "중식", japanese: "일식", western: "양식", snack: "분식", seating: "좌석", indoor: "실내", accessible: "무장애",
+  soup: "국물", rice: "밥", no_raw: "날것 제외", walk_min_from_venue: "", friends_count: "", companions: "", stay_link: "", stay_name: "",
+};
+export function cleanNote(s: string): string {
+  return s
+    .replace(/https?:\/\/\S+/g, "")
+    .replace(/숙소 링크\s*:?\s*/g, "")
+    .replace(/\b[a-z]+(?:_[a-z]+)+\b|\b(?:mild|seafood|quick|korean|chinese|japanese|western|snack|seating|indoor|accessible|soup|rice|verified)\b/g, (m) => FIELD_KO[m] ?? "")
+    .replace(/\s*태그\s*(있음|있어요)/g, "")
+    .replace(/\(\s*\)/g, "")
+    .replace(/\s*·\s*(?=·|$)/g, "")
+    .replace(/^\s*·\s*/, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+

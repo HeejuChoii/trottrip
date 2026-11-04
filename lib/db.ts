@@ -206,6 +206,29 @@ export async function listTtPlaces(scope: { venue_key?: string | null; concert_i
   return ((await local()).tt_places ?? []).filter((r) => (!!scope.venue_key && r.venue_key === scope.venue_key) || (!!scope.concert_id && r.concert_id === scope.concert_id));
 }
 
+// ---------- 공연 포스터 (tt_places에 venue_key "posters"로 저장: 마이그레이션 없이) ----------
+const POSTERS = "posters";
+/** 키(공연 id 또는 가수 이름) → 포스터 이미지 주소 */
+export async function listPosters(): Promise<Record<string, string>> {
+  const rows = await listTtPlaces({ venue_key: POSTERS }).catch(() => []);
+  return Object.fromEntries(rows.filter((r) => r.data.link_url).map((r) => [r.data.name, r.data.link_url!]));
+}
+export async function setPosters(items: { key: string; url: string | null }[]): Promise<void> {
+  const now = new Date().toISOString();
+  for (const it of items.filter((x) => !x.url)) await deleteTtPlace(`poster__${it.key}`);
+  await upsertTtPlaces(items.filter((x) => x.url).map((it) => ({
+    id: `poster__${it.key}`, venue_key: POSTERS, concert_id: null, origin: "manual" as const, updated_at: now,
+    data: {
+      id: `poster__${it.key}`, concert_ids: [], name: it.key, category: "photo" as const, lat: null, lng: null, address: "", walk_min_from_venue: null,
+      tags: [], fan_type: "none" as const, description_ko: "공연 포스터", evidence_urls: [], source: "user_input" as const, updated_at: now, concertrip_url: "", link_url: it.url!,
+    },
+  })));
+}
+/** 공연 포스터: 공연 id로 넣은 게 있으면 그것, 없으면 가수 이름으로 넣은 것 */
+export function posterFor(map: Record<string, string>, c: { id?: string | null; artist_display?: string }): string | null {
+  return (c.id && map[c.id]) || (c.artist_display && map[c.artist_display]) || null;
+}
+
 /** 전체 tt_places (평점 붙여넣기 매칭용, 수백 건 규모) */
 export async function listAllTtPlaces(): Promise<TtPlaceRow[]> {
   const s = supa();

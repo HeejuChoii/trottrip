@@ -45,3 +45,10 @@ test("근거 링크 이름", () => {
   assert.equal(sourceName("https://m.blog.naver.com/a/1"), "네이버 블로그");
   assert.equal(sourceName("https://www.starnewskorea.com/a"), "스타뉴스");
 });
+
+test("자녀 메모에 영어 필드명·URL이 보이지 않게", async () => {
+  const { cleanNote } = await import("../lib/text.ts");
+  assert.equal(cleanNote("한식·mild 태그 있음. 정보 출처 확인 필요(needs_check)."), "한식·덜 매운. 정보 출처 확인 필요.");
+  assert.equal(cleanNote("숙소 링크: https://place.map.kakao.com/1117108402 · 지하철이면 한성백제역이 덜 붐빔"), "지하철이면 한성백제역이 덜 붐빔");
+  assert.equal(cleanNote("near_toilet 조건에 맞는 쉼터"), "화장실 가까이 조건에 맞는 쉼터");
+});

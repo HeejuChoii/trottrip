@@ -8,8 +8,15 @@ import type { Concert, ParentProfile, Prefs, Transport } from "@/lib/types";
 import { shortTitle } from "@/lib/planner";
 import { eunNeun } from "@/lib/text";
 
-type C = Concert & { place_count: number };
-export interface CourseCard { id: string; artist: string; title: string; region: string; blurb: string; start: string; spots: { name: string; kind: string }[] }
+type C = Concert & { place_count: number; poster?: string | null };
+export interface CourseCard { id: string; artist: string; title: string; region: string; blurb: string; start: string; poster?: string | null; spots: { name: string; kind: string }[] }
+
+/** 포스터가 있으면 이미지, 없으면 가수 색 상자에 이름 */
+function Poster({ src, color, label }: { src?: string | null; color: string; label: string }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  if (src) return <img className="poster" src={src} alt={`${label} 포스터`} referrerPolicy="no-referrer" style={{ padding: 0, objectFit: "cover", background: color }} />;
+  return <div className="poster" style={{ background: color }}>{label}</div>;
+}
 export interface ArtistCard { name: string; fandom: string; color: string; blurb: string }
 
 function Chip({ on, onClick, children, tone }: { on: boolean; onClick: () => void; children: React.ReactNode; tone?: "pk" | "pu" }) {
@@ -52,6 +59,10 @@ export default function Wizard({ concerts, artists = [], courses = [], initialMo
     return () => clearInterval(t);
   }, [step]);
   const [concertId, setConcertId] = useState<string | null>(concerts[0]?.id ?? null);
+  // 공연 고르기: 가수 알약 칩으로 거르기 (전체 / 임영웅 / 이찬원 …)
+  const [artistFilter, setArtistFilter] = useState("전체");
+  const concertArtists = useMemo(() => ["전체", ...new Set(concerts.map((c) => c.artist_display).filter(Boolean))], [concerts]);
+  const shown = artistFilter === "전체" ? concerts : concerts.filter((c) => c.artist_display === artistFilter);
   const [custom, setCustom] = useState({ title: "", venue_name: "", date: "", start_time: "" });
   const [useCustom, setUseCustom] = useState(concerts.length === 0);
   const [seat, setSeat] = useState("");
@@ -115,7 +126,8 @@ export default function Wizard({ concerts, artists = [], courses = [], initialMo
         custom_concert: !fanMode && useCustom ? custom : null,
         pilgrimage: fanMode ? { course_id: courseId, date: tripDate, start_time: tripStart } : null,
         parent_profile: parent, prefs: fanMode ? { goods: false, photo: false, artist_places: true, fan_first: true, sightseeing: false } : prefs,
-        transport: { ...tr, companions: tr.mode === "fan_bus" ? "fan_bus" : tr.companions },
+        // 친구분과가 아니면 친구 수는 0으로(기본값 2가 그대로 넘어가 "친구 2분"이 나오지 않게)
+        transport: { ...tr, companions: tr.mode === "fan_bus" && tr.companions !== "alone" ? "fan_bus" : tr.companions, friends_count: tr.companions === "friends" ? tr.friends_count : 0 },
         seat, src: ls.get("tt_src") ?? "", privacy_ok: !!consent.privacy, marketing_opt_in: !!consent.marketing,
       });
       router.push(`/k/${r.kid_token}`);
@@ -195,7 +207,7 @@ export default function Wizard({ concerts, artists = [], courses = [], initialMo
           {courses.filter((c) => c.artist === artist).map((c) => (
             <button key={c.id} type="button" className={`card ${c.id === courseId ? "sel" : ""}`} aria-pressed={c.id === courseId} onClick={() => setCourseId(c.id)} style={{ textAlign: "left" }}>
               <div className="show">
-                <div className="poster" style={{ background: artists.find((a) => a.name === c.artist)?.color ?? "var(--purple)" }}>{c.artist}</div>
+                <Poster src={c.poster} color={artists.find((a) => a.name === c.artist)?.color ?? "var(--purple)"} label={c.artist} />
                 <div>
                   <b>{c.title}</b>
                   <small>{c.blurb}</small>
@@ -228,11 +240,19 @@ export default function Wizard({ concerts, artists = [], courses = [], initialMo
         <>
           <h1 className="h">부모님이 어떤 공연에 가시나요?</h1>
           <p className="lead">티켓을 이미 구하셨다면 공연을 골라 주세요.</p>
-          {concerts.map((c) => (
+          {concertArtists.length > 2 && (
+            <div className="chips" role="tablist" aria-label="가수로 거르기">
+              {concertArtists.map((a) => (
+                <button key={a} type="button" role="tab" className="chip" aria-pressed={artistFilter === a}
+                  onClick={() => { setArtistFilter(a); const first = a === "전체" ? concerts[0] : concerts.find((c) => c.artist_display === a); if (first) { setConcertId(first.id); setUseCustom(false); } }}>{a}</button>
+              ))}
+            </div>
+          )}
+          {shown.map((c) => (
             <button key={c.id} type="button" className={`card ${!useCustom && c.id === concertId ? "sel" : ""}`} aria-pressed={!useCustom && c.id === concertId}
               onClick={() => { setConcertId(c.id); setUseCustom(false); setErr(""); }}>
               <div className="show">
-                <div className="poster" style={{ background: c.color }}>{c.artist_display || shortTitle(c.title).slice(0, 6)}</div>
+                <Poster src={c.poster} color={c.color} label={c.artist_display || shortTitle(c.title).slice(0, 6)} />
                 <div>
                   <b>{c.title}</b>
                   <small>{c.city ? `${c.city} ` : ""}{c.venue_name} · {fmtDateKo(c.date)} {fmtTimeKo(c.start_time)}</small>

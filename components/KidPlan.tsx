@@ -11,7 +11,8 @@ import type { ConcertView, ParentProfile, Place, Plan, PlanItem, Prefs, TicketIn
 import { estimateSteps, fmtMin } from "@/lib/steps";
 import { buildChecklist } from "@/lib/checklist";
 
-const SWAPPABLE = new Set(["meal", "rest", "goods", "photo"]);
+// 포토존·굿즈 부스는 보통 한 곳뿐이라 바꾸기 버튼을 두지 않는다
+const SWAPPABLE = new Set(["meal", "rest"]);
 const SWAP_LABEL: Record<string, string> = { meal: "다른 식당으로 바꾸기", rest: "다른 쉼터로", goods: "다른 부스로", photo: "다른 포토존으로" };
 
 interface Props {
@@ -28,6 +29,7 @@ interface Props {
   transport: Transport;
   ticket: TicketInfo;
   checklist: Record<string, boolean>;
+  poster?: string | null;
 }
 
 /** 굿즈·포토존·팬덤 스팟(가수가 다녀간 식당 포함)은 분홍 카드 */
@@ -184,7 +186,11 @@ export default function KidPlan(props: Props) {
   return (
     <main className="shell">
       <div className="top"><Brand /><Link className="back" href={`/k/${kidToken}/status`}>진행 상황 보기 →</Link></div>
-      <h1 className="h" style={{ fontSize: 22 }}>{plan.title}</h1>
+      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {props.poster && <img src={props.poster} alt="포스터" referrerPolicy="no-referrer" style={{ width: 64, height: 86, objectFit: "cover", borderRadius: 10, flex: "none" }} />}
+        <h1 className="h" style={{ fontSize: 22 }}>{plan.title}</h1>
+      </div>
       <p className="lead">{plan.summary}</p>
       <p className="note" style={{ textAlign: "left", margin: "-4px 0 0" }}>{pil ? `${concert.city} · ${fmtDateKo(concert.date)} ${fmtTimeKo(concert.start_time)} ${concert.venue_name}에서 출발` : `${concert.venue_name} · ${fmtDateKo(concert.date)} ${fmtTimeKo(concert.start_time)} 시작`}</p>
       {pil && <p className="note" style={{ textAlign: "left", margin: 0 }}><span className="tag pu">콘서트립에서 불러온 팬덤 스팟</span> 공연 없이 떠나는 {concert.artist_display} 팬덤 스팟 여행이에요</p>}

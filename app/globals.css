@@ -5,7 +5,7 @@
   /* 로고 색만 쓴다: 민트(#14C1AD)·핑크(#FF5C93). 진초록 배경은 쓰지 않고, 글자용 민트만 조금 진하게(#0B8F80) */
   --mint: #14c1ad; --deep: #0b8f80; --pink: #ff5c93; --pinkD: #c2185b; --purple: #ff8fb5; --purpleD: #c2185b;
   /* 버튼: 민트 바탕 + 진한 글씨(대비 6.4), 강조 버튼: 연한 핑크 바탕 + 진한 자주 글씨(대비 6.9) */
-  --btn: #14c1ad; --btnInk: #062f2a; --accent: #ffa3c2; --accentInk: #5a1030;
+  --btn: #14c1ad; --btnInk: #111111; --accent: #ffa3c2; --accentInk: #111111;
   --bg: #f2f4f6; --ink: #23313b; --sub: #5b6b73; --line: #e5e8eb; --card: #ffffff;
   --mintS: #e3f8f4; --pinkS: #ffeef4; --purpleS: #ffeef4;
   --f: "Noto Sans KR", "Noto Sans CJK KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;

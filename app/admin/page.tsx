@@ -1,5 +1,6 @@
 import { isAdmin } from "@/lib/admin";
-import { ensureSeedConcerts, listConcerts, placeCounts, storageHealth, storageMode, supabaseKeyKind } from "@/lib/db";
+import { ensureSeedConcerts, listConcerts, listPosters, placeCounts, storageHealth, storageMode, supabaseKeyKind } from "@/lib/db";
+import AdminPosters from "@/components/admin/AdminPosters";
 import { computeMetrics } from "@/lib/metrics";
 import { listUsage } from "@/lib/db";
 import { budgetUsd } from "@/lib/usage";
@@ -79,6 +80,7 @@ export default async function Page() {
         </div>
       </div>
 
+      <AdminPosters concerts={concerts.filter((c) => c.active).map((c) => ({ id: c.id, title: c.title, date: c.date, artist: c.artist_display, ticket_url: c.ticket_url ?? null }))} initial={await listPosters()} />
       <AdminPilgrim venues={[...new Set(concerts.filter((c) => c.active).map((c) => c.venue_name))]} />
       <AdminEval />
 

@@ -1,5 +1,5 @@
 import Wizard from "@/components/Wizard";
-import { ensureSeedConcerts, listConcerts, placeCounts } from "@/lib/db";
+import { ensureSeedConcerts, listConcerts, listPosters, placeCounts, posterFor } from "@/lib/db";
 import { nowKST } from "@/lib/time";
 import { courseSpots, pilgrimArtists, pilgrimCourses } from "@/lib/pilgrim";
 
@@ -10,10 +10,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ m
   const { mode } = await searchParams;
   const today = nowKST().date;
   await ensureSeedConcerts().catch(() => undefined);
-  const [concerts, counts] = await Promise.all([listConcerts(true), placeCounts()]);
-  const upcoming = concerts.filter((c) => c.date >= today).map((c) => ({ ...c, place_count: counts[c.id]?.count ?? 0 }));
+  const [concerts, counts, posters] = await Promise.all([listConcerts(true), placeCounts(), listPosters()]);
+  const upcoming = concerts.filter((c) => c.date >= today).map((c) => ({ ...c, place_count: counts[c.id]?.count ?? 0, poster: posterFor(posters, c) }));
   const courses = pilgrimCourses().map((c) => ({
-    id: c.id, artist: c.artist, title: c.title, region: c.region, blurb: c.blurb, start: c.start.name,
+    id: c.id, artist: c.artist, title: c.title, region: c.region, blurb: c.blurb, start: c.start.name, poster: posters[c.artist] ?? null,
     spots: courseSpots(c).map((p) => ({ name: p.name, kind: p.category })),
   }));
   return <Wizard concerts={upcoming} artists={pilgrimArtists()} courses={courses} initialMode={mode === "fan" ? "fan" : "concert"} />;

@@ -23,6 +23,8 @@ interface Props {
   concertLine: string; // "코엑스 D홀 · 오후 5시 시작"
   /** 공연 없는 성지순례 여행 */
   pilgrim?: boolean;
+  /** 공연(또는 가수) 포스터 이미지 */
+  poster?: string | null;
 }
 
 /** 물어보기 챗봇: 부모님 화면 어디서나 오른쪽 아래 동그라미 */
@@ -142,6 +144,10 @@ export default function ParentHome(p: Props) {
       <main className="shell pv">
         <div className="top"><Brand href={null} /></div>
         <p className="hello">{p.honorific}, {kidH}이 보낸 {p.pilgrim ? "팬덤 스팟 여행" : "공연 날"} 안내장이에요</p>
+        {p.poster && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={p.poster} alt="공연 포스터" referrerPolicy="no-referrer" style={{ width: "100%", maxHeight: 300, objectFit: "contain", borderRadius: 18, background: "#fff" }} />
+        )}
         <section className="next pk">
           <div className="k">{fmtDateLongKo(p.concertDate)}</div>
           <div className="w">{p.concertTitle}</div>
