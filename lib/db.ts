@@ -28,9 +28,9 @@ export function mockVenue(venueKey: string | null | undefined): { tips: string[]
 }
 
 /** 실제 일정으로 바뀌어 더 쓰지 않는 시연용 가상 공연 → 목록에서 숨긴다 */
-const RETIRED_SEED_IDS = ["yt-exco-1206", "kgm-goyang-1121"];
+const RETIRED_SEED_IDS = ["yt-exco-1206", "kgm-goyang-1121", "lyw-gocheok-1227", "sgi-bexco-1213"];
 /** 공식 일정으로 시각·예매처가 바뀐 시드 공연 → 시각·예매처·공지만 시드 값으로 맞춘다 */
-const REFRESH_SEED_IDS = ["cyp-kspo-1127", "cyp-kspo-1128", "lsc-kspo-1205", "yt-daegu-1128", "yt-daegu-1129"];
+const REFRESH_SEED_IDS = ["cyp-kspo-1127", "cyp-kspo-1128", "lsc-kspo-1205", "yt-daegu-1128", "yt-daegu-1129", "lsc-daejeon-1122", "lsc-exco-1128", "lsc-bexco-1224"];
 
 /** 시드 공연 중 아직 없는 것만 넣는다(운영자가 고친 공연은 건드리지 않음) */
 export async function ensureSeedConcerts(): Promise<void> {
@@ -211,10 +211,15 @@ export async function listTtPlaces(scope: { venue_key?: string | null; concert_i
 
 // ---------- 공연 포스터 (tt_places에 venue_key "posters"로 저장: 마이그레이션 없이) ----------
 const POSTERS = "posters";
+/** 기본 포스터(공식 포스터 이미지를 public/posters에 둠). 운영자가 넣은 값이 있으면 그쪽이 우선 */
+const STATIC_POSTERS: Record<string, string> = {
+  이승철: "/posters/lee-seungchul.webp", 김건모: "/posters/kim-gunmo.webp", 박서진: "/posters/park-seojin.webp",
+  이찬원: "/posters/lee-chanwon.png", 영탁: "/posters/youngtak.png",
+};
 /** 키(공연 id 또는 가수 이름) → 포스터 이미지 주소 */
 export async function listPosters(): Promise<Record<string, string>> {
   const rows = await listTtPlaces({ venue_key: POSTERS }).catch(() => []);
-  return Object.fromEntries(rows.filter((r) => r.data.link_url).map((r) => [r.data.name, r.data.link_url!]));
+  return { ...STATIC_POSTERS, ...Object.fromEntries(rows.filter((r) => r.data.link_url).map((r) => [r.data.name, r.data.link_url!])) };
 }
 export async function setPosters(items: { key: string; url: string | null }[]): Promise<void> {
   const now = new Date().toISOString();
