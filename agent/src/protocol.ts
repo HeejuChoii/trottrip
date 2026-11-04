@@ -40,10 +40,16 @@ export interface ChatRequest {
   places: AgentPlace[];
 }
 
+/** 챗봇이 답과 함께 띄우는 버튼. 누르면 Vercel 화면으로 이동한다(챗봇이 화면을 직접 바꾸지 않음) */
+export type ChatAction =
+  | { type: "schedule"; item_id: string; label: string } // 일정에서 보기 → /p/{token}?item=
+  | { type: "map"; place_id: string; label: string }; // 지도에서 길찾기 → /p/{token}/map?place=&route=1
+
 export interface ChatResponse {
   text: string;
   needs_check: boolean;
   place_id: string | null;
+  actions: ChatAction[];
 }
 
 export const SIG_HEADER = "x-trottrip-signature";

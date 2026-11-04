@@ -10,7 +10,11 @@ export function agentEnabled() {
   return !!process.env.AGENT_URL && !!process.env.AGENT_SHARED_SECRET;
 }
 
-export interface AgentAnswer { text: string; needs_check: boolean; place_id: string | null }
+export type ChatAction =
+  | { type: "schedule"; item_id: string; label: string }
+  | { type: "map"; place_id: string; label: string };
+
+export interface AgentAnswer { text: string; needs_check: boolean; place_id: string | null; actions: ChatAction[] }
 
 export class AgentLimitError extends Error {}
 
@@ -45,5 +49,11 @@ export async function askAgent(loaded: LoadedTrip, q: string, now: string, done:
   if (res.status === 429) throw new AgentLimitError(json.message || "잠시 후 다시 물어봐 주세요.");
   if (!res.ok || typeof json.text !== "string" || !json.text) throw new Error(`agent ${res.status}`);
   const pid = json.place_id && places.some((p) => p.id === json.place_id) ? json.place_id : null;
-  return { text: json.text, needs_check: !!json.needs_check, place_id: pid };
+  const itemIds = new Set(trip.plan!.items.map((i) => i.id));
+  const placeIds = new Set(places.map((p) => p.id));
+  // 버튼은 이 안내장에 실제로 있는 항목·장소만 통과
+  const actions = (Array.isArray(json.actions) ? json.actions : []).filter((a): a is ChatAction =>
+    !!a && typeof a.label === "string" &&
+    ((a.type === "schedule" && itemIds.has(a.item_id)) || (a.type === "map" && placeIds.has(a.place_id)))).slice(0, 3);
+  return { text: json.text, needs_check: !!json.needs_check, place_id: pid, actions };
 }

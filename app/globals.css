@@ -182,3 +182,9 @@ h1.h, h2.h { font-size: 24px; line-height: 1.3; margin: 4px 0 0; font-weight: 90
 .admin th { background: var(--mintS); font-weight: 700; color: var(--deep); }
 .admin td.n { text-align: right; font-variant-numeric: tabular-nums; }
 .tblwrap { overflow-x: auto; }
+
+.actbtn { display: block; background: var(--mintS); color: var(--deep); border: 2px solid var(--deep); border-radius: 14px; padding: 12px 14px; font-size: 17px; font-weight: 900; text-decoration: none; min-height: 52px; line-height: 1.35; }
+.asked { background: #fff; border: 3px solid var(--purple); border-radius: 20px; padding: 16px; }
+.asked .k { font-size: 15px; font-weight: 700; color: var(--purpleD); }
+.asked .w { font-size: 26px; font-weight: 900; margin: 4px 0; }
+.asked .d { font-size: 18px; line-height: 1.5; }

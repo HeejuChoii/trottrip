@@ -6,7 +6,7 @@ import { createServer } from "../src/server.ts";
 import { AgentPool, LimitError } from "../src/agent/pool.ts";
 import type { AgentOpener, TurnState } from "../src/agent/croche.ts";
 import { sign, SIG_HEADER, TS_HEADER, type ChatRequest } from "../src/protocol.ts";
-import { findPlaces, stripMarkers } from "../src/tools.ts";
+import { addAction, findPlaces, stripMarkers } from "../src/tools.ts";
 
 const TRIP = "0b6e3a4e-8c1f-4a7e-9a39-7b1f2c3d4e5f";
 const req = (q: string, trip = TRIP): ChatRequest => ({
@@ -32,6 +32,12 @@ function fakeOpener(log: string[]): AgentOpener {
         const r = findPlaces(state.req!, "toilet");
         r.found.forEach((p) => state.placeIds.push(p.id));
         return { text: `${r.found[0].name}이 가까워요. 걸어서 1분이에요.`, markers: [], status: "completed" };
+      }
+      if (text.includes("어디 가")) {
+        addAction(state.actions, state.req!, "schedule", "i1");
+        addAction(state.actions, state.req!, "map", "wc1");
+        assert.equal(addAction(state.actions, state.req!, "map", "nope").shown, false);
+        return { text: "지금은 입장하실 시간이에요. 아래 버튼을 누르세요.", markers: [], status: "completed" };
       }
       return { text: "그건 확인이 필요해요. : unknown :", markers: [], status: "completed" };
     },
@@ -59,6 +65,10 @@ test("pool: 같은 사용자 직렬화, 인스턴스 재사용, 장소 id·unkno
   assert.equal(b.needs_check, true);
   assert.equal(b.place_id, null);
   assert.ok(!b.text.includes("unknown"));
+  assert.deepEqual(a.actions.map((x) => x.type), ["map"]); // 장소 안내 → 지도 버튼 자동
+  const c = await pool.ask(req("공연 1시간 남았는데 어디 가야 해?"), {});
+  assert.deepEqual(c.actions.map((x) => x.type), ["schedule", "map"]);
+  assert.equal(b.actions.length, 0);
   await pool.closeAll();
 });
 

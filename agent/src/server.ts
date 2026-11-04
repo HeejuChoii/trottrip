@@ -27,7 +27,7 @@ export function createServer(opener: AgentOpener = openCrocheAgent, secret = pro
   const pool = new AgentPool(opener, {
     maxOpen: Number(process.env.MAX_OPEN_AGENTS ?? 100),
     idleMs: Number(process.env.AGENT_IDLE_MS ?? 15 * 60_000),
-    perUserDaily: Number(process.env.PER_USER_DAILY ?? 60),
+    perUserDaily: Number(process.env.PER_USER_DAILY ?? 30), // trip당 30회 (PRD 9장)
     globalHourly: Number(process.env.GLOBAL_HOURLY ?? 800), // 서버 키 한도(시간당 1,000회)보다 낮게
   });
   pool.start();
@@ -38,7 +38,7 @@ export function createServer(opener: AgentOpener = openCrocheAgent, secret = pro
       res.end(JSON.stringify(body));
     };
     try {
-      if (req.method === "GET" && req.url === "/health") return send(200, { ok: true, open: pool.size });
+      if (req.method === "GET" && (req.url === "/health" || req.url === "/")) return send(200, { ok: true, service: "trottrip-agent", open: pool.size });
       if (req.method !== "POST" || req.url !== "/chat") return send(404, { error: "not_found" });
 
       let raw = "";

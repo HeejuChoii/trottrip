@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
 import ParentHome from "@/components/ParentHome";
 import { getParentData } from "./data";
-import { toHHMM, toMin } from "@/lib/time";
+import { fmtTimeKo, toHHMM, toMin } from "@/lib/time";
+import { estimateSteps } from "@/lib/steps";
+import { parentKit } from "@/lib/checklist";
+import { EMPTY_TICKET } from "@/lib/schemas";
 
 // P1 지금 할 일 (F7) + P4 귀가 안내 (F12)
 export default async function Page({ params }: { params: Promise<{ token: string }> }) {
@@ -23,6 +26,9 @@ export default async function Page({ params }: { params: Promise<{ token: string
       done={d.done}
       opened={d.opened}
       placeNames={placeNames}
+      stepsLine={estimateSteps(d.trip.plan!, d.places, d.trip.parent_profile).line}
+      kit={parentKit({ concert: d.concert, parent: d.trip.parent_profile, prefs: d.trip.prefs, ticket: { ...EMPTY_TICKET, ...(d.trip.ticket ?? {}) } })}
+      concertLine={`${d.concert.venue_name} · ${fmtTimeKo(d.concert.start_time)} 시작`}
     />
   );
 }

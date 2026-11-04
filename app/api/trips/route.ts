@@ -1,5 +1,5 @@
 // POST /api/trips — 일정 생성 (F5). 자녀 토큰과 부모님 토큰을 함께 만든다.
-import { CreateTripSchema } from "@/lib/schemas";
+import { CreateTripSchema, EMPTY_TICKET } from "@/lib/schemas";
 import { createTrip, getConcert, getPlaces } from "@/lib/db";
 import { generatePlan } from "@/lib/ai";
 import { concertView, newToken } from "@/lib/trip";
@@ -39,6 +39,8 @@ export async function POST(req: Request) {
       kid_phone: "",
       src: v.src,
       marketing_opt_in: v.marketing_opt_in,
+      checklist: {},
+      ticket: EMPTY_TICKET,
       expires_at: expiryFor(view.date),
     });
     return ok({ kid_token: trip.kid_token });

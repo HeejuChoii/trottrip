@@ -7,7 +7,9 @@ import { postJSON, track } from "@/lib/client";
 import { fmtDateKo, fmtTimeKo, isHHMM } from "@/lib/time";
 import { shareTitle } from "@/lib/text";
 import { CATEGORY_LABEL, FAN_LABEL } from "@/lib/concertrip";
-import type { ConcertView, Place, Plan, PlanItem } from "@/lib/types";
+import type { ConcertView, ParentProfile, Place, Plan, PlanItem, Prefs, TicketInfo, Transport } from "@/lib/types";
+import { estimateSteps, fmtMin } from "@/lib/steps";
+import { buildChecklist } from "@/lib/checklist";
 
 const SWAPPABLE = new Set(["meal", "rest", "goods", "photo"]);
 const SWAP_LABEL: Record<string, string> = { meal: "다른 식당으로 바꾸기", rest: "다른 쉼터로", goods: "다른 부스로", photo: "다른 포토존으로" };
@@ -21,6 +23,11 @@ interface Props {
   parentHonorific: string;
   share: { kid_label: string; kid_name: string; kid_phone: string };
   kakaoKey: string;
+  parent: ParentProfile;
+  prefs: Prefs;
+  transport: Transport;
+  ticket: TicketInfo;
+  checklist: Record<string, boolean>;
 }
 
 function tone(it: PlanItem) {
@@ -47,6 +54,9 @@ export default function KidPlan(props: Props) {
   const [intent, setIntent] = useState<"" | "yes" | "no">("");
   const [origin, setOrigin] = useState("");
   const kakao = useKakao(kakaoKey);
+  const [tab, setTab] = useState<"plan" | "check" | "ticket">("plan");
+  const [ticket, setTicket] = useState<TicketInfo>(props.ticket);
+  const [checks, setChecks] = useState<Record<string, boolean>>(props.checklist ?? {});
 
   useEffect(() => { setOrigin(process.env.NEXT_PUBLIC_SITE_URL || location.origin); }, []);
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(""), 2400); return () => clearTimeout(t); }, [toast]);
@@ -136,6 +146,15 @@ export default function KidPlan(props: Props) {
     setBusy("");
   }
 
+  async function lessWalk() {
+    setBusy("less");
+    try {
+      const r = await postJSON<{ plan: Plan }>(`/api/k/${kidToken}/less-walk`, {});
+      setPlan(r.plan); setDraft(r.plan.items); setToast("덜 걷게 다시 짰어요");
+    } catch (e) { setToast(e instanceof Error ? e.message : "다시 짜지 못했어요"); }
+    setBusy("");
+  }
+
   function sendIntent(v: "yes" | "no") {
     setIntent(v);
     track("intent", kidToken, undefined, { answer: v });
@@ -151,6 +170,37 @@ export default function KidPlan(props: Props) {
       <p className="note" style={{ textAlign: "left", margin: "-4px 0 0" }}>{concert.venue_name} · {fmtDateKo(concert.date)} {fmtTimeKo(concert.start_time)} 시작{props.share && ""}</p>
       {plan.general && <div className="card" style={{ fontSize: 14, lineHeight: 1.5 }}><b>이 공연은 장소 정보를 준비 중이에요.</b><br />식사·이동·귀가 시각만 담은 일반 일정이에요. 장소가 준비되면 운영자가 콘서트립에 올려요.</div>}
 
+      {plan.fallback_reason && <p className="note" style={{ textAlign: "left", margin: 0 }}>※ {plan.fallback_reason}</p>}
+      {(() => {
+        const st = estimateSteps(plan, places, props.parent);
+        return (
+          <div className="card" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <span className="lab" style={{ margin: 0 }}>오늘 얼마나 움직이세요?</span>
+            <b style={{ fontSize: 22 }}>예상 약 {st.steps.toLocaleString("ko-KR")}보</b>
+            <span style={{ fontSize: 14, color: "var(--sub)" }}>걷는 시간 약 {fmtMin(st.walk_min)} · 서 있는 시간 약 {fmtMin(st.stand_min)} · {st.compare_text}{st.usual_guessed ? " (걷기 스타일 기준)" : ` (평소 ${st.usual.toLocaleString("ko-KR")}보)`}</span>
+            {plan.less_walk
+              ? <span className="tag ok" style={{ alignSelf: "flex-start" }}>덜 걷게 바꾼 일정이에요</span>
+              : <button className="mini-btn" style={{ alignSelf: "flex-start", fontSize: 14, padding: "8px 12px" }} disabled={busy === "less"} onClick={lessWalk}>{busy === "less" ? "다시 짜는 중…" : "덜 걷게 바꾸기"}</button>}
+          </div>
+        );
+      })()}
+      <div className="chips" role="tablist">
+        {([["plan", "일정"], ["check", "준비 체크리스트"], ["ticket", "티켓 정보"]] as const).map(([k, l]) => (
+          <button key={k} role="tab" className="chip" aria-pressed={tab === k} aria-selected={tab === k} onClick={() => setTab(k)}>{l}</button>
+        ))}
+      </div>
+
+      {tab === "check" && <ChecklistTab items={buildChecklist({ concert, parent: props.parent, prefs: props.prefs, transport: props.transport, ticket, who: props.parentHonorific })} checks={checks} onToggle={async (id, v) => {
+        setChecks((c) => ({ ...c, [id]: v }));
+        try { await postJSON(`/api/k/${kidToken}`, { checklist: { [id]: v } }, "PATCH"); } catch { setToast("저장하지 못했어요"); }
+      }} />}
+
+      {tab === "ticket" && <TicketTab ticket={ticket} onSave={async (t) => {
+        try { const r = await postJSON<{ ticket: TicketInfo }>(`/api/k/${kidToken}`, { ticket: t }, "PATCH"); setTicket(r.ticket); setToast("티켓 정보를 저장했어요. 부모님 화면 '내 티켓'에 보여요"); }
+        catch (e) { setToast(e instanceof Error ? e.message : "저장하지 못했어요"); }
+      }} />}
+
+      {tab === "plan" && <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span className="lab" style={{ margin: 0 }}>공연 날 하루</span>
         {editing
@@ -213,6 +263,8 @@ export default function KidPlan(props: Props) {
         </div>
       )}
 
+      </>}
+
       <div className="card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <span className="lab" style={{ margin: 0 }}>보내기 전에 알려 주세요</span>
         <div>
@@ -255,5 +307,47 @@ export default function KidPlan(props: Props) {
       <p className="fine">부모님 링크는 공연 다음 날 23:59까지 열려요. 장소 정보는 콘서트립(concertrip.kr)에서 불러와요.</p>
       {toast && <div className="toast" role="status">{toast}</div>}
     </main>
+  );
+}
+
+function ChecklistTab({ items, checks, onToggle }: { items: ReturnType<typeof buildChecklist>; checks: Record<string, boolean>; onToggle: (id: string, v: boolean) => void }) {
+  const phases = ["D-7", "D-1", "당일 아침"] as const;
+  const done = items.filter((i) => checks[i.id]).length;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <p className="note" style={{ textAlign: "left", margin: 0 }}>이 일정에 맞춰 만든 준비 목록이에요. {done}/{items.length} 완료</p>
+      {phases.map((ph) => (
+        <div key={ph} className="card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <b style={{ color: "var(--deep)" }}>{ph}</b>
+          {items.filter((i) => i.phase === ph).map((i) => (
+            <label key={i.id} style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 14.5, lineHeight: 1.5 }}>
+              <input type="checkbox" checked={!!checks[i.id]} onChange={(e) => onToggle(i.id, e.target.checked)} style={{ width: 22, height: 22, flex: "none" }} />
+              <span style={{ textDecoration: checks[i.id] ? "line-through" : "none", color: checks[i.id] ? "var(--sub)" : "inherit" }}>{i.text}</span>
+            </label>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TicketTab({ ticket, onSave }: { ticket: TicketInfo; onSave: (t: TicketInfo) => void }) {
+  const [t, setT] = useState(ticket);
+  const F = (p: Partial<TicketInfo>) => setT((x) => ({ ...x, ...p }));
+  return (
+    <div className="card" style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <p className="note" style={{ textAlign: "left", margin: "0 0 6px" }}>부모님 화면 &quot;내 티켓&quot; 카드에 큰 글씨로 보여요. 좌석·입구는 일정 정보에서 가져와요.</p>
+      <div className="fld"><span>예매처</span><input className="inp sm" value={t.vendor} onChange={(e) => F({ vendor: e.target.value })} placeholder="예: 티켓링크" /></div>
+      <div className="fld"><span>티켓 받는 방법</span>
+        <select className="inp sm" value={t.pickup} onChange={(e) => F({ pickup: e.target.value as TicketInfo["pickup"] })}>
+          <option value="">모름</option><option value="mobile">모바일 티켓</option><option value="onsite">현장 수령</option><option value="paper">종이 티켓(배송)</option>
+        </select></div>
+      <div className="fld"><span>예매자 이름</span><input className="inp sm" value={t.booker_name} onChange={(e) => F({ booker_name: e.target.value })} placeholder="본인 확인용(선택)" /></div>
+      <label className="fld"><span>신분증 확인</span><input type="checkbox" checked={t.id_check} onChange={(e) => F({ id_check: e.target.checked })} style={{ width: 22, height: 22 }} /></label>
+      <div className="fld"><span>귀가 버스 호차</span><input className="inp sm" value={t.bus_car} onChange={(e) => F({ bus_car: e.target.value })} placeholder="예: 3호차" /></div>
+      <div className="fld"><span>버스 좌석</span><input className="inp sm" value={t.bus_seat} onChange={(e) => F({ bus_seat: e.target.value })} placeholder="예: 12번" /></div>
+      <div className="fld"><span>메모</span><input className="inp sm" value={t.note} onChange={(e) => F({ note: e.target.value })} placeholder="예: 버스 앞 유리 '수성 봄날'" /></div>
+      <button className="cta" style={{ marginTop: 8 }} onClick={() => onSave(t)}>저장</button>
+    </div>
   );
 }

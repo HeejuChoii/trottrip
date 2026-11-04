@@ -18,6 +18,8 @@ export interface PlanInput {
 
 export const ENTER_BEFORE_MIN = 40;
 export const GOODS_WAIT_MIN = 70;
+/** 1순위 팬덤 장소로 당일에 넣는 최대 거리(도보 기준 분). 넘으면 '하루 더' 카드 */
+export const FAN_FIRST_MAX_MIN = 60;
 const DEFAULT_SHOW_MIN = 150;
 
 export function maxWalkFor(walk: ParentProfile["walk"]): number {
@@ -53,12 +55,23 @@ function score(p: Place, prefer: string[]) {
   return s;
 }
 
+// 카카오 등에서 온 식당은 "안 매운지" 알 수 없다. 메뉴 분류로 매운 집만 빼고 "확인 필요"로 표시한다.
+const SPICY_RE = /마라|훠궈|짬뽕|매운|불닭|닭발|떡볶이|낙지|쭈꾸미|주꾸미|곱창|막창|양꼬치|탄탄|태국|베트남|멕시칸|인도|카레/;
+
+export function isSpicyByName(p: Place): boolean {
+  return SPICY_RE.test(`${p.name} ${p.category_detail ?? ""}`);
+}
+
+/** 안 매운 조건을 태그로 확인한 게 아니라 추정한 경우 */
+export function mildUnverified(p: Place, parent: ParentProfile): boolean {
+  return parent.food.includes("mild") && !(p.tags as string[]).includes("mild");
+}
+
 export function restaurantMatches(p: Place, parent: ParentProfile): boolean {
-  if (p.category !== "restaurant" && p.category !== "cafe") return false;
-  if (p.category === "cafe") return false;
+  if (p.category !== "restaurant") return false;
   const tags = p.tags as string[];
   if (parent.food.includes("korean") && !tags.includes("korean")) return false;
-  if (parent.food.includes("mild") && !tags.includes("mild")) return false;
+  if (parent.food.includes("mild") && !tags.includes("mild") && (isSpicyByName(p) || (!p.category_detail && p.origin !== "kakao"))) return false;
   if (!parent.food.includes("seafood") && tags.includes("seafood") && !tags.includes("korean")) return false;
   return true;
 }
@@ -68,10 +81,12 @@ export function candidates(cat: PlaceCategory, input: PlanInput, extraPrefer: st
   const prefer = [...extraPrefer];
   if (input.parent.elevator_first) prefer.push("elevator", "accessible");
   if (input.parent.rest_often) prefer.push("seating");
+  if (input.parent.near_toilet) prefer.push("accessible");
   let list = input.places.filter((p) => p.category === cat && withinWalk(p, max));
   if (cat === "restaurant") {
     list = list.filter((p) => restaurantMatches(p, input.parent));
     if (input.parent.food.includes("quick")) prefer.push("quick");
+    if (input.parent.food.includes("mild")) prefer.push("mild"); // 확인된 곳 우선
   }
   if (cat === "gate" && input.parent.elevator_first) {
     const ev = list.filter((p) => (p.tags as string[]).includes("elevator"));
@@ -181,21 +196,34 @@ export function buildRulePlan(input: PlanInput): Plan {
       cursor -= 20 + gap;
     }
   }
-  const nearFan = prefs.artist_places
-    ? input.places.filter((p) => p.fan_type !== "none" && p.category !== "restaurant" && p.walk_min_from_venue !== null && p.walk_min_from_venue <= maxWalk && !used.has(p.id))
+  // 가수가 다녀간 곳: "꼭 가고 싶어요"(fan_first)면 1순위 — 최대 2곳, 걷기 기준을 넘으면 택시, 시간이 모자라도 마지막에 뺀다.
+  // "시간 나면"이면 걸어갈 수 있는 1곳만, 시간이 모자라면 먼저 뺀다.
+  const fanPool = prefs.artist_places
+    ? input.places
+        .filter((p) => p.fan_type !== "none" && !["restaurant", "goods", "photo"].includes(p.category) && !used.has(p.id) && p.walk_min_from_venue !== null)
+        .filter((p) => p.walk_min_from_venue! <= (prefs.fan_first ? FAN_FIRST_MAX_MIN : maxWalk))
+        .sort((a, b) => (a.fan_type === "artist_visited" ? 0 : 1) - (b.fan_type === "artist_visited" ? 0 : 1) || a.walk_min_from_venue! - b.walk_min_from_venue!)
     : [];
-  if (nearFan[0]) {
-    const f = nearFan[0];
+  const fanItems: PlanItem[] = [];
+  for (const f of fanPool.slice(0, prefs.fan_first ? 2 : 1)) {
     used.add(f.id);
+    const taxi = f.walk_min_from_venue! > maxWalk;
+    const len = taxi ? 45 : prefs.fan_first ? 30 : 20;
     const it = item({
-      start: toHHMM(cursor - 20), end: toHHMM(cursor), type: "photo",
+      start: toHHMM(cursor - len), end: toHHMM(cursor), type: "photo",
       title: `최애 장소 · ${f.name}`, place_id: f.id, walk_min: walkOf(f),
-      parent_text: `${f.description_ko || f.name}. 들러서 사진 한 장 남기세요.`,
-      done_label: "다녀왔어요", kid_note: "팬덤 장소", source: f.source, optional: true,
+      parent_text: taxi
+        ? `${f.description_ko || f.name}. 공연장에서 걸어서 ${f.walk_min_from_venue}분이라 택시를 타세요. 사진 남기고 공연장으로 돌아오세요.`
+        : `${f.description_ko || f.name}. 들러서 사진 한 장 남기세요.`,
+      done_label: "다녀왔어요", kid_note: `팬덤 장소${prefs.fan_first ? " · 1순위" : ""}${taxi ? " · 택시 왕복" : ""}`,
+      source: f.source, optional: !prefs.fan_first,
     });
-    before.unshift(it); optional.push(it);
-    cursor -= 20 + gap;
+    before.unshift(it);
+    fanItems.push(it);
+    cursor -= len + gap;
   }
+  // 시간이 모자랄 때 빼는 순서: optional 배열의 뒤에서부터. fan_first면 팬덤 장소를 맨 앞(마지막에 뺌)
+  if (prefs.fan_first) optional.unshift(...fanItems); else optional.push(...fanItems);
 
   // 점심(또는 이른 저녁): 붐비기 전
   const mealLen = parent.food.includes("quick") ? 40 : 55;
@@ -220,7 +248,7 @@ export function buildRulePlan(input: PlanInput): Plan {
     parent_text: r
       ? `${r.description_ko || r.name}. 붐비기 전에 드세요.`
       : general ? "공연장 근처에서 붐비기 전에 드세요." : "근처 식당 정보를 확인하고 있어요. 붐비기 전에 드세요.",
-    done_label: "다 먹었어요", kid_note: foodNote || "", source: r?.source ?? "needs_check",
+    done_label: "다 먹었어요", kid_note: [foodNote, r && mildUnverified(r, parent) ? "안 매운 메뉴 확인 필요" : ""].filter(Boolean).join(" · "), source: r?.source ?? "needs_check",
   }));
 
   // 도착
@@ -320,10 +348,10 @@ export function buildRulePlan(input: PlanInput): Plan {
 
   const sorted = items.sort((a, b) => toMin(a.start) - toMin(b.start) || ITEM_TYPES.indexOf(a.type) - ITEM_TYPES.indexOf(b.type));
   const summaryBits = [
-    maxWalk <= 10 ? "무리 없는 이동" : "여유 있는 동선",
+    maxWalk <= 5 ? "여유로운 동선" : maxWalk <= 10 ? "적당히 걷는 동선" : "많이 걸어도 좋은 동선",
     prefs.goods && sorted.some((i) => i.type === "goods") ? "굿즈 시간 확보" : null,
     parent.elevator_first ? "엘리베이터 우선" : null,
-    transport.companions === "friends" && transport.friends_count ? `친구 ${transport.friends_count}분 포함` : transport.companions === "fan_bus" ? "팬 모임 버스" : null,
+    transport.companions === "friends" && transport.friends_count ? `친구 ${transport.friends_count}분 포함` : transport.companions === "fan_bus" ? "팬 모임 버스" : transport.companions === "family" ? "3대 가족 나들이" : null,
   ].filter(Boolean);
   return {
     title: `${who}의 〈${shortTitle(concert.title)}〉 ${concert.city || ""} 여행`.replace(/\s+여행$/, " 여행").replace(/\s{2,}/g, " "),
@@ -476,3 +504,45 @@ export function rulesReplan(plan: Plan, input: PlanInput, reason: ChangeReason, 
   const newItems = [...kept, ...out].sort((a, b) => toMin(a.start) - toMin(b.start));
   return { plan: { ...plan, items: newItems }, message, changes };
 }
+
+// ---------- AI가 고를 칸별 후보 (코드가 조건을 거른 뒤 최대 4곳) ----------
+export function fanCandidates(input: PlanInput): Place[] {
+  const { prefs } = input;
+  if (!prefs.artist_places) return [];
+  const maxWalk = maxWalkFor(input.parent.walk);
+  return input.places
+    .filter((p) => p.fan_type !== "none" && !["restaurant", "goods", "photo"].includes(p.category) && p.walk_min_from_venue !== null)
+    .filter((p) => p.walk_min_from_venue! <= (prefs.fan_first ? FAN_FIRST_MAX_MIN : maxWalk))
+    .sort((a, b) => (a.fan_type === "artist_visited" ? 0 : 1) - (b.fan_type === "artist_visited" ? 0 : 1) || a.walk_min_from_venue! - b.walk_min_from_venue!);
+}
+
+export function slotCandidates(plan: Plan, input: PlanInput): Record<string, Place[]> {
+  const out: Record<string, Place[]> = {};
+  const byId = new Map(input.places.map((p) => [p.id, p]));
+  for (const it of plan.items) {
+    let list: Place[] = [];
+    if (it.type === "meal") list = candidates("restaurant", input);
+    else if (it.type === "rest") list = [...candidates("rest", input, ["indoor", "seating"]), ...candidates("cafe", input, ["seating"])];
+    else if (it.type === "goods") list = candidates("goods", input, ["indoor"]);
+    else if (it.type === "photo" && it.title.startsWith("최애 장소")) list = fanCandidates(input);
+    else if (it.type === "photo") list = candidates("photo", input);
+    else if (it.type === "enter") list = candidates("gate", input);
+    else if ((it.type === "arrive" && input.transport.mode === "fan_bus") || (it.type === "return" && input.transport.mode === "fan_bus")) list = candidates("bus_stop", input);
+    const cur = it.place_id ? byId.get(it.place_id) : undefined;
+    const top = list.slice(0, 4);
+    if (cur && !top.some((p) => p.id === cur.id)) top.unshift(cur);
+    if (top.length) out[it.id] = top;
+  }
+  return out;
+}
+
+/** F17 "덜 걷게 바꾸기": 걷기 스타일 한 단계 여유롭게, 포토존·'시간 나면' 팬덤 장소 빼기 */
+export function lessWalkInput(input: PlanInput): PlanInput {
+  const walk: ParentProfile["walk"] = input.parent.walk === "30+" ? "15-30" : "15-";
+  return {
+    ...input,
+    parent: { ...input.parent, walk, rest_often: true },
+    prefs: { ...input.prefs, photo: false, artist_places: input.prefs.fan_first ? input.prefs.artist_places : false },
+  };
+}
+

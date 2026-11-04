@@ -5,11 +5,13 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import type { ChatRow, Place, Plan, PlanItem } from "./types.ts";
-import { ITEM_TYPES } from "./types.ts";
+import { createHash } from "crypto";
 import {
-  buildRulePlan, classifyReason, ENTER_BEFORE_MIN, GOODS_WAIT_MIN, gateForSeat, honorificOf, label,
-  maxWalkFor, rulesReplan, validatePlan, type ChangeReason, type ChangeResult, type PlanInput,
+  buildRulePlan, classifyReason, ENTER_BEFORE_MIN, gateForSeat, honorificOf,
+  maxWalkFor, rulesReplan, slotCandidates, validatePlan, type ChangeReason, type ChangeResult, type PlanInput,
 } from "./planner.ts";
+import { getCachedPlan, setCachedPlan } from "./db.ts";
+import { budgetLeft, recordUsage } from "./usage.ts";
 import { toHHMM, toMin } from "./time.ts";
 import { CATEGORY_LABEL } from "./concertrip.ts";
 
@@ -22,30 +24,23 @@ function claude() {
   return client;
 }
 
+// ---------- 모델·예산 ----------
+// 일정 생성은 상위 모델 1회, 챗봇·분류는 작은 모델 (PRD 9장)
+export const SMALL_MODEL = process.env.ANTHROPIC_SMALL_MODEL || "claude-haiku-5-5";
+
 // ---------- 스키마 ----------
-const ItemSchema = z.object({
-  id: z.string(),
-  start: z.string().describe("HH:MM 24시간"),
-  end: z.string().describe("HH:MM 24시간"),
-  type: z.enum(ITEM_TYPES),
-  title: z.string(),
-  place_id: z.string().nullable().describe("반드시 PLACES의 id 중 하나. 맞는 장소가 없으면 null"),
-  walk_min: z.number().nullable(),
-  parent_text: z.string().describe("부모님께 보여 줄 한두 문장. 쉬운 존댓말"),
-  done_label: z.string().describe("완료 버튼 문구. 예: 다 먹었어요"),
-  kid_note: z.string(),
-  source: z.enum(["verified", "needs_check", "user_input"]),
-  optional: z.boolean(),
-});
-const PlanSchema = z.object({
-  title: z.string(),
-  summary: z.string(),
-  items: z.array(ItemSchema),
-  extra_day: z.object({ title: z.string(), place_ids: z.array(z.string()) }).nullable(),
-});
-const ReplanSchema = z.object({
-  message: z.string().describe("'이렇게 바꿨어요' 카드에 보여 줄 한두 문장"),
-  items: z.array(ItemSchema).describe("지금 이후 남은 일정 전체(바뀐 것과 그대로인 것 모두)"),
+/** AI가 맡는 것: 각 칸(slot)의 장소 고르기 + 문장. 시각·순서·걸음 수는 코드가 정한다 */
+const RefineSchema = z.object({
+  title: z.string().describe("예: 엄마의 〈공연명〉 부산 여행 — 부모님 호칭 사용"),
+  summary: z.string().describe("3개 이하, ' · '로 구분. 예: 무리 없는 이동 · 굿즈 시간 확보 · 친구 2분 포함"),
+  items: z.array(z.object({
+    id: z.string().describe("SKELETON의 id 그대로"),
+    place_id: z.string().nullable().describe("그 칸의 candidates 중 하나의 id. candidates가 비었거나 맞는 곳이 없으면 null"),
+    title: z.string().describe("'점심 · 장소이름'처럼 짧게"),
+    parent_text: z.string().describe("부모님께 보여 줄 한두 문장. 쉬운 존댓말, 어디서 몇 분인지"),
+    done_label: z.string().describe("완료 버튼 문구. 예: 다 먹었어요"),
+    kid_note: z.string().describe("자녀가 볼 짧은 메모(조건·근거)"),
+  })),
 });
 const ChatSchema = z.object({
   answer: z.string().describe("2~3문장, 쉬운 존댓말"),
@@ -57,6 +52,7 @@ function placesForPrompt(places: Place[]) {
   return places.map((p) => ({
     id: p.id, name: p.name, category: p.category, walk_min_from_venue: p.walk_min_from_venue,
     tags: p.tags, fan_type: p.fan_type, description: p.description_ko, source: p.source,
+    ...(p.category_detail ? { category_detail: p.category_detail } : {}),
   }));
 }
 
@@ -73,105 +69,143 @@ function contextBlock(input: PlanInput) {
   });
 }
 
-const PLAN_RULES = `규칙
-1. 공연 시작 시각에서 거꾸로 계산한다: 입장(시작 ${ENTER_BEFORE_MIN}분 전) → 쉼터 → 굿즈(선택 시 대기 ${GOODS_WAIT_MIN}분) → 점심(붐비기 전) → 도착. 입장(enter)과 공연(show), 귀가(return) 항목은 반드시 넣는다.
-2. 장소는 PLACES의 id로만 고른다. 맞는 장소가 없으면 place_id는 null, source는 "needs_check"로 두고 parent_text에 "확인이 필요해요"를 쓴다. 장소 이름을 지어내지 않는다.
-3. 걷는 시간: parent.walk가 "15-30"이면 장소 간 도보 10분 이내 우선, 넘으면 택시 제안. "15-"이면 5분 이내.
-4. elevator_first면 elevator 태그가 있는 입구·동선을 고른다.
-5. 식사 조건(parent.food)과 tags가 맞는 식당만 고른다. tags가 비어 있는 식당은 조건을 확인할 수 없으므로 고르지 않는다.
-6. 시간이 모자라면 취향 항목(굿즈·포토)을 줄이고 parent_text에 "줄이 길면 건너뛰어도 돼요"를 쓴다. 취향 항목은 optional=true.
-7. 멀리 있는(도보 기준을 넘는) 팬덤 장소(fan_type≠none)는 당일에 넣지 않고 extra_day.place_ids에 넣는다. 없으면 extra_day는 null.
-8. parent.medicine_time이 있으면 그 시각에 type "medicine" 항목을 넣는다.
-- 시각은 HH:MM 24시간. 항목 id는 i1, i2 … 순서.
-- parent_text는 50~70대 부모님이 읽는 문장: 한두 문장, 쉬운 말, 존댓말, 어디서 몇 분인지.
-- kid_note는 자녀가 보는 짧은 메모(조건·근거).
-- title 예: "엄마의 〈공연명〉 부산 여행" — 부모님 호칭을 쓴다. summary는 "무리 없는 이동 · 굿즈 시간 확보 · 친구 2분 포함"처럼 3개 이하.`;
+const REFINE_RULES = `규칙
+- 시각·순서·항목 종류는 이미 정해져 있다. 바꾸지 말고, 각 칸의 장소와 문장만 정한다.
+- place_id는 그 칸의 candidates 안에서만 고른다. 장소 이름을 지어내지 않는다. 맞는 곳이 없으면 null로 두고 parent_text에 "확인이 필요해요"를 쓴다.
+- 식당: 식사 조건(parent.food)에 맞는 곳. "덜 매운 음식"(mild) 조건인데 tags에 mild가 없으면 kid_note에 "덜 매운 메뉴 확인 필요"를 쓴다.
+- elevator_first면 elevator 태그가 있는 입구·동선을 고른다. near_toilet이면 화장실이 가까운 쉼터를 고른다.
+- 고른 장소의 walk_min_from_venue가 parent.max_walk_between_places_min보다 크면 parent_text에 택시를 타라고 쓴다.
+- optional 칸(굿즈·포토존)의 parent_text에는 "줄이 길면 건너뛰어도 돼요"를 넣는다.
+- 문장은 50~70대 부모님이 읽는다: 한두 문장, 쉬운 말, 존댓말. 아프거나 약한 사람처럼 쓰지 않는다("편하게", "여유 있게" 같은 말 사용).`;
 
 // ---------- F5 일정 생성 ----------
-export async function generatePlan(input: PlanInput): Promise<Plan> {
-  // 장소가 없는 공연(직접 입력 등)은 "일반 일정"
-  if (input.places.length === 0 || !aiEnabled()) return buildRulePlan(input);
+// 1) 규칙 엔진이 시각·순서·칸(slot)과 칸마다 후보 장소를 정한다(코드, 항상 같은 결과)
+// 2) AI는 후보 중 하나를 고르고 문장만 쓴다(상위 모델 1회)
+// 3) 같은 입력이면 캐시된 일정을 그대로 쓴다(입력 해시)
+export function planHash(input: PlanInput, lessWalk = false): string {
+  const { concert, parent, prefs, transport, seat, places } = input;
+  const key = JSON.stringify({
+    v: 2, lessWalk,
+    concert: [concert.id, concert.title, concert.date, concert.start_time, concert.est_end_time, concert.gate_map],
+    places: places.map((p) => `${p.id}:${p.updated_at}`).sort(),
+    parent, prefs, transport, seat,
+  });
+  return createHash("sha256").update(key).digest("hex");
+}
 
-  const system = `너는 트로트 공연에 가시는 50~70대 부모님의 공연 날 하루 일정을 짜는 도우미다. 자녀가 입력한 정보와 PLACES(콘서트립 장소 목록) 안에서만 일정을 만든다.\n\n${PLAN_RULES}`;
-  const user = `INPUT\n${contextBlock(input)}\n\nPLACES\n${JSON.stringify(placesForPrompt(input.places))}\n\n위 규칙대로 공연 날 일정을 JSON으로 만들어 줘.`;
+export async function generatePlan(input: PlanInput, opts: { lessWalk?: boolean } = {}): Promise<Plan> {
+  const hash = planHash(input, opts.lessWalk);
+  const cached = await getCachedPlan(hash).catch(() => null);
+  if (cached) return cached;
 
+  const skeleton = buildRulePlan(input);
+  if (opts.lessWalk) skeleton.less_walk = true;
+  let plan: Plan = skeleton;
+  if (input.places.length === 0) {
+    plan = skeleton; // 일반 일정
+  } else if (!aiEnabled()) {
+    plan = skeleton;
+  } else if (!(await budgetLeft()).ok) {
+    plan = { ...skeleton, fallback_reason: "AI 사용량이 한도에 닿아 기본 규칙으로 만들었어요" };
+  } else {
+    const refined = await refineWithAI(skeleton, input);
+    plan = refined ?? { ...skeleton, fallback_reason: "AI 응답이 늦어 기본 규칙으로 만들었어요" };
+  }
+  // AI 결과든 규칙이든 하루 중 겹치지 않게 한 번 더 확인
+  const v = validatePlan(plan, input.places);
+  if (!v.ok) plan = skeleton;
+  if (!plan.fallback_reason) await setCachedPlan(hash, plan).catch(() => undefined);
+  return plan;
+}
+
+async function refineWithAI(skeleton: Plan, input: PlanInput): Promise<Plan | null> {
+  const cands = slotCandidates(skeleton, input);
+  const maxWalk = maxWalkFor(input.parent.walk);
+  const skel = skeleton.items.map((i) => ({
+    id: i.id, start: i.start, end: i.end, type: i.type, optional: !!i.optional, draft_title: i.title, draft_text: i.parent_text,
+    candidates: (cands[i.id] ?? []).map((p) => p.id),
+  }));
+  const usedIds = new Set(Object.values(cands).flat().map((p) => p.id));
+  const system = `너는 트로트 공연에 가시는 부모님의 공연 날 일정표에 장소를 채우고 안내 문장을 쓰는 도우미다.\n\n${REFINE_RULES}`;
+  const user = `INPUT\n${contextBlock(input)}\n\nSKELETON\n${JSON.stringify(skel)}\n\nPLACES(후보에 나온 곳만)\n${JSON.stringify(placesForPrompt(input.places.filter((p) => usedIds.has(p.id))))}\n\n모든 칸을 채워 JSON으로 답해 줘.`;
   let lastErr = "";
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const res = await claude().beta.messages.parse({
         model: MODEL,
-        max_tokens: 8000,
+        max_tokens: 6000,
         betas: ["server-side-fallback-2026-07-01"],
         fallbacks: "default",
-        output_config: { effort: "low", format: betaZodOutputFormat(PlanSchema) },
+        output_config: { effort: "low", format: betaZodOutputFormat(RefineSchema) },
         system,
-        messages: [{ role: "user", content: attempt === 0 ? user : `${user}\n\n이전 출력이 검증에 실패했어: ${lastErr}\n고쳐서 다시 만들어 줘.` }],
+        messages: [{ role: "user", content: attempt === 0 ? user : `${user}\n\n이전 답이 검증에 실패했어: ${lastErr}` }],
       });
+      await recordUsage("plan", MODEL, res.usage);
       if (res.stop_reason === "refusal" || !res.parsed_output) { lastErr = `stop_reason=${res.stop_reason}`; continue; }
-      const v = validatePlan({ ...res.parsed_output, generated_by: "ai" } as Plan, input.places);
-      if (v.ok) return v.plan;
-      lastErr = v.errors.slice(0, 5).join("; ");
+      const out = res.parsed_output;
+      const byId = new Map(out.items.map((x) => [x.id, x]));
+      const errs: string[] = [];
+      for (const it of skeleton.items) {
+        const r = byId.get(it.id);
+        if (!r) { errs.push(`${it.id} 빠짐`); continue; }
+        if (r.place_id && !(cands[it.id] ?? []).some((p) => p.id === r.place_id)) errs.push(`${it.id}의 place_id ${r.place_id}는 후보에 없음`);
+      }
+      const seenPlace = new Map<string, string>();
+      for (const it of skeleton.items) {
+        const pid = byId.get(it.id)?.place_id;
+        if (!pid || it.type === "arrive" || it.type === "return") continue;
+        if (seenPlace.has(pid)) errs.push(`${pid}를 ${seenPlace.get(pid)}와 ${it.id}에 중복 사용`);
+        seenPlace.set(pid, it.id);
+      }
+      if (errs.length) { lastErr = errs.slice(0, 5).join("; "); continue; }
+      const places = new Map(input.places.map((p) => [p.id, p]));
+      const items = skeleton.items.map((it) => {
+        const r = byId.get(it.id)!;
+        const p = r.place_id ? places.get(r.place_id) : undefined;
+        let text = r.parent_text || it.parent_text;
+        if (p && p.walk_min_from_venue != null && p.walk_min_from_venue > maxWalk && !/택시/.test(text)) text += " 걸어가기 멀어서 택시를 타세요.";
+        return {
+          ...it, // 시각·종류·optional은 코드 값 그대로
+          place_id: p ? p.id : (cands[it.id]?.length ? null : it.place_id),
+          walk_min: p ? p.walk_min_from_venue : it.walk_min,
+          source: p ? p.source : it.place_id ? it.source : it.source,
+          title: r.title || it.title,
+          parent_text: text,
+          done_label: r.done_label || it.done_label,
+          kid_note: r.kid_note || it.kid_note,
+        } as PlanItem;
+      });
+      return { ...skeleton, title: out.title || skeleton.title, summary: out.summary || skeleton.summary, items, generated_by: "ai" };
     } catch (e) {
       lastErr = e instanceof Error ? e.message : String(e);
     }
   }
-  console.warn("[ai] generatePlan 실패, 규칙 기반으로 대신함:", lastErr);
-  return buildRulePlan(input);
+  console.warn("[ai] refine 실패, 규칙 기반 일정 사용:", lastErr);
+  return null;
 }
 
 // ---------- F11 남은 일정 재생성 ----------
-const REASON_KO: Record<ChangeReason, string> = {
-  leg_pain: "다리가 아파요", long_line: "줄이 너무 길어요", late: "조금 늦어질 것 같아요", free: "",
-};
-
+// 시각은 규칙 엔진이 바꾼다(코드). "말로 하기"만 작은 모델로 이유를 분류한다.
 export async function replan(
   plan: Plan, input: PlanInput, reason: ChangeReason, freeText: string, nowMin: number, done: Set<string>,
 ): Promise<ChangeResult> {
-  const r = reason === "free" ? classifyReason(freeText) : reason;
-  if (!aiEnabled()) return rulesReplan(plan, input, r, nowMin, done);
-
-  const remaining = plan.items.filter((i) => !done.has(i.id) && toMin(i.end) > nowMin);
-  const kept = plan.items.filter((i) => !remaining.includes(i));
-  try {
-    const res = await claude().beta.messages.parse({
-      model: MODEL,
-      max_tokens: 6000,
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
-      output_config: { effort: "low", format: betaZodOutputFormat(ReplanSchema) },
-      system: `너는 공연장에 계신 부모님의 남은 일정을 바꿔 드리는 도우미다. 지금 이후의 남은 항목만 다시 짠다. 입장(enter)·공연(show) 시각은 바꾸지 않는다. 귀가(return)는 시각을 유지한다.\n\n${PLAN_RULES}`,
-      messages: [{
-        role: "user",
-        content: `INPUT\n${contextBlock(input)}\n\nPLACES\n${JSON.stringify(placesForPrompt(input.places))}\n\n지금 시각: ${toHHMM(nowMin)}\n남은 일정: ${JSON.stringify(remaining)}\n부모님 말씀: "${REASON_KO[reason] || freeText}"\n\n남은 일정을 바꿔 줘. 새 항목 id는 c로 시작해.`,
-      }],
-    });
-    if (res.stop_reason !== "refusal" && res.parsed_output) {
-      const merged: Plan = { ...plan, items: [...kept, ...(res.parsed_output.items as PlanItem[])] };
-      const v = validatePlan(merged, input.places);
-      const keptIds = new Set(kept.map((k) => k.id));
-      const dupWithKept = res.parsed_output.items.some((i) => keptIds.has(i.id));
-      const enterOk = !remaining.some((i) => i.type === "enter") || res.parsed_output.items.some((i) => i.type === "enter");
-      if (v.ok && !dupWithKept && enterOk) {
-        return { plan: v.plan, message: res.parsed_output.message, changes: diffItems(remaining, res.parsed_output.items as PlanItem[]) };
-      }
+  let r = reason === "free" ? classifyReason(freeText) : reason;
+  if (r === "free" && freeText && aiEnabled() && (await budgetLeft()).ok) {
+    try {
+      const res = await claude().beta.messages.parse({
+        model: SMALL_MODEL,
+        max_tokens: 300,
+        output_config: { effort: "low", format: betaZodOutputFormat(z.object({ reason: z.enum(["leg_pain", "long_line", "late", "free"]) })) },
+        system: "공연장에 계신 부모님이 일정을 바꾸고 싶다며 한 말을 분류한다. leg_pain: 힘들다·쉬고 싶다, long_line: 줄·대기가 길다, late: 늦어진다, free: 그 밖.",
+        messages: [{ role: "user", content: freeText.slice(0, 300) }],
+      });
+      await recordUsage("replan", SMALL_MODEL, res.usage);
+      if (res.parsed_output) r = res.parsed_output.reason;
+    } catch (e) {
+      console.warn("[ai] 이유 분류 실패:", e instanceof Error ? e.message : e);
     }
-  } catch (e) {
-    console.warn("[ai] replan 실패:", e instanceof Error ? e.message : e);
   }
   return rulesReplan(plan, input, r, nowMin, done);
-}
-
-export function diffItems(before: PlanItem[], after: PlanItem[]): ChangeResult["changes"] {
-  const out: ChangeResult["changes"] = [];
-  const afterById = new Map(after.map((a) => [a.id, a]));
-  for (const b of before) {
-    const a = afterById.get(b.id);
-    if (!a) out.push({ before: label(b), after: null });
-    else if (a.start !== b.start || a.title !== b.title || a.place_id !== b.place_id) out.push({ before: label(b), after: label(a) });
-  }
-  const beforeIds = new Set(before.map((b) => b.id));
-  for (const a of after) if (!beforeIds.has(a.id)) out.push({ before: null, after: label(a) });
-  return out;
 }
 
 // ---------- F10 물어보기 ----------
@@ -192,6 +226,8 @@ export interface ChatContext {
   infoDeskName: string | null;
   nowMin: number;
   history: ChatRow[];
+  /** 부모님이 완료한 항목 id */
+  done?: Set<string>;
 }
 
 export interface ChatAnswer { answer: string; needs_check: boolean; place_id: string | null }
@@ -203,14 +239,12 @@ export function unknownAnswer(ctx: ChatContext): string {
 }
 
 export async function answerQuestion(q: string, ctx: ChatContext): Promise<ChatAnswer> {
-  if (!aiEnabled()) return rulesAnswer(q, ctx);
+  if (!aiEnabled() || !(await budgetLeft()).ok) return rulesAnswer(q, ctx);
   const { input, plan } = ctx;
   try {
     const res = await claude().beta.messages.parse({
-      model: MODEL,
-      max_tokens: 2000,
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
+      model: SMALL_MODEL,
+      max_tokens: 1000,
       output_config: { effort: "low", format: betaZodOutputFormat(ChatSchema) },
       system: `너는 공연장에 혼자 오신 50~70대 부모님의 질문에 답하는 안내 도우미다.
 - 근거는 아래 SCHEDULE, CONCERT, PLACES뿐이다. 거기에 없는 사실(사인회, 시간표, 메뉴, 가격 등)은 지어내지 않는다.
@@ -223,7 +257,7 @@ CONCERT
 ${contextBlock(input)}
 
 SCHEDULE
-${JSON.stringify(plan.items)}
+${JSON.stringify(plan.items.map((i) => ({ ...i, done: !!ctx.done?.has(i.id) })))}
 
 PLACES
 ${JSON.stringify(placesForPrompt(input.places))}`,
@@ -232,6 +266,7 @@ ${JSON.stringify(placesForPrompt(input.places))}`,
         { role: "user", content: q },
       ],
     });
+    await recordUsage("chat", SMALL_MODEL, res.usage);
     if (res.stop_reason !== "refusal" && res.parsed_output) {
       const o = res.parsed_output;
       const pid = o.place_id && input.places.some((p) => p.id === o.place_id) ? o.place_id : null;
@@ -280,8 +315,8 @@ export function rulesAnswer(q: string, ctx: ChatContext): ChatAnswer {
       return { answer: `${meal.start}에 ${p?.name ?? meal.title}에서 드시면 돼요. ${meal.parent_text}`, needs_check: false, place_id: meal.place_id };
     }
   }
-  if (/지금|뭐 해|다음/.test(q)) {
-    const next = plan.items.find((i) => toMin(i.end) > ctx.nowMin);
+  if (/지금|뭐 해|다음|어디 가|남았|뭐 하/.test(q)) {
+    const next = plan.items.find((i) => !ctx.done?.has(i.id) && toMin(i.end) > ctx.nowMin);
     if (next) return { answer: `지금은 ${next.title} 시간이에요. ${next.parent_text}`, needs_check: false, place_id: next.place_id };
   }
   return { answer: unknownAnswer(ctx), needs_check: true, place_id: null };

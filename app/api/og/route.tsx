@@ -3,6 +3,8 @@ import { ImageResponse } from "next/og";
 import { getConcert, getTripBy } from "@/lib/db";
 import { concertView } from "@/lib/trip";
 import { fmtDateKo, fmtTimeKo } from "@/lib/time";
+import { estimateSteps } from "@/lib/steps";
+import { getPlaces } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -28,7 +30,11 @@ export async function GET(req: Request) {
     sub = `${fmtDateKo(c.date)} ${fmtTimeKo(c.start_time)} · ${c.venue_name}`;
     color = c.color || color;
   }
-  const foot = "공연 날 안내장 · 앱 설치 없이 바로 보세요";
+  let foot = "공연 날 안내장 · 앱 설치 없이 바로 보세요";
+  if (trip?.plan) {
+    const places = trip.concert_id ? await getPlaces(trip.concert_id) : [];
+    foot = `예상 약 ${estimateSteps(trip.plan, places, trip.parent_profile).steps.toLocaleString("ko-KR")}보 · 앱 설치 없이 바로 보세요`;
+  }
   const text = `${title}${sub}${foot}트롯트립`;
   const [bold, reg] = await Promise.all([loadFont(text, 900), loadFont(text, 500)]);
   const fonts = [

@@ -5,8 +5,8 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
-import type { ChatRow, Concert, EventType, Place, Trip, TripEvent } from "./types.ts";
-import { SEED_CONCERTS } from "./seed.ts";
+import type { ChatRow, Concert, EventType, Place, Plan, Trip, TripEvent, TtPlaceRow } from "./types.ts";
+import { SEED_CONCERTS, SEED_TT_PLACES } from "./seed.ts";
 
 interface LocalDB {
   concerts: Concert[];
@@ -14,7 +14,12 @@ interface LocalDB {
   trips: Trip[];
   trip_events: TripEvent[];
   chats: ChatRow[];
+  tt_places?: TtPlaceRow[];
+  plan_cache?: { hash: string; plan: Plan; created_at: string }[];
+  api_usage?: UsageRow[];
 }
+
+export interface UsageRow { id: string; kind: string; model: string; input_tokens: number; output_tokens: number; cost_usd: number; created_at: string }
 
 let sb: SupabaseClient | null = null;
 function supa(): SupabaseClient | null {
@@ -37,9 +42,11 @@ async function local(): Promise<LocalDB> {
   try {
     localCache = JSON.parse(await fs.readFile(LOCAL_PATH, "utf8")) as LocalDB;
   } catch {
-    localCache = { concerts: SEED_CONCERTS.map((c) => ({ ...c })), places_cache: [], trips: [], trip_events: [], chats: [] };
+    localCache = { concerts: SEED_CONCERTS.map((c) => ({ ...c })), places_cache: [], trips: [], trip_events: [], chats: [], tt_places: SEED_TT_PLACES.map((p) => ({ ...p })) };
     await flush();
   }
+  localCache.tt_places ??= SEED_TT_PLACES.map((p) => ({ ...p }));
+  for (const c of localCache.concerts) if (c.venue_key === undefined) c.venue_key = SEED_CONCERTS.find((x) => x.id === c.id)?.venue_key ?? null;
   return localCache;
 }
 async function flush() {
@@ -88,13 +95,76 @@ export async function upsertConcert(c: Concert): Promise<Concert> {
 }
 
 // ---------- places_cache ----------
-export async function getPlaces(concertId: string): Promise<Place[]> {
+/** 콘서트립에서 불러온 장소(캐시)만 */
+export async function getConcertripPlaces(concertId: string): Promise<Place[]> {
   const s = supa();
   if (s) {
     const rows = must(await s.from("places_cache").select("data").eq("concert_id", concertId)) as { data: Place }[];
-    return rows.map((r) => r.data);
+    return rows.map((r) => ({ ...r.data, origin: "concertrip" as const }));
   }
-  return (await local()).places_cache.filter((p) => p.concert_id === concertId).map((p) => p.data);
+  return (await local()).places_cache.filter((p) => p.concert_id === concertId).map((p) => ({ ...p.data, origin: "concertrip" as const }));
+}
+
+/** 일정·화면에 쓰는 장소 = 콘서트립(팬덤 등) + 트롯트립 공연장 공통 장소 + 이 공연만의 장소 */
+export async function getPlaces(concertId: string): Promise<Place[]> {
+  const concert = await getConcert(concertId);
+  const [ct, tt] = await Promise.all([getConcertripPlaces(concertId), listTtPlaces({ venue_key: concert?.venue_key ?? null, concert_id: concertId })]);
+  const seen = new Set<string>();
+  const out: Place[] = [];
+  // 트롯트립 장소가 같은 id면 우선(운영자가 고친 값)
+  for (const p of [...tt.map((r) => ({ ...r.data, origin: r.origin })), ...ct]) {
+    if (seen.has(p.id)) continue;
+    seen.add(p.id);
+    out.push(p);
+  }
+  return out;
+}
+
+// ---------- tt_places (트롯트립이 직접 관리하는 장소) ----------
+export async function listTtPlaces(scope: { venue_key?: string | null; concert_id?: string | null }): Promise<TtPlaceRow[]> {
+  const s = supa();
+  if (s) {
+    const ors: string[] = [];
+    if (scope.venue_key) ors.push(`venue_key.eq.${scope.venue_key}`);
+    if (scope.concert_id) ors.push(`concert_id.eq.${scope.concert_id}`);
+    if (!ors.length) return [];
+    return must(await s.from("tt_places").select("*").or(ors.join(","))) as TtPlaceRow[];
+  }
+  return ((await local()).tt_places ?? []).filter((r) => (!!scope.venue_key && r.venue_key === scope.venue_key) || (!!scope.concert_id && r.concert_id === scope.concert_id));
+}
+
+export async function upsertTtPlaces(rows: TtPlaceRow[]): Promise<void> {
+  if (!rows.length) return;
+  const s = supa();
+  if (s) { must(await s.from("tt_places").upsert(rows)); return; }
+  const db = await local();
+  const list = (db.tt_places ??= []);
+  for (const r of rows) {
+    const i = list.findIndex((x) => x.id === r.id);
+    if (i >= 0) list[i] = r; else list.push(r);
+  }
+  await flush();
+}
+
+export async function deleteTtPlace(id: string): Promise<void> {
+  const s = supa();
+  if (s) { must(await s.from("tt_places").delete().eq("id", id)); return; }
+  const db = await local();
+  db.tt_places = (db.tt_places ?? []).filter((r) => r.id !== id);
+  await flush();
+}
+
+/** 카카오 다시 불러오기 등: 한 범위·출처의 장소를 통째로 바꾼다(운영자 입력 장소는 건드리지 않음) */
+export async function replaceTtPlacesByOrigin(venue_key: string, origin: TtPlaceRow["origin"], rows: TtPlaceRow[]): Promise<void> {
+  const s = supa();
+  if (s) {
+    must(await s.from("tt_places").delete().eq("venue_key", venue_key).eq("origin", origin));
+    if (rows.length) must(await s.from("tt_places").upsert(rows));
+    return;
+  }
+  const db = await local();
+  db.tt_places = (db.tt_places ?? []).filter((r) => !(r.venue_key === venue_key && r.origin === origin)).concat(rows);
+  await flush();
 }
 
 export async function replacePlaces(concertId: string, places: Place[]): Promise<void> {
@@ -207,4 +277,40 @@ export async function listChats(tripId: string): Promise<ChatRow[]> {
   const s = supa();
   if (s) return must(await s.from("chats").select("*").eq("trip_id", tripId).order("created_at")) as ChatRow[];
   return (await local()).chats.filter((c) => c.trip_id === tripId).sort((a, b) => a.created_at.localeCompare(b.created_at));
+}
+
+// ---------- plan_cache (같은 입력이면 같은 일정) ----------
+export async function getCachedPlan(hash: string): Promise<Plan | null> {
+  const s = supa();
+  if (s) return ((must(await s.from("plan_cache").select("plan").eq("hash", hash).maybeSingle()) as { plan: Plan } | null)?.plan) ?? null;
+  return (await local()).plan_cache?.find((r) => r.hash === hash)?.plan ?? null;
+}
+
+export async function setCachedPlan(hash: string, plan: Plan): Promise<void> {
+  const row = { hash, plan, created_at: new Date().toISOString() };
+  const s = supa();
+  if (s) { must(await s.from("plan_cache").upsert(row)); return; }
+  const db = await local();
+  db.plan_cache = (db.plan_cache ?? []).filter((r) => r.hash !== hash).concat(row);
+  await flush();
+}
+
+// ---------- api_usage ----------
+export async function addUsage(u: Omit<UsageRow, "id" | "created_at">): Promise<void> {
+  const row: UsageRow = { ...u, id: randomUUID(), created_at: new Date().toISOString() };
+  const s = supa();
+  if (s) { must(await s.from("api_usage").insert(row)); return; }
+  const db = await local();
+  (db.api_usage ??= []).push(row);
+  await flush();
+}
+
+export async function listUsage(): Promise<UsageRow[]> {
+  const s = supa();
+  if (s) return must(await s.from("api_usage").select("*").order("created_at")) as UsageRow[];
+  return (await local()).api_usage ?? [];
+}
+
+export async function sumUsage(): Promise<number> {
+  return (await listUsage()).reduce((a, r) => a + Number(r.cost_usd), 0);
 }
