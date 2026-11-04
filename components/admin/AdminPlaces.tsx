@@ -89,6 +89,12 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { c
         </div>
 
         <div className="card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <b>⓪ 웹 조사 시설 넣기</b>
+          <small style={{ color: "var(--sub)", lineHeight: 1.5 }}>Claude가 웹에서 모은 이 공연장의 화장실·물품보관·안내소·역 정보를 한 번에 넣어요(근거 링크 포함, &quot;확인 전&quot; 표시). 넣은 뒤 아래 표에서 &quot;수정 → 이름으로 좌표 찾기&quot;로 위치를 잡아 주세요.</small>
+          <button className="mini-btn" style={{ alignSelf: "flex-start" }} disabled={!!busy || !concert.venue_key} onClick={() => run<{ count: number }>("research", { action: "import_research" }, (r) => `웹 조사 시설 ${r.count}곳을 넣었어요`)}>{busy === "research" ? "넣는 중…" : "조사 자료 넣기"}</button>
+        </div>
+
+        <div className="card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <b>② 공연 공지 붙여 넣기 → AI 정리</b>
           <small style={{ color: "var(--sub)", lineHeight: 1.5 }}>예매처·소속사 SNS·팬카페의 MD 부스, 포토존, 게이트, 셔틀 승하차 공지를 그대로 붙여 넣으세요. 정리 결과를 확인한 뒤에만 저장돼요.</small>
           <textarea className="inp" rows={5} value={notice} onChange={(e) => setNotice(e.target.value)} placeholder="공지 원문" />
