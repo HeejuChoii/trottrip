@@ -70,3 +70,17 @@ test("1박 둘째 날: 먼 팬덤 장소는 빼고 역 근처 취향 맞는 곳(
   assert.equal(items.at(-1)!.type, "return");
   assert.ok(items.every((i) => i.day === 2));
 });
+
+test("둘째 날 가볼 곳: 공연장 건물·박람회는 빼고 고른다", async () => {
+  const { buildDayTwo } = await import("../lib/legs.ts");
+  const mk = (id: string, name: string, likes: string[]): Place => ({ id, concert_ids: [], name, category: "sight", lat: 35.907, lng: 128.613, address: "", walk_min_from_venue: 3, tags: [], fan_type: "none", description_ko: "", evidence_urls: [], source: "needs_check", updated_at: "", concertrip_url: "", likes, category_detail: "문화,예술 > 문화시설 > 전시관" });
+  let n = 0;
+  const items = buildDayTwo({
+    transport: { ...transport, mode: "car", stay: "overnight", stay_name: "숙소" }, parent: { ...parent, likes: ["전시"] }, places: [], used: new Set(), spots: [],
+    sights: [mk("a", "엑스코 서관", ["전시"]), mk("b", "대구국제기계산업대전", ["전시"]), mk("c", "대구미술관", ["전시", "실내"])],
+    base: { name: "숙소", lat: 35.907, lng: 128.613 }, stationLL: null, stayName: "숙소", stayUrl: null,
+  }, () => `x${++n}`);
+  const t = items.map((i) => i.title).join(" / ");
+  assert.ok(t.includes("대구미술관"), t);
+  assert.ok(!t.includes("엑스코") && !t.includes("산업대전"), t);
+});

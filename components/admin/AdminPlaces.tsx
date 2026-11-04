@@ -173,7 +173,7 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { c
               <td>{CATEGORY_LABEL[p.category]}{p.fan_type !== "none" && <><br /><span className="tag pk">{FAN_LABEL[p.fan_type]}</span></>}</td>
               <td>{p.link_url ? <a href={p.link_url} target="_blank" rel="noopener noreferrer">{p.name}</a> : p.name}{p.category_detail && <><br /><small>{p.category_detail}</small></>}{p.lat == null && <><br /><small className="err">좌표 없음(지도에 안 보임)</small></>}</td>
               <td className="n">{p.walk_min_from_venue ?? "-"}</td>
-              <td><small>{p.tags.map((t) => TAG_LABEL[t] ?? t).join(", ")}</small></td>
+              <td><small>{[...p.tags.map((t) => TAG_LABEL[t] ?? t), ...(p.likes ?? []).filter((l) => l !== "실내")].join(", ")}</small></td>
               <td><small>{p.ai_spice ? [({ mild: "덜 매움", medium: "보통", spicy: "매움", unknown: "맵기 모름" } as Record<string, string>)[p.ai_spice], p.ai_soup ? "국물" : null, p.ai_staple && p.ai_staple !== "unknown" ? ({ rice: "밥", noodle: "면", bread: "빵", mixed: "섞임" } as Record<string, string>)[p.ai_staple] : null, p.ai_raw ? "날것" : null, p.ai_note].filter(Boolean).join(" · ") : "-"}</small></td>
               <td><small>{p.description_ko}</small></td>
               <td><small>{p.source === "verified" ? "확인" : "확인 전"}</small></td>

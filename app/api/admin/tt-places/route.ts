@@ -63,6 +63,8 @@ export async function POST(req: Request) {
         if (!concert.venue_key || concert.venue_lat == null || concert.venue_lng == null) return bad("공연장 키와 위도·경도를 먼저 넣어 주세요");
         const radius = Math.min(Math.max(Number(b.radius) || 6000, 1000), 20000);
         const sights = await importSights(concert.venue_lat, concert.venue_lng, radius);
+        // 다시 불러오면 예전에 불러온 관광지(ks_)는 지우고 새로 넣는다(걸러지기 전 행사·전시장 정리)
+        for (const r of await listTtPlaces({ venue_key: concert.venue_key })) if (r.id.includes("__ks_")) await deleteTtPlace(r.id);
         const now = new Date().toISOString();
         await upsertTtPlaces(sights.map((p) => ({ id: `${concert.venue_key}__${p.id}`, venue_key: concert.venue_key, concert_id: null, origin: "research" as const, data: { ...p, id: `${concert.venue_key}__${p.id}` }, updated_at: now })));
         return ok({ count: sights.length, names: sights.slice(0, 8).map((p) => p.name) });

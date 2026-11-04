@@ -123,6 +123,11 @@ export function likesFromCategory(cat: string, name: string): string[] {
   return [...out];
 }
 
+// 가볼 만한 곳에서 빼는 것: 공연장·컨벤션 건물, 박람회·페어 같은 행사, 숙박·유흥
+const SIGHT_SKIP_RE = /영화관|공연장|극장|노래방|PC방|모텔|호텔|숙박|컨벤션|전시장|박람회|페어$|페어 |산업대전|산업전|엑스포|대전$|EXCO|엑스코|킨텍스|KINTEX|코엑스|COEX|벡스코|BEXCO|홀$|\d홀|센터 ?[동서남북]관|[동서]관$/i;
+// 문화시설(CT1)은 이런 곳만: 미술관·박물관·기념관·과학관·도서관·갤러리·문화원·궁·한옥
+const CT1_KEEP_RE = /미술관|박물관|기념관|과학관|도서관|갤러리|문화원|문화마을|한옥|궁|사찰|아트센터$/;
+
 /** 공연장 반경 radius(m) 안 관광명소(AT4)·문화시설(CT1) — 1박 둘째 날 가볼 만한 곳 */
 export async function importSights(lat: number, lng: number, radius = 6000): Promise<Place[]> {
   const out: Place[] = [];
@@ -130,12 +135,13 @@ export async function importSights(lat: number, lng: number, radius = 6000): Pro
     for (let page = 1; page <= pages; page++) {
       const r = await kakaoGet("category.json", { category_group_code: code, x: lng, y: lat, radius: Math.min(radius, 20000), sort: "accuracy", page, size: 15 });
       for (const d of r.documents) {
-        if (/영화관|공연장|극장|노래방|PC방|모텔|호텔/.test(d.category_name)) continue;
+        if (SIGHT_SKIP_RE.test(`${d.category_name} ${d.place_name}`)) continue;
+        if (code === "CT1" && !CT1_KEEP_RE.test(`${d.category_name} ${d.place_name}`)) continue;
         const likes = likesFromCategory(d.category_name, d.place_name);
         out.push({
           id: `ks_${d.id}`, concert_ids: [], name: d.place_name, category: "sight", lat: Number(d.y), lng: Number(d.x),
-          address: d.road_address_name || d.address_name, walk_min_from_venue: null, tags: likes.includes("실내") ? ["indoor"] : [],
-          fan_type: "none", description_ko: d.category_name.split(" > ").slice(-1)[0], evidence_urls: d.place_url ? [d.place_url] : [],
+          address: d.road_address_name || d.address_name, walk_min_from_venue: d.distance ? walkMinFromDistance(Number(d.distance)) : null, tags: likes.includes("실내") ? ["indoor"] : [],
+          fan_type: "none", description_ko: `${d.category_name.split(" > ").slice(-1)[0]}${likes.length ? ` · ${likes.join("·")}` : ""}${d.distance ? ` · 공연장에서 약 ${(Number(d.distance) / 1000).toFixed(1)}km` : ""}`, evidence_urls: d.place_url ? [d.place_url] : [],
           source: "needs_check", updated_at: new Date().toISOString(), concertrip_url: "", origin: "research",
           category_detail: d.category_name, link_url: d.place_url || undefined, likes,
         });
