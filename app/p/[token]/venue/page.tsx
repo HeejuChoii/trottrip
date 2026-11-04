@@ -10,6 +10,16 @@ const FAC: { cat: PlaceCategory; label: string }[] = [
   { cat: "locker", label: "물품 보관" }, { cat: "info_desk", label: "안내소" }, { cat: "gate", label: "입구" },
 ];
 
+/** 부모님 화면용 짧은 설명: 괄호 속 메모를 빼고 첫 마디만, 18자 안쪽 */
+function shortDesc(t: string): string {
+  const s = t.replace(/\([^)]*\)/g, "").split(/[.。·,]/)[0].trim();
+  return s.length > 18 ? `${s.slice(0, 17)}…` : s;
+}
+function firstSentence(t: string): string {
+  const s = t.split(/(?<=[.。요])\s/)[0].trim();
+  return s.length > 28 ? `${s.slice(0, 27)}…` : s;
+}
+
 // P2 공연장 안내 (F9)
 export default async function Page({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -38,7 +48,12 @@ export default async function Page({ params }: { params: Promise<{ token: string
         </div>
       )}
       {concert.official_map_url && <a className="bigbtn line" href={concert.official_map_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 18 }}>공식 좌석 배치도 보기</a>}
-      {concert.notice_text && <div className="card" style={{ fontSize: 17, lineHeight: 1.5 }}><b>공지</b><br />{concert.notice_text}</div>}
+      {concert.notice_text && (
+        <details className="card" style={{ fontSize: 17, lineHeight: 1.5 }}>
+          <summary style={{ cursor: "pointer" }}><b>공지</b> · {firstSentence(concert.notice_text)} <span style={{ color: "var(--deep)", fontWeight: 700 }}>더 보기</span></summary>
+          <p style={{ margin: "8px 0 0" }}>{concert.notice_text}</p>
+        </details>
+      )}
       <div className="fac">
         {FAC.map(({ cat, label }) => {
           const list = places.filter((p) => p.category === cat).sort((a, b) => (a.walk_min_from_venue ?? 99) - (b.walk_min_from_venue ?? 99));
@@ -46,7 +61,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
           const p = list[0];
           return (
             <Link key={cat} className="fa" href={`/p/${token}/map?place=${encodeURIComponent(p.id)}`} style={{ textDecoration: "none", color: "inherit" }}>
-              {label}<small>{p.description_ko || p.name}{list.length > 1 ? ` 외 ${list.length - 1}곳` : ""}</small>
+              {label}<small>{shortDesc(p.description_ko || p.name)}</small>
             </Link>
           );
         })}

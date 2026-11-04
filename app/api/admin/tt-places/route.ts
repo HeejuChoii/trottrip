@@ -135,14 +135,17 @@ export async function POST(req: Request) {
       }
       case "import_research": {
         if (!concert?.venue_key) return bad("공연장 키(venue_key)가 있는 공연에서 눌러 주세요");
-        const list = (research as { venues: Record<string, unknown[]> }).venues[concert.venue_key] ?? [];
-        if (!list.length) return bad(`'${concert.venue_key}' 공연장의 조사 자료가 아직 없어요`);
-        const rows = list.map((x) => {
-          const p = PlaceInput.parse({ ...(x as object), source: "needs_check" });
-          return toRow(concert, "venue", "research", { ...p, id: String((x as { id: string }).id) });
-        });
+        const data = research as { venues: Record<string, unknown[]>; artists?: Record<string, unknown[]> };
+        const list = data.venues[concert.venue_key] ?? [];
+        const fan = (concert.artist_display && data.artists?.[concert.artist_display]) || [];
+        if (!list.length && !fan.length) return bad(`'${concert.venue_key}' 공연장·'${concert.artist_display}' 가수의 조사 자료가 아직 없어요`);
+        const rows = [
+          ...list.map((x) => toRow(concert, "venue", "research", { ...PlaceInput.parse({ ...(x as object), source: "needs_check" }), id: String((x as { id: string }).id) })),
+          // 가수 팬덤 장소는 그 공연에만(같은 공연장에 다른 가수 공연이 와도 섞이지 않게)
+          ...fan.map((x) => toRow(concert, "concert", "research", { ...PlaceInput.parse({ ...(x as object), source: "needs_check" }), id: `${String((x as { id: string }).id)}__${concert.id}` })),
+        ];
         await upsertTtPlaces(rows);
-        return ok({ count: rows.length });
+        return ok({ count: rows.length, fan: fan.length });
       }
       case "list": {
         if (!concert) return bad("공연을 찾을 수 없어요", 404);

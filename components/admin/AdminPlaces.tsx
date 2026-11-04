@@ -92,8 +92,8 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { c
 
         <div className="card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <b>⓪ 웹 조사 시설 넣기</b>
-          <small style={{ color: "var(--sub)", lineHeight: 1.5 }}>Claude가 웹에서 모은 이 공연장의 화장실·물품보관·안내소·역 정보를 한 번에 넣어요(근거 링크 포함, &quot;확인 전&quot; 표시). 넣은 뒤 아래 표에서 &quot;수정 → 이름으로 좌표 찾기&quot;로 위치를 잡아 주세요.</small>
-          <button className="mini-btn" style={{ alignSelf: "flex-start" }} disabled={!!busy || !concert.venue_key} onClick={() => run<{ count: number }>("research", { action: "import_research" }, (r) => `웹 조사 시설 ${r.count}곳을 넣었어요`)}>{busy === "research" ? "넣는 중…" : "조사 자료 넣기"}</button>
+          <small style={{ color: "var(--sub)", lineHeight: 1.5 }}>Claude가 웹에서 모은 이 공연장의 화장실·물품보관·안내소·역 정보와 이 공연 가수의 팬덤 장소(성지)를 한 번에 넣어요(근거 링크 포함, &quot;확인 전&quot; 표시). 넣은 뒤 아래 표에서 &quot;수정 → 이름으로 좌표 찾기&quot;로 위치를 잡아 주세요.</small>
+          <button className="mini-btn" style={{ alignSelf: "flex-start" }} disabled={!!busy || !concert.venue_key} onClick={() => run<{ count: number; fan: number }>("research", { action: "import_research" }, (r) => `웹 조사 장소 ${r.count}곳을 넣었어요${r.fan ? ` (가수 팬덤 장소 ${r.fan}곳 포함)` : ""}`)}>{busy === "research" ? "넣는 중…" : "조사 자료 넣기"}</button>
         </div>
 
         <div className="card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
