@@ -50,6 +50,9 @@ export interface Place {
   ai_staple?: "rice" | "noodle" | "bread" | "mixed" | "unknown";
   /** AI 추정: 회·초밥처럼 날것이 대표 메뉴인지 */
   ai_raw?: boolean | null;
+  /** 영업시간 "11:00-21:00", 쉬는 요일 ["화"] (팬덤 스팟 데이터·운영자 입력) */
+  hours?: string;
+  closed?: string[];
   /** 평점(운영자가 지도 화면에서 확인해 넣은 값, 5점 만점) */
   rating?: number | null;
   rating_count?: number | null;
@@ -160,6 +163,9 @@ export interface Transport {
   shuttle_info: string;
   // 숙박
   stay: "day" | "overnight";
+  /** 1박이면 숙소 이름·카카오맵 링크(또는 주소) — 일정 끝에 체크인 카드로 넣는다 */
+  stay_name?: string;
+  stay_link?: string;
 }
 
 export const ITEM_TYPES = ["arrive", "meal", "goods", "photo", "rest", "enter", "show", "return", "medicine", "extra"] as const;
@@ -180,6 +186,8 @@ export interface PlanItem {
   optional?: boolean;
   /** "왜 여기?" 한 줄. 장소 태그·거리·조건에서 코드가 만든다(AI가 쓰지 않음) */
   why?: string;
+  /** 길찾기·예약 등 바로 가는 링크 (예: 숙소 카카오맵) */
+  link?: { label: string; url: string };
 }
 
 /** 일정이 만들어진 단계 기록 (자녀 화면 "AI가 이렇게 짰어요", 발표 시연용) */

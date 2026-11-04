@@ -17,7 +17,7 @@ interface Props {
   kidLabel: string;
   done: string[];
   opened: boolean;
-  placeNames: Record<string, { name: string; walk: number | null }>;
+  placeNames: Record<string, { name: string; walk: number | null; lat?: number | null; lng?: number | null }>;
   stepsLine: string;
   kit: string[];
   concertLine: string; // "코엑스 D홀 · 오후 5시 시작"
@@ -25,19 +25,52 @@ interface Props {
   pilgrim?: boolean;
 }
 
-export function BottomBar({ token, pilgrim }: { token: string; pilgrim?: boolean }) {
+/** 물어보기 챗봇: 부모님 화면 어디서나 오른쪽 아래 동그라미 */
+export function AskFab({ token }: { token: string }) {
   return (
-    <nav className="bbar" aria-label="부모님 메뉴">
-      <Link href={`/p/${token}/map`}>지도</Link>
-      <Link href={`/p/${token}/venue`}>{pilgrim ? "성지" : "공연장"}</Link>
-      <Link href={`/p/${token}/ask`} className="ask">물어보기</Link>
-    </nav>
+    <Link href={`/p/${token}/ask`} className="fab" aria-label="물어보기">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" /><path d="M8.5 11h.01M12 11h.01M15.5 11h.01" strokeWidth="2.6" />
+      </svg>
+      물어보기
+    </Link>
+  );
+}
+
+/** 아래 메뉴: 일정 · 지도 · 공연장(내 티켓 포함) — 물어보기는 동그란 버튼으로 따로 */
+export function BottomBar({ token, pilgrim, current }: { token: string; pilgrim?: boolean; current?: "home" | "map" | "venue" | "ask" }) {
+  return (
+    <>
+      {current !== "ask" && <AskFab token={token} />}
+      <nav className="bbar" aria-label="부모님 메뉴">
+        <Link href={`/p/${token}`} className={current === "home" ? "on" : ""}>일정</Link>
+        <Link href={`/p/${token}/map`} className={current === "map" ? "on" : ""}>지도</Link>
+        <Link href={`/p/${token}/venue`} className={current === "venue" ? "on" : ""}>{pilgrim ? "팬덤 스팟" : "공연장·티켓"}</Link>
+      </nav>
+    </>
+  );
+}
+
+/** 지금 할 일 아래 바로 가기 버튼: 숙소 등 링크, 길찾기, 택시 구간이면 카카오맵 택시·길찾기 */
+function Actions({ it, place, token }: { it: PlanItem; place?: { name: string; lat?: number | null; lng?: number | null }; token: string }) {
+  const taxi = /택시/.test(it.parent_text);
+  const ll = place?.lat != null && place?.lng != null;
+  if (!it.link && !(it.place_id && ll)) return null;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {it.link && <a className="actbtn" href={it.link.url} target="_blank" rel="noopener noreferrer">{it.link.label}</a>}
+      {it.place_id && ll && taxi && (
+        <a className="actbtn" href={`https://map.kakao.com/link/to/${encodeURIComponent(place!.name)},${place!.lat},${place!.lng}`} target="_blank" rel="noopener noreferrer">🚕 택시·길찾기 (카카오맵)</a>
+      )}
+      {it.place_id && ll && !taxi && <Link className="actbtn" href={`/p/${token}/map?place=${encodeURIComponent(it.place_id)}&route=1`}>🧭 길찾기</Link>}
+    </div>
   );
 }
 
 function mainTitle(it: PlanItem) {
-  // 성지순례: "성지 · 송가인공원 (진도 임회)" → "송가인공원"
-  if (it.title.startsWith("성지 · ")) return it.title.slice(5).replace(/\s*\(.*\)$/, "");
+  // 팬덤 스팟 여행: "임영웅 스팟 · 콩마루 (포천 군내면)" → "콩마루"
+  const m = it.title.match(/^\S+ 스팟 · (.+)$/);
+  if (m) return m[1].replace(/\s*\(.*\)$/, "");
   return it.title.split(" · ")[0];
 }
 
@@ -89,7 +122,7 @@ export default function ParentHome(p: Props) {
       <div className="top"><Brand href={null} /><span style={{ fontSize: 16, color: "var(--sub)" }}>{fmtDateLongKo(p.concertDate)}</span></div>
       <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "space-between" }}>
         <span style={{ fontSize: 16, color: "var(--sub)" }}>👟 {p.stepsLine.split(" · ")[0]}</span>
-        {!p.pilgrim && <Link href={`/p/${token}/ticket`} className="mini-btn" style={{ fontSize: 17, padding: "10px 14px", textDecoration: "none" }}>🎫 내 티켓</Link>}
+
       </div>
     </>
   );
@@ -100,7 +133,7 @@ export default function ParentHome(p: Props) {
     return (
       <main className="shell pv">
         <div className="top"><Brand href={null} /></div>
-        <p className="hello">{p.honorific}, {kidH}이 보낸 {p.pilgrim ? "성지순례 여행" : "공연 날"} 안내장이에요</p>
+        <p className="hello">{p.honorific}, {kidH}이 보낸 {p.pilgrim ? "팬덤 스팟 여행" : "공연 날"} 안내장이에요</p>
         <section className="next pk">
           <div className="k">{fmtDateLongKo(p.concertDate)}</div>
           <div className="w">{p.concertTitle}</div>
@@ -119,7 +152,7 @@ export default function ParentHome(p: Props) {
           <b>🎒 챙기실 것</b><br />{p.kit.join(" · ")}
         </div>
         <div className="ai"><p style={{ marginTop: 0 }}>{DAY} 이 링크를 열면 <b>지금 할 일</b>을 하나씩 알려 드려요. 앱 설치는 필요 없어요.</p></div>
-        {!p.pilgrim && <Link href={`/p/${token}/ticket`} className="bigbtn line">🎫 내 티켓 보기</Link>}
+        <Link href={`/p/${token}/venue`} className="bigbtn line">{p.pilgrim ? "📍 오늘 갈 팬덤 스팟 보기" : "🎫 내 티켓·공연장 보기"}</Link>
         <button className="bigbtn pk" style={{ fontSize: 19, padding: 14 }} onClick={() => setPreview(true)}>{DAY} 화면 미리 보기</button>
       </main>
     );
@@ -151,7 +184,7 @@ export default function ParentHome(p: Props) {
       <main className="shell pv">
         <div className="top"><Brand href={null} /><span style={{ fontSize: 16, color: "var(--sub)" }}>{p.pilgrim ? "오늘 일정 끝" : "공연이 끝났어요"}</span></div>
         {askedCard}
-        <h1 className="h">집에 가실 시간이에요</h1>
+        <h1 className="h">{ret.title.startsWith("숙소") ? "숙소로 가실 시간이에요" : "집에 가실 시간이에요"}</h1>
         <div className="home">
           <div className="k">{ret.title}</div>
           <div className="w">{place?.name ?? ret.title}</div>
@@ -162,8 +195,9 @@ export default function ParentHome(p: Props) {
           <small>출발까지 남은 시간 · {fmtTimeKo(ret.start)}</small>
         </div>
         <button className="bigbtn ok" disabled={busy} onClick={() => complete(ret)}>{ret.done_label} ✓</button>
+        <Actions it={ret} place={place} token={token} />
         <div className="kid"><div className="av">{p.kidLabel.slice(0, 2) || "자녀"}</div><div>버튼을 누르시면 {kidH}께 바로 알려 드려요</div></div>
-        <BottomBar token={token} pilgrim={p.pilgrim} />
+        <BottomBar token={token} pilgrim={p.pilgrim} current="home" />
       </main>
     );
   }
@@ -179,7 +213,7 @@ export default function ParentHome(p: Props) {
         <div className="mini">
           {items.filter((i) => i.type !== "show").map((i) => <div key={i.id} className="mi past"><span>{mainTitle(i)}</span><b>{done.has(i.id) ? "완료" : fmtShort(i.start)}</b></div>)}
         </div>
-        <BottomBar token={token} pilgrim={p.pilgrim} />
+        <BottomBar token={token} pilgrim={p.pilgrim} current="home" />
       </main>
     );
   }
@@ -192,7 +226,7 @@ export default function ParentHome(p: Props) {
   return (
     <main className="shell pv">
       {header}
-      <p className="hello">{p.honorific}, 즐거운 {p.pilgrim ? "성지순례" : "공연 여행"} 되세요</p>
+      <p className="hello">{p.honorific}, 즐거운 {p.pilgrim ? "여행" : "공연 여행"} 되세요</p>
       {firstOpen && (
         <div className="kid" role="note">
           <div className="av">{p.kidLabel.slice(0, 2) || "자녀"}</div>
@@ -214,6 +248,7 @@ export default function ParentHome(p: Props) {
         <span className="when">{started ? `${fmtTimeKo(cur.end)}까지` : `${fmtTimeKo(cur.start)}부터`}</span>
       </section>
       {cur.type !== "show" && <button className="bigbtn ok" disabled={busy} onClick={() => complete(cur)}>{cur.done_label || "했어요"} ✓</button>}
+      <Actions it={cur} place={curPlace} token={token} />
       <div className="mini" aria-label="오늘 일정">
         {items.filter((i) => i.id !== cur.id && i.type !== "show").map((i) => {
           const past = done.has(i.id) || (rel === "today" && toMin(i.end) <= minNow && i.type !== "return") || rel === "after";
@@ -225,7 +260,7 @@ export default function ParentHome(p: Props) {
         })}
       </div>
       <Link className="bigbtn pk" href={`/p/${token}/change`} style={{ fontSize: 19, padding: 14 }}>일정 바꾸기</Link>
-      <BottomBar token={token} pilgrim={p.pilgrim} />
+      <BottomBar token={token} pilgrim={p.pilgrim} current="home" />
     </main>
   );
 }

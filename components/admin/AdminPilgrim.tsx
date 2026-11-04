@@ -4,7 +4,7 @@ import { postJSON } from "@/lib/client";
 
 interface Spot { id: string; name: string; address: string; courses: string[]; lat: number | null; lng: number | null; url: string; rating: number | null; rating_count: number | null; evidence: number }
 
-const FORMAT = `[{"id":"(성지면 id, 식당이면 생략)","name":"카카오맵 표기 이름","address":"도로명 주소","lat":37.5,"lng":127.0,"url":"https://place.map.kakao.com/...","rating":4.3,"review_count":120,"open":true}]`;
+const FORMAT = `[{"id":"(성지면 id, 식당이면 생략)","name":"카카오맵 표기 이름","address":"도로명 주소","lat":37.5,"lng":127.0,"url":"https://place.map.kakao.com/...","rating":4.3,"review_count":120,"hours":"11:00-21:00","closed":["화"]}]`;
 
 /** 브라우저에 연결된 Claude에게 붙여 넣을 요청문 */
 function browserPrompt(spots: Spot[], venues: string[]): string {
@@ -17,7 +17,7 @@ function browserPrompt(spots: Spot[], venues: string[]): string {
     "",
     venues.length ? `② 공연장 근처 음식점: ${venues.join(", ")} 각각 '공연장 이름 + 맛집'으로 검색해서 걸어서 10분 안쪽 식당 10곳씩 (카카오맵에 적힌 이름 그대로)` : "",
     "",
-    "각 장소 상세 페이지에서: 정확한 이름, 도로명 주소, 평점(별점), 후기 수, 장소 링크(place.map.kakao.com/숫자), 지금 영업 중인지(폐업 표시 여부).",
+    "각 장소 상세 페이지에서: 정확한 이름, 도로명 주소, 평점(별점), 후기 수, 장소 링크(place.map.kakao.com/숫자), 영업시간(hours, 예: 11:00-21:00), 정기 휴무 요일(closed, 예: [\"화\"]). 폐업이면 빼 줘.",
     "좌표는 장소 링크를 열고 '공유 → 링크 복사' 또는 길찾기 URL에 나오는 위도·경도를 적어 줘. 모르면 lat/lng는 빼도 돼.",
     "",
     "결과는 설명 없이 아래 형식의 JSON 배열 하나로만 줘:",

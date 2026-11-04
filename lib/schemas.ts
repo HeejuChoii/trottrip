@@ -35,6 +35,8 @@ export const TransportSchema = z.object({
   train_from: s(40), train_to: s(40), train_depart: hhmm, train_arrive: hhmm, train_return_depart: hhmm,
   shuttle_info: s(300),
   stay: z.enum(["day", "overnight"]).default("day"),
+  stay_name: s(60),
+  stay_link: s(300),
 });
 
 export const CustomConcertSchema = z.object({

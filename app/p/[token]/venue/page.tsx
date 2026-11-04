@@ -3,7 +3,11 @@ import { notFound } from "next/navigation";
 import { getParentData } from "../data";
 import { BottomBar } from "@/components/ParentHome";
 import { gateForSeat } from "@/lib/planner";
+import { EMPTY_TICKET } from "@/lib/schemas";
+import { fmtDateLongKo, fmtTimeKo } from "@/lib/time";
 import type { PlaceCategory } from "@/lib/types";
+
+const PICKUP: Record<string, string> = { mobile: "휴대폰(모바일 티켓)으로 들어가요", onsite: "공연장에서 티켓을 받아요(현장 수령)", paper: "종이 티켓을 꼭 챙기세요", "": "" };
 
 const FAC: { cat: PlaceCategory; label: string }[] = [
   { cat: "elevator", label: "엘리베이터" }, { cat: "toilet", label: "화장실" }, { cat: "rest", label: "쉼터" },
@@ -20,7 +24,7 @@ function firstSentence(t: string): string {
   return s.length > 28 ? `${s.slice(0, 27)}…` : s;
 }
 
-// P2 공연장 안내 (F9)
+// P2 공연장 · 내 티켓 (F9 + F20을 한 화면으로)
 export default async function Page({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const d = await getParentData(token);
@@ -30,6 +34,10 @@ export default async function Page({ params }: { params: Promise<{ token: string
   const enter = trip.plan!.items.find((i) => i.type === "enter");
   const enterGate = enter?.place_id ? places.find((p) => p.id === enter.place_id) : undefined;
   const gateText = gate ?? enterGate?.name ?? null;
+  const t = { ...EMPTY_TICKET, ...(trip.ticket ?? {}) };
+  const ret = trip.plan!.items.find((i) => i.type === "return");
+  const retPlace = ret?.place_id ? places.find((p) => p.id === ret.place_id) : undefined;
+  const mapLink = (id?: string | null) => (id ? `/p/${token}/map?place=${encodeURIComponent(id)}&route=1` : null);
 
   // 성지순례 여행: 공연장 대신 오늘 들르는 성지 목록
   if (concert.pilgrim) {
@@ -38,7 +46,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
     return (
       <main className="shell pv">
         <div className="top"><Link className="back" href={`/p/${token}`} style={{ fontSize: 18 }}>← 일정으로</Link></div>
-        <h1 className="h">오늘 들르는 성지</h1>
+        <h1 className="h">오늘 들르는 {concert.artist_display} 스팟</h1>
         <p className="hello">{concert.artist_display} · {concert.city}</p>
         {spots.map(({ it, p }, n) => (
           <Link key={it.id} className="card" href={`/p/${token}/map?place=${encodeURIComponent(p!.id)}`} style={{ textDecoration: "none", color: "inherit", display: "flex", gap: 12, alignItems: "center" }}>
@@ -46,8 +54,8 @@ export default async function Page({ params }: { params: Promise<{ token: string
             <span style={{ fontSize: 19, lineHeight: 1.4 }}><b>{p!.name.replace(/\s*\(.*\)$/, "")}</b><br /><small style={{ fontSize: 16, color: "var(--sub)" }}>{shortDesc(p!.description_ko, 26)} · {it.start}</small></span>
           </Link>
         ))}
-        <p className="note">콘서트립 팬덤 장소 정보예요. 가게 사정으로 문을 닫았을 수 있어요.</p>
-        <BottomBar token={token} pilgrim />
+        <p className="note">콘서트립 팬덤 스팟 정보예요. 영업시간·휴무일을 반영해 짰어요.</p>
+        <BottomBar token={token} pilgrim current="venue" />
       </main>
     );
   }
@@ -55,13 +63,36 @@ export default async function Page({ params }: { params: Promise<{ token: string
   return (
     <main className="shell pv">
       <div className="top"><Link className="back" href={`/p/${token}`} style={{ fontSize: 18 }}>← 일정으로</Link></div>
-      <h1 className="h">공연장 안내</h1>
-      <p className="hello">{concert.venue_name}</p>
+      <h1 className="h">공연장 · 내 티켓</h1>
+      <p className="hello">{concert.title}<br />{fmtDateLongKo(concert.date)} {fmtTimeKo(concert.start_time)} · {concert.venue_name}</p>
       <div className="seat">
         <div className="s1">내 자리</div>
         <div className="s2">{trip.seat || "좌석 정보 없음"}</div>
         <div className="s3">{gateText ? `${gateText}로 들어가세요` : "입구는 공지가 나오면 업데이트돼요"}</div>
+        {enter && <div style={{ fontSize: 17, marginTop: 6 }}>입장 {fmtTimeKo(enter.start)}부터</div>}
       </div>
+      {enterGate && <Link className="actbtn" href={mapLink(enterGate.id)!}>🧭 입구까지 길찾기</Link>}
+      <div className="card" style={{ fontSize: 18, lineHeight: 1.6 }}>
+        <b>🎫 티켓</b><br />
+        {PICKUP[t.pickup] || "티켓 받는 방법은 자녀분께 확인해 주세요"}
+        {t.vendor && <><br />예매처: {t.vendor}</>}
+        {t.id_check && <><br /><b>신분증을 꼭 챙기세요.</b>{t.booker_name ? ` 예매자: ${t.booker_name}` : ""}</>}
+      </div>
+      {ret?.title.startsWith("숙소") && (
+        <div className="card" style={{ fontSize: 18, lineHeight: 1.6 }}>
+          <b>🏨 {ret.title}</b><br />공연이 끝나면 체크인하세요 · {fmtTimeKo(ret.start)}쯤
+          {ret.link && <><br /><a href={ret.link.url} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 700, color: "var(--deep)" }}>{ret.link.label}</a></>}
+        </div>
+      )}
+      {ret && !ret.title.startsWith("숙소") && (
+        <div className="card" style={{ fontSize: 18, lineHeight: 1.6 }}>
+          <b>🚌 {ret.title}</b><br />
+          {fmtTimeKo(ret.start)} · {retPlace?.name ?? (trip.transport.return_place || "출발 장소 확인 필요")}
+          {(t.bus_car || t.bus_seat) && <><br /><b>{[t.bus_car, t.bus_seat && `${t.bus_seat} 좌석`].filter(Boolean).join(" · ")}</b></>}
+          {t.note && <><br />{t.note}</>}
+          {retPlace && <><br /><Link href={mapLink(retPlace.id)!} style={{ fontWeight: 700, color: "var(--deep)" }}>🧭 타는 곳 길찾기</Link></>}
+        </div>
+      )}
       {concert.zone_image_url && (
         <div className="card" style={{ padding: 8 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -94,8 +125,9 @@ export default async function Page({ params }: { params: Promise<{ token: string
         })}
       </div>
       {!places.length && <p className="note">이 공연은 공연장 시설 정보를 준비 중이에요. 현장 안내소에 물어보세요.</p>}
+      {concert.ticket_url && <a className="actbtn" href={concert.ticket_url} target="_blank" rel="noopener noreferrer">📄 예매처 공지 보기</a>}
       <p className="note">공식 자료를 바탕으로 한 안내예요. 당일 현장 안내를 우선해 주세요.</p>
-      <BottomBar token={token} />
+      <BottomBar token={token} current="venue" />
     </main>
   );
 }

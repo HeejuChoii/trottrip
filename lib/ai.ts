@@ -15,6 +15,7 @@ import { budgetLeft, recordUsage } from "./usage.ts";
 import { toHHMM, toMin } from "./time.ts";
 import { CATEGORY_LABEL } from "./concertrip.ts";
 import { buildPilgrimPlan, PILGRIM_REV } from "./pilgrim.ts";
+import { geocode, kakaoConfigured } from "./kakao-local.ts";
 import venueMock from "../data/venue-mock.json" with { type: "json" };
 
 const MOCK_REV = (() => { const t = JSON.stringify(venueMock); let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return String(h); })();
@@ -143,14 +144,20 @@ export async function generatePlan(input: PlanInput, opts: { lessWalk?: boolean 
 // 동선(순서·시각·도보/택시)은 코드가 정하고, AI는 장소를 바꾸지 않고 부모님용 문장만 다듬는다.
 async function generatePilgrimPlan(input: PlanInput, hash: string, t0: number, lessWalk: boolean): Promise<Plan> {
   const c = input.concert;
-  const skeleton = buildPilgrimPlan({ view: c, parent: input.parent, transport: input.transport, places: input.places, lessWalk });
+  // 자가용·택시로 집에서 출발하면 출발지 좌표를 카카오로 찾아 첫 장소까지 운전 시간을 넣는다
+  let originLL: { lat: number; lng: number } | null = null;
+  if (input.transport.mode !== "train" && input.transport.origin.trim() && kakaoConfigured()) {
+    const hit = await geocode(input.transport.origin.trim()).catch(() => null);
+    if (hit) originLL = { lat: hit.lat, lng: hit.lng };
+  }
+  const skeleton = buildPilgrimPlan({ view: c, parent: input.parent, transport: input.transport, places: input.places, lessWalk, originLL });
   if (lessWalk) skeleton.less_walk = true;
   const fan = input.places.filter((p) => p.origin === "concertrip");
   const near = input.places.length - fan.length;
   const spots = skeleton.items.filter((i) => i.type === "photo").length;
   const trace: TraceStep[] = [
-    { step: "① 입력 정리", detail: `${c.artist_display} 성지순례 · ${c.city} · ${c.start_time} 출발 · 걷기 ${input.parent.walk === "30+" ? "많이" : input.parent.walk === "15-30" ? "적당히" : "여유롭게"} · 식사 ${input.parent.food.length ? input.parent.food.length + "가지 조건" : "상관없음"}` },
-    { step: "② 성지 불러오기", detail: `콘서트립 팬덤 장소 ${fan.length}곳${near ? ` + 근처 식당·카페 ${near}곳(카카오)` : ""}` },
+    { step: "① 입력 정리", detail: `${c.artist_display} 팬덤 스팟 여행 · ${c.city} · ${c.start_time} 출발 · 걷기 ${input.parent.walk === "30+" ? "많이" : input.parent.walk === "15-30" ? "적당히" : "여유롭게"} · 식사 ${input.parent.food.length ? input.parent.food.length + "가지 조건" : "상관없음"}` },
+    { step: "② 팬덤 스팟 불러오기", detail: `콘서트립 팬덤 스팟 ${fan.length}곳${near ? ` + 근처 식당·카페 ${near}곳(카카오)` : ""}` },
     { step: "③ 동선 최적화(코드)", detail: `가까운 곳부터 ${spots}곳 순서 정하기 · 점심을 11:40에 가깝게 끼워 넣기 · 걷기 기준(${maxWalkFor(input.parent.walk)}분)을 넘는 구간은 택시` },
   ];
   let plan: Plan = skeleton;

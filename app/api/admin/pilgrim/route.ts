@@ -21,6 +21,8 @@ const Item = z.object({
   rating: z.coerce.number().min(0).max(5).optional().nullable(),
   review_count: z.coerce.number().int().min(0).optional().nullable(),
   open: z.union([z.boolean(), z.string()]).optional().nullable(),
+  hours: z.string().regex(/^\d{1,2}:\d{2}-\d{1,2}:\d{2}$/).optional().nullable(),
+  closed: z.array(z.enum(["월", "화", "수", "목", "금", "토", "일"])).optional().nullable(),
 });
 
 const norm = (s: string) => s.replace(/\s*\(.*?\)\s*/g, "").replace(/[\s·\-_.,'"]/g, "").toLowerCase();
@@ -88,6 +90,8 @@ export async function POST(req: Request) {
         if (it.lat != null && it.lng != null) { patch.lat = it.lat; patch.lng = it.lng; }
         if (it.url) patch.link_url = it.url;
         if (it.address) patch.address = it.address;
+        if (it.hours) patch.hours = it.hours;
+        if (it.closed) patch.closed = it.closed;
         if (it.rating != null) { patch.rating = it.rating; patch.rating_count = it.review_count ?? null; patch.rating_src = "카카오맵"; }
         const n = norm(it.name);
         const spot = spots.find((p) => p.id === it.id) ?? spots.find((p) => norm(p.name) === n) ?? spots.find((p) => norm(p.name).includes(n) || n.includes(norm(p.name)));

@@ -14,17 +14,12 @@ export function buildChecklist(o: { concert: ConcertView; parent: ParentProfile;
   const out: CheckItem[] = [];
   const add = (phase: CheckItem["phase"], id: string, text: string) => out.push({ id, phase, text });
   if (concert.pilgrim) {
-    add("D-7", "places_open", "성지 가게들이 그날 문을 여는지 확인하기(휴무일·영업시간)");
     if (t.mode === "train") add("D-7", "train_confirm", "열차·버스 왕복 예매 확인하고, 승차권을 휴대폰에 넣어 드리기");
-    if (t.stay === "overnight") add("D-7", "stay", "숙소 예약 확인하고 주소를 안내장에 함께 알려 드리기");
+    if (t.stay === "overnight" && !t.stay_name) add("D-7", "stay", "숙소 이름을 일정 만들기에 넣으면 마지막에 체크인 안내가 들어가요");
     add("D-1", "weather", "여행 날 날씨 확인하기");
     add("D-1", "clothes", season(concert.date) === "winter" ? "따뜻한 겉옷·핫팩 챙기시게 말씀드리기" : season(concert.date) === "summer" ? "양산·물 챙기시게 말씀드리기" : "얇은 겉옷 챙기시게 말씀드리기");
-    add("D-1", "taxi", "택시 앱을 깔아 드리거나, 택시비(카드) 챙기시게 말씀드리기");
     if (parent.medicine_time) add("D-1", "medicine", `드시는 약(${parent.medicine_time})을 챙기시게 말씀드리기`);
-    add("D-1", "charge", `${who} 휴대폰 충전 부탁드리기`);
     add("당일 아침", "link", "안내장 링크를 다시 보내 드리고, 열어 보셨는지 확인하기");
-    add("당일 아침", "call", "출발하셨는지 전화로 확인하기");
-    add("당일 아침", "status", "진행 상황 링크를 내 휴대폰에 열어 두기");
     return out;
   }
 
@@ -33,7 +28,7 @@ export function buildChecklist(o: { concert: ConcertView; parent: ParentProfile;
   if (t.mode === "fan_bus") add("D-7", "bus_confirm", `팬 모임 버스 집결 시각·장소${t.meet_time ? `(${t.meet_time} ${t.meet_place})` : ""}와 귀가 출발 시각을 ${who}께 다시 알려 드리기`);
   if (t.mode === "train") add("D-7", "train_confirm", "열차 왕복 예매 확인하고, 승차권을 휴대폰에 넣어 드리기");
   if (t.mode === "shuttle") add("D-7", "shuttle_confirm", "공연 셔틀 예약·탑승 장소 공지 확인하기");
-  if (t.stay === "overnight") add("D-7", "stay", "숙소 예약 확인하고 주소를 안내장에 함께 알려 드리기");
+  if (t.stay === "overnight" && !t.stay_name) add("D-7", "stay", "숙소 이름을 일정 만들기에 넣으면 공연 뒤 체크인 안내가 들어가요");
   if (!Object.keys(concert.gate_map ?? {}).length) add("D-7", "notice", "공연 공지(입장 게이트·MD 부스 시간)가 나왔는지 확인하기");
 
   add("D-1", "weather", "공연 날 날씨 확인하기");
@@ -42,11 +37,8 @@ export function buildChecklist(o: { concert: ConcertView; parent: ParentProfile;
   add("D-1", "kit", "응원봉·보조배터리·방석 챙기시게 말씀드리기");
   if (parent.medicine_time) add("D-1", "medicine", `드시는 약(${parent.medicine_time})을 챙기시게 말씀드리기`);
   if (prefs.goods) add("D-1", "goods", "굿즈 살 돈(카드·현금) 챙기시게 말씀드리기");
-  add("D-1", "charge", `${who} 휴대폰 충전 부탁드리기`);
 
   add("당일 아침", "link", "안내장 링크를 다시 보내 드리고, 열어 보셨는지 확인하기");
-  add("당일 아침", "call", t.mode === "fan_bus" ? "버스에 타셨는지 전화로 확인하기" : "출발하셨는지 전화로 확인하기");
-  add("당일 아침", "status", "진행 상황 링크를 내 휴대폰에 열어 두기");
   return out;
 }
 

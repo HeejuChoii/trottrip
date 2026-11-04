@@ -30,14 +30,16 @@ interface Props {
   checklist: Record<string, boolean>;
 }
 
-function tone(it: PlanItem) {
-  return it.type === "goods" || it.type === "photo" ? "pk" : it.type === "extra" ? "pu" : "";
+/** 굿즈·포토존·팬덤 스팟(가수가 다녀간 식당 포함)은 분홍 카드 */
+function tone(it: PlanItem, p?: Place) {
+  if (it.type === "goods" || it.type === "photo" || (p && p.fan_type !== "none")) return "pk";
+  return it.type === "extra" ? "pu" : "";
 }
 
+/** 출처 표시: 확인된 곳만 "확인됨"을 붙인다(조사·방송 근거 장소에 불안한 꼬리표를 달지 않음) */
 function sourceTag(it: PlanItem) {
-  if (!it.place_id && it.source === "needs_check") return <span className="tag in">확인 필요</span>;
-  if (it.source === "verified") return <span className="tag ok">공식·현장 확인</span>;
-  if (it.source === "needs_check") return <span className="tag in">확인 전 정보</span>;
+  if (!it.place_id && it.source === "needs_check" && ["meal", "rest", "goods", "photo"].includes(it.type)) return <span className="tag in">장소 준비 중</span>;
+  if (it.source === "verified") return <span className="tag ok">확인됨</span>;
   return null;
 }
 
@@ -67,11 +69,11 @@ export default function KidPlan(props: Props) {
   const byId = useMemo(() => new Map(places.map((p) => [p.id, p])), [places]);
   const parentUrl = `${origin}/p/${parentToken}`;
   const kidUrl = `${origin}/k/${kidToken}/status`;
-  const title = shareTitle(share.kid_label, share.kid_name);
+  const title = shareTitle(share.kid_label, share.kid_name, !!concert.pilgrim);
   const pil = !!concert.pilgrim;
   const DAY = pil ? "여행 날" : "공연 날";
   const desc = pil
-    ? `${concert.artist_display} 성지순례 · ${concert.city} · ${fmtDateKo(concert.date)} · 앱 설치 없이 바로 보세요`
+    ? `${concert.artist_display} 팬덤 스팟 여행 · ${concert.city} · ${fmtDateKo(concert.date)} · 앱 설치 없이 바로 보세요`
     : `〈${concert.title.replace(/.*〈|〉.*/g, "")}〉 · ${fmtDateKo(concert.date)} · 앱 설치 없이 바로 보세요`;
   const ogImage = `${origin}/api/og?t=${parentToken}`;
 
@@ -112,6 +114,8 @@ export default function KidPlan(props: Props) {
             title: toSelf ? `부모님 ${DAY} 진행 상황` : title,
             description: toSelf ? "누른 버튼과 질문만 보여요. 위치는 보내지 않아요." : desc,
             imageUrl: ogImage,
+            imageWidth: 1200,
+            imageHeight: 630,
             link: { mobileWebUrl: url, webUrl: url },
           },
           buttons: [{ title: toSelf ? "진행 상황 보기" : "안내장 열기", link: { mobileWebUrl: url, webUrl: url } }],
@@ -183,7 +187,7 @@ export default function KidPlan(props: Props) {
       <h1 className="h" style={{ fontSize: 22 }}>{plan.title}</h1>
       <p className="lead">{plan.summary}</p>
       <p className="note" style={{ textAlign: "left", margin: "-4px 0 0" }}>{pil ? `${concert.city} · ${fmtDateKo(concert.date)} ${fmtTimeKo(concert.start_time)} ${concert.venue_name}에서 출발` : `${concert.venue_name} · ${fmtDateKo(concert.date)} ${fmtTimeKo(concert.start_time)} 시작`}</p>
-      {pil && <p className="note" style={{ textAlign: "left", margin: 0 }}><span className="tag pu">콘서트립에서 불러온 성지</span> 공연 없이 떠나는 {concert.artist_display} 성지순례 여행이에요</p>}
+      {pil && <p className="note" style={{ textAlign: "left", margin: 0 }}><span className="tag pu">콘서트립에서 불러온 팬덤 스팟</span> 공연 없이 떠나는 {concert.artist_display} 팬덤 스팟 여행이에요</p>}
       {(concert.ticket_url || concert.shuttle_url) && (
         <p className="note" style={{ textAlign: "left", margin: 0, display: "flex", gap: 12, flexWrap: "wrap" }}>
           {concert.ticket_url && <a href={concert.ticket_url} target="_blank" rel="noopener noreferrer">예매처 공지 ↗</a>}
@@ -230,11 +234,12 @@ export default function KidPlan(props: Props) {
           : <button className="mini-btn" onClick={() => { setDraft(plan.items); setEditing(true); }}>시간 조정·삭제</button>}
       </div>
 
+      <a className="actbtn" href={`/p/${parentToken}/map?kid=1`} target="_blank" rel="noopener noreferrer" style={{ textAlign: "center" }}>🗺 지도에서 동선 보기</a>
       <div className="tl">
         {items.map((it) => {
           const p = it.place_id ? byId.get(it.place_id) : undefined;
           return (
-            <div key={it.id} className={`ti ${tone(it)}`}>
+            <div key={it.id} className={`ti ${tone(it, p)}`}>
               <div className="t">{it.start}</div>
               <div className="dot" />
               <div className="box">
@@ -244,7 +249,7 @@ export default function KidPlan(props: Props) {
                 </small>
                 {p?.fan_type && p.fan_type !== "none" && <span className="tag pk" style={{ marginRight: 4 }}>{FAN_LABEL[p.fan_type]}</span>}
                 {sourceTag(it)}
-                {it.why && <small style={{ color: "var(--deep)", marginTop: 4 }}>왜 여기? {it.why}</small>}
+                {it.why && <small style={{ color: "var(--deep)", marginTop: 4 }}>이 장소가 포함된 근거: {it.why}</small>}
                 {editing && (
                   <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 8, flexWrap: "wrap" }}>
                     <input aria-label="시작" className="inp sm" type="time" value={it.start} style={{ width: 110 }} onChange={(e) => setDraft(draft.map((d) => d.id === it.id ? { ...d, start: e.target.value } : d))} />
@@ -275,7 +280,7 @@ export default function KidPlan(props: Props) {
 
       {fanPlaces.length > 0 && (
         <>
-          <span className="lab" style={{ margin: "4px 0 -6px" }}>{pil ? "오늘 들르는 성지" : "최애 장소"}</span>
+          <span className="lab" style={{ margin: "4px 0 -6px" }}>{pil ? `오늘 들르는 ${concert.artist_display} 스팟` : "최애 장소"}</span>
           {fanPlaces.map((p) => (
             <div key={p.id} className="fanc">
               <b>{p.name}</b> <span className="tag pk">{FAN_LABEL[p.fan_type]}</span>{(p.origin ?? "concertrip") === "concertrip" && <span className="tag pu" style={{ marginLeft: 4 }}>콘서트립에서 불러옴</span>}

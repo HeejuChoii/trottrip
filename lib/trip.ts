@@ -73,7 +73,7 @@ export async function pilgrimPlaces(course: PilgrimCourse): Promise<Place[]> {
     return {
       ...p,
       lat: g.lat ?? p.lat, lng: g.lng ?? p.lng, link_url: g.link_url ?? p.link_url,
-      address: g.address || p.address, rating: g.rating ?? p.rating, rating_count: g.rating_count ?? p.rating_count, rating_src: g.rating_src ?? p.rating_src,
+      address: g.address || p.address, hours: g.hours ?? p.hours, closed: g.closed ?? p.closed, rating: g.rating ?? p.rating, rating_count: g.rating_count ?? p.rating_count, rating_src: g.rating_src ?? p.rating_src,
     };
   });
   let near = await listTtPlaces({ venue_key: key }).catch(() => []);
