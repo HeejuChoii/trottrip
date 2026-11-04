@@ -1,7 +1,8 @@
 // /demo 시연용 고정 시나리오: "무릎이 편치 않은 어머니가 친구 두 분과 팬 모임 버스로 박서진 공연에 가신다. 굿즈는 꼭 사고 싶어 하신다."
 // AI가 실패해도 generatePlan이 규칙 기반 일정으로 대신하므로 시연이 멈추지 않는다. 같은 입력은 캐시라 두 번째부터 즉시 열린다.
 import "server-only";
-import { createTrip, getConcert, getPlaces, getTripBy, listTripsLite } from "./db.ts";
+import { createTrip, getConcert, getPlaces, getTripBy, listTripsLite, upsertConcert } from "./db.ts";
+import { SEED_CONCERTS } from "./seed.ts";
 import { generatePlan } from "./ai.ts";
 import { concertView, newToken } from "./trip.ts";
 import { expiryFor } from "./time.ts";
@@ -31,8 +32,13 @@ export async function getOrCreateDemoTrip(fresh = false): Promise<Trip> {
       if (t?.plan && new Date(t.expires_at).getTime() > Date.now()) return t;
     }
   }
-  const c = await getConcert(DEMO_CONCERT);
-  if (!c) throw new Error(`시연 공연(${DEMO_CONCERT})이 없어요`);
+  let c = await getConcert(DEMO_CONCERT);
+  if (!c) {
+    // seed.sql이 실행되지 않았으면 1차 등록 공연을 넣어 둔다(이미 있는 공연은 건드리지 않음)
+    for (const seed of SEED_CONCERTS) if (!(await getConcert(seed.id))) await upsertConcert({ ...seed });
+    c = await getConcert(DEMO_CONCERT);
+  }
+  if (!c) throw new Error(`시연 공연(${DEMO_CONCERT})을 만들지 못했어요. Supabase concerts 테이블을 확인해 주세요`);
   const places = await getPlaces(c.id);
   const view = concertView({ custom_concert: null } as never, c);
   const plan = await generatePlan({ concert: view, parent, prefs, transport, seat: "B구역 12열", places });

@@ -32,6 +32,36 @@ export function storageMode(): "supabase" | "local" {
   return supa() ? "supabase" : "local";
 }
 
+/**
+ * SUPABASE_SERVICE_KEY에 어떤 키가 들어 있는지. anon/publishable 키면 RLS 때문에 읽기가 오류 없이 0건으로 나온다.
+ * (키 값은 밖으로 내보내지 않고 종류만 본다)
+ */
+export function supabaseKeyKind(): "service" | "secret" | "anon" | "publishable" | "unknown" | "none" {
+  const k = process.env.SUPABASE_SERVICE_KEY ?? "";
+  if (!k) return "none";
+  if (k.startsWith("sb_secret_")) return "secret";
+  if (k.startsWith("sb_publishable_")) return "publishable";
+  const parts = k.split(".");
+  if (parts.length === 3) {
+    try {
+      const payload = JSON.parse(Buffer.from(parts[1].replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8"));
+      if (payload.role === "service_role") return "service";
+      if (payload.role === "anon") return "anon";
+    } catch { /* 형식 오류 */ }
+  }
+  return "unknown";
+}
+
+/** /admin 상태 확인: 공연 수와 쓰기 가능 여부 */
+export async function storageHealth(): Promise<{ concerts: number; error: string | null }> {
+  try {
+    const c = await listConcerts(false);
+    return { concerts: c.length, error: null };
+  } catch (e) {
+    return { concerts: 0, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 // ---------- 로컬 파일 저장소 (개발·데모용) ----------
 const LOCAL_PATH = process.env.LOCAL_DB_PATH || path.join(process.cwd(), ".data", "db.json");
 let localCache: LocalDB | null = null;
