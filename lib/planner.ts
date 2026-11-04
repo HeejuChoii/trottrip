@@ -5,7 +5,8 @@ import type {
   ConcertView, ParentProfile, Place, PlaceCategory, Plan, PlanItem, Prefs, Transport,
 } from "./types.ts";
 import { CUISINE_TAGS, ITEM_TYPES } from "./types.ts";
-import { isHHMM, toHHMM, toMin } from "./time.ts";
+import { absMin, isHHMM, toHHMM, toMin } from "./time.ts";
+import { buildDayTwo, rideOut, stationLegText } from "./legs.ts";
 
 export interface PlanInput {
   concert: ConcertView;
@@ -14,6 +15,11 @@ export interface PlanInput {
   transport: Transport;
   seat: string;
   places: Place[];
+  /** 열차 도착역 좌표(카카오로 찾음) — 역 → 공연장 이동 시간 계산용 */
+  stationLL?: { lat: number; lng: number } | null;
+  /** 열차 출발역·숙소 좌표(지도 핀, 둘째 날 출발점) */
+  fromLL?: { lat: number; lng: number } | null;
+  stayLL?: { lat: number; lng: number } | null;
 }
 
 export const ENTER_BEFORE_MIN = 40;
@@ -140,7 +146,9 @@ export function buildRulePlan(input: PlanInput): Plan {
 
   // 도착 가능 시각(입력된 경우)
   let arriveAt: number | null = null;
-  if (transport.mode === "train" && isHHMM(transport.train_arrive)) arriveAt = toMin(transport.train_arrive) + 30; // 역→공연장
+  // 역 → 공연장 이동(역 좌표가 있으면 택시·대중교통 시간을 계산)
+  const stationLeg = transport.mode === "train" ? stationLegText(transport, { name: concert.venue_name, lat: concert.venue_lat, lng: concert.venue_lng }, input.stationLL) : null;
+  if (transport.mode === "train" && isHHMM(transport.train_arrive)) arriveAt = toMin(transport.train_arrive) + (stationLeg?.min ?? 30);
   // 팬 모임 버스: 집결 시각만 알면 도착 시각은 모르므로 계획 기준으로 역산
 
   // 1) 입장
@@ -275,7 +283,7 @@ export function buildRulePlan(input: PlanInput): Plan {
   if (busStop) used.add(busStop.id);
   const arriveText =
     transport.mode === "fan_bus" ? `${transport.drop_point || busStop?.name || "공연장"}에서 내리세요.`
-    : transport.mode === "train" ? `${transport.train_to || "도착역"}에서 공연장으로 오세요.${maxWalk <= 10 ? " 걷기 힘드시면 택시를 타세요." : ""}`
+    : transport.mode === "train" ? `${stationLeg!.text}${maxWalk <= 10 ? " 걷기 힘드시면 택시를 타세요." : ""}`
     : transport.mode === "shuttle" ? "공연 셔틀에서 내리세요."
     : "공연장 근처에 도착하세요. 주차장이 붐빌 수 있어요.";
   before.unshift(item({
@@ -283,8 +291,9 @@ export function buildRulePlan(input: PlanInput): Plan {
     title: transport.mode === "fan_bus" ? "버스 하차" : "공연장 도착",
     place_id: transport.mode === "fan_bus" ? busStop?.id ?? null : null, walk_min: null,
     parent_text: arriveText, done_label: "도착했어요",
-    kid_note: transport.mode === "fan_bus" && transport.meet_time ? `집결 ${transport.meet_place} ${transport.meet_time}` : "",
+    kid_note: transport.mode === "fan_bus" && transport.meet_time ? `집결 ${transport.meet_place} ${transport.meet_time}` : stationLeg?.note ?? "",
     source: "user_input",
+    ...(stationLeg?.link ? { link: stationLeg.link } : {}),
   }));
 
   // 규칙 6: 도착 시각이 늦으면 취향 항목을 줄인다
@@ -326,6 +335,12 @@ export function buildRulePlan(input: PlanInput): Plan {
     if (toMin(last.end) > enterStart) last.end = toHHMM(enterStart);
   }
 
+  // 열차로 일찍 도착하면 '공연장 도착' 카드를 실제 도착 시각으로 당긴다(빈 시간이 보이지 않게)
+  if (arriveAt !== null && before[0]?.type === "arrive" && toMin(before[0].start) > arriveAt + 10) {
+    before[0].start = toHHMM(arriveAt);
+    before[0].end = toHHMM(arriveAt + 10);
+    before[0].parent_text += " 점심 전까지 근처에서 천천히 쉬세요.";
+  }
   items.push(...before, enter, show);
 
   // 귀가
@@ -340,7 +355,7 @@ export function buildRulePlan(input: PlanInput): Plan {
     const q = (transport.stay_link || stayName).trim();
     const url = /^https?:\/\//.test(q) ? q : `https://map.kakao.com/link/search/${encodeURIComponent(q)}`;
     items.push(item({
-      start: toHHMM(showEnd + 20), end: toHHMM(showEnd + 50), type: "return", title: `숙소 체크인 · ${stayName}`,
+      start: toHHMM(showEnd + 20), end: toHHMM(showEnd + 50), type: "extra", title: `숙소 체크인 · ${stayName}`,
       place_id: null, walk_min: null,
       parent_text: `공연이 끝나면 ${stayName}로 가서 체크인하고 짐 푸세요. 출구가 붐비면 잠시 기다렸다 나오셔도 돼요.`,
       done_label: "체크인했어요", kid_note: "1박", source: "user_input",
@@ -357,6 +372,19 @@ export function buildRulePlan(input: PlanInput): Plan {
     done_label: transport.mode === "fan_bus" ? "버스에 탔어요" : "출발했어요",
     kid_note: "", source: "user_input",
   }));
+
+  // 1박이면 둘째 날: 체크아웃 → (가수가 다녀간 곳) → 점심 → 역으로 이동 → 귀가 열차
+  if (stayName) {
+    const q = (transport.stay_link || stayName).trim();
+    items.push(...buildDayTwo({
+      transport, parent, places: input.places, used,
+      spots: input.places.filter((p) => p.fan_type !== "none" && !["goods", "photo"].includes(p.category)),
+      base: { name: stayName, lat: input.stayLL?.lat ?? concert.venue_lat, lng: input.stayLL?.lng ?? concert.venue_lng }, stationLL: input.stationLL,
+      stayName, stayUrl: /^https?:\/\//.test(q) ? q : `https://map.kakao.com/link/search/${encodeURIComponent(q)}`,
+    }, nid));
+  }
+  // 가는 길 탑승 카드(기차·팬 모임 버스)
+  items.unshift(...rideOut(transport, nid));
 
   // 규칙 8: 약 시간
   if (isHHMM(parent.medicine_time)) {
@@ -376,7 +404,7 @@ export function buildRulePlan(input: PlanInput): Plan {
   const far = input.places.filter((p) => (p.fan_type !== "none" || (prefs.sightseeing && p.category === "sight")) && !used.has(p.id));
   const extra_day = far.length ? { title: "하루 더 머무신다면?", place_ids: far.slice(0, 4).map((p) => p.id) } : null;
 
-  const sorted = items.sort((a, b) => toMin(a.start) - toMin(b.start) || ITEM_TYPES.indexOf(a.type) - ITEM_TYPES.indexOf(b.type));
+  const sorted = items.sort((a, b) => absMin(a) - absMin(b) || ITEM_TYPES.indexOf(a.type) - ITEM_TYPES.indexOf(b.type));
   const summaryBits = [
     maxWalk <= 5 ? "여유로운 동선" : maxWalk <= 10 ? "적당히 걷는 동선" : "많이 걸어도 좋은 동선",
     prefs.goods && sorted.some((i) => i.type === "goods") ? "굿즈 시간 확보" : null,
@@ -422,7 +450,7 @@ export function validatePlan(plan: Plan, places: Place[]): { ok: true; plan: Pla
     // 장소가 없으면 "확인 필요"
     source: it.place_id ? (places.find((p) => p.id === it.place_id)?.source ?? it.source) : it.type === "show" || it.type === "medicine" || it.type === "arrive" || it.type === "return" ? it.source : "needs_check",
   })) as PlanItem[];
-  items.sort((a, b) => toMin(a.start) - toMin(b.start));
+  items.sort((a, b) => absMin(a) - absMin(b));
   return { ok: true, plan: { ...plan, items, extra_day: plan.extra_day && plan.extra_day.place_ids?.length ? plan.extra_day : null } };
 }
 
@@ -451,7 +479,8 @@ const FIXED = new Set(["enter", "show", "return", "medicine"]);
 /** 남은 항목만 다시 짠다. done: 완료한 item id 목록, nowMin: 현재 시각(분) */
 export function rulesReplan(plan: Plan, input: PlanInput, reason: ChangeReason, nowMin: number, done: Set<string>): ChangeResult {
   const items = plan.items.map((i) => ({ ...i }));
-  const remaining = items.filter((i) => !done.has(i.id) && toMin(i.end) > nowMin);
+  // 둘째 날 일정(1박)은 오늘 바꾸기에서 건드리지 않는다
+  const remaining = items.filter((i) => !done.has(i.id) && (i.day ?? 1) === 1 && toMin(i.end) > nowMin);
   const kept = items.filter((i) => !remaining.includes(i));
   const changes: ChangeResult["changes"] = [];
   const who = honorificOf(input.parent);
@@ -474,7 +503,7 @@ export function rulesReplan(plan: Plan, input: PlanInput, reason: ChangeReason, 
     out = remaining.filter((i) => !drop.includes(i));
     for (const d of drop) changes.push({ before: label(d), after: null });
     // 쉼터 시간 확보: 지금부터 다음 고정 항목/다음 남은 항목 전까지
-    const nextAfter = out.filter((i) => toMin(i.start) > nowMin).sort((a, b) => toMin(a.start) - toMin(b.start))[0];
+    const nextAfter = out.filter((i) => toMin(i.start) > nowMin).sort((a, b) => absMin(a) - absMin(b))[0];
     const restEnd = nextAfter ? toMin(nextAfter.start) : nowMin + 60;
     const len = Math.min(Math.max(restEnd - nowMin, 20), reason === "leg_pain" ? 60 : 45);
     const existingRest = out.find((i) => i.type === "rest" && toMin(i.start) <= nowMin + 15);
@@ -531,7 +560,7 @@ export function rulesReplan(plan: Plan, input: PlanInput, reason: ChangeReason, 
     message = "말씀하신 내용은 바로 반영하기 어려워요. 일정은 그대로 두었어요. 물어보기에서 다시 말씀해 주세요.";
   }
 
-  const newItems = [...kept, ...out].sort((a, b) => toMin(a.start) - toMin(b.start));
+  const newItems = [...kept, ...out].sort((a, b) => absMin(a) - absMin(b));
   return { plan: { ...plan, items: newItems }, message, changes };
 }
 
@@ -588,7 +617,8 @@ export function whyFor(it: PlanItem, p: Place | undefined, input: PlanInput): st
   if (!p) {
     if (it.type === "show" || it.type === "medicine") return "";
     if (it.type === "enter" && gateForSeat(input.seat, input.concert.gate_map)) return `${input.seat} 좌석 입구 · 공연 ${ENTER_BEFORE_MIN}분 전 입장`;
-    return it.type === "arrive" || it.type === "return" ? "자녀가 입력한 이동 정보" : "장소 정보 준비 중";
+    // 이동·체크인처럼 장소가 없는 카드에는 근거 줄을 붙이지 않는다
+    return "";
   }
   const bits: string[] = [];
   const parent = input.parent;

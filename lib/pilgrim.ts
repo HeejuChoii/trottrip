@@ -6,7 +6,8 @@
 import data from "../data/pilgrimage.json" with { type: "json" };
 import type { ConcertView, ParentProfile, Place, Plan, PlanItem, Transport } from "./types.ts";
 import { honorificOf, maxWalkFor, restaurantMatches, isSpicyByName } from "./planner.ts";
-import { isHHMM, toHHMM, toMin } from "./time.ts";
+import { absMin, isHHMM, toHHMM, toMin } from "./time.ts";
+import { buildDayTwo, rideOut, stationLegText } from "./legs.ts";
 
 export interface PilgrimArtist { name: string; fandom: string; color: string; blurb: string }
 export interface PilgrimCourse {
@@ -134,6 +135,9 @@ export interface PilgrimInput {
   lessWalk?: boolean;
   /** 자가용·택시로 집에서 출발할 때 출발지 좌표(카카오로 찾음). 없으면 출발지 이름만 쓴다 */
   originLL?: { lat: number; lng: number } | null;
+  /** 열차 도착역 좌표 — 역 → 코스 시작점 이동 시간 */
+  stationLL?: { lat: number; lng: number } | null;
+  stayLL?: { lat: number; lng: number } | null;
 }
 
 /** 자가용 이동 시간(분): 도로는 직선의 1.3배, 시내 35km/h·장거리 70km/h, 주차·여유 10분 */
@@ -203,7 +207,8 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
     ? (input.originLL ? { min: driveMin(input.originLL, start), rough: false } : { min: 60, rough: true })
     : null;
   let T0 = drive ? departAt + drive.min : departAt;
-  if (t.mode === "train" && isHHMM(t.train_arrive)) T0 = toMin(t.train_arrive) + 10;
+  const stLeg = t.mode === "train" ? stationLegText(t, { name: view.venue_name, lat: view.venue_lat, lng: view.venue_lng }, input.stationLL) : null;
+  if (t.mode === "train" && isHHMM(t.train_arrive)) T0 = toMin(t.train_arrive) + (stLeg?.min ?? 10);
 
   // 3) 점심을 몇 번째에 넣을지: 11:40에 가장 가깝고 덜 돌아가는 자리
   type Stop = { kind: "spot" | "meal" | "rest" | "dinner"; p: (Place & LL) | null };
@@ -253,7 +258,7 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
   let seq = 0;
   const nid = () => `i${++seq}`;
   const items: PlanItem[] = [];
-  const arriveText = t.mode === "train" ? `${t.train_to || view.venue_name}에 내리세요. ${view.venue_name}에서 시작해요.`
+  const arriveText = t.mode === "train" ? `${stLeg!.text} ${view.venue_name}에서 시작해요.`
     : t.mode === "car" ? `${view.venue_name} 근처에 차를 두고 시작하세요.`
     : `${view.venue_name}에서 시작해요.`;
   const boat = view.pilgrim?.arrive_note;
@@ -269,8 +274,10 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
   items.push({
     id: nid(), start: toHHMM(T0), end: toHHMM(T0 + 10), type: "arrive", title: `${view.venue_name} 도착`,
     place_id: null, walk_min: null, parent_text: arriveFull, done_label: "도착했어요",
-    kid_note: t.mode === "train" && t.train_depart ? `${t.train_from} ${t.train_depart} 출발` : "", source: "user_input",
+    kid_note: stLeg?.note ?? "", source: "user_input",
+    ...(stLeg?.link ? { link: stLeg.link } : {}),
   });
+  items.unshift(...rideOut(t, nid));
   const legText = (lg: ReturnType<typeof leg> | null, from: string, rough = false) => !lg ? "" : rough ? ` ${from}에서 택시나 차로 이동하세요.` : lg.mode === "walk"
     ? ` ${from}에서 걸어서 ${lg.min}분이에요.`
     : ` ${from}에서 ${lg.km >= 1 ? `약 ${Math.round(lg.km)}km라` : ""} 택시로 ${lg.min}분쯤 걸려요.`;
@@ -320,7 +327,7 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
     const at = Math.max(sch.end + 20, 15 * 60);
     const url = stayLink(t);
     items.push({
-      id: nid(), start: toHHMM(at), end: toHHMM(at + 30), type: "return", title: `숙소 체크인 · ${stay}`,
+      id: nid(), start: toHHMM(at), end: toHHMM(at + 30), type: "extra", title: `숙소 체크인 · ${stay}`,
       place_id: null, walk_min: null,
       parent_text: `${stay}에 가서 체크인하고 짐 푸세요. 오늘 푹 쉬세요.`,
       done_label: "체크인했어요", kid_note: "1박", source: "user_input",
@@ -340,7 +347,16 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
       : `오늘 일정 끝! ${back.mode === "taxi" ? `${view.venue_name}까지 택시로 ${back.min}분쯤 걸려요.` : "조심히 들어가세요."}`,
     done_label: t.mode === "train" ? "열차 탔어요" : "출발했어요", kid_note: "", source: "user_input",
   });
-  items.sort((a, b) => toMin(a.start) - toMin(b.start));
+  // 1박 둘째 날: 체크아웃 → 남은 팬덤 스팟 → 점심 → 역으로 이동·귀가
+  if (stay) {
+    const usedIds = new Set(items.map((i) => i.place_id).filter(Boolean) as string[]);
+    const rest = nearestOrder(sch.last, fan.filter((p) => !usedIds.has(p.id) && p.category !== "restaurant"));
+    items.push(...buildDayTwo({
+      transport: t, parent, places: [...fan.filter((p) => p.category === "restaurant"), ...others], used: usedIds, spots: rest,
+      base: { name: stay, lat: input.stayLL?.lat ?? sch.last.lat, lng: input.stayLL?.lng ?? sch.last.lng }, stationLL: input.stationLL, stayName: stay, stayUrl: stayLink(t),
+    }, nid).map((it) => it.type === "photo" ? { ...it, title: it.title.replace("최애 장소", `${view.artist_display} 스팟`) } : it));
+  }
+  items.sort((a, b) => absMin(a) - absMin(b));
 
   const spots = items.filter((i) => i.type === "photo").length;
   const taxis = sch.out.filter((x) => x.leg?.mode === "taxi").length;

@@ -1,6 +1,6 @@
 // F17 예상 걸음 수·서 있는 시간. 숫자는 코드로만 계산한다(AI가 만들지 않음).
 import type { ParentProfile, Place, Plan } from "./types.ts";
-import { toMin } from "./time.ts";
+import { absMin, toMin } from "./time.ts";
 
 export const STEPS_PER_MIN = 100; // 걷는 1분 ≈ 100보
 const IN_VENUE_WALK_MIN = 20; // 공연장 안·주변 이동(자리 찾기, 화장실, 퇴장 인파 등)
@@ -30,7 +30,7 @@ export function fmtMin(m: number) {
 
 export function estimateSteps(plan: Plan, places: Place[], parent: Pick<ParentProfile, "steps_usual" | "walk">): StepEstimate {
   const byId = new Map(places.map((p) => [p.id, p]));
-  const items = [...plan.items].sort((a, b) => toMin(a.start) - toMin(b.start));
+  const items = [...plan.items].sort((a, b) => absMin(a) - absMin(b));
   // 공연장에서 떨어진 거리(도보 분)로 동선을 근사: 다른 장소로 옮길 때 두 거리의 합의 60%
   let prev = 0;
   let walk = IN_VENUE_WALK_MIN;

@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { clientNow } from "@/lib/client";
-import { toMin } from "@/lib/time";
+import { absMin, toMin } from "@/lib/time";
 import { kidHonorific } from "@/lib/text";
 import { CATEGORY_LABEL } from "@/lib/concertrip";
 import { BottomBar } from "./ParentHome";
@@ -16,6 +16,8 @@ declare global { interface Window { kakao?: any } }
 interface Props {
   token: string; items: PlanItem[]; done: string[]; concertDate: string; pins: Place[]; focus: string | null;
   venue: { name: string; lat: number | null; lng: number | null }; kakaoKey: string; kidLabel: string; pilgrim?: boolean;
+  /** 출발역·도착역·숙소 같은 추가 핀 */
+  extraPins?: { label: string; name: string; lat: number; lng: number }[];
 }
 
 export default function ParentMap(p: Props) {
@@ -33,7 +35,7 @@ export default function ParentMap(p: Props) {
     }
     const { date, min } = clientNow();
     const done = new Set(p.done);
-    const upcoming = [...p.items].sort((a, b) => toMin(a.start) - toMin(b.start))
+    const upcoming = [...p.items].sort((a, b) => absMin(a) - absMin(b))
       .filter((i) => !done.has(i.id) && i.place_id && (date < p.concertDate || toMin(i.end) > min || i.type === "return"));
     for (const i of upcoming) {
       const pl = p.pins.find((x) => x.id === i.place_id);
@@ -58,6 +60,15 @@ export default function ParentMap(p: Props) {
         const el = pinElement(label, { focus: isT });
         el.title = pin.name;
         new k.CustomOverlay({ map: map.current, position: new k.LatLng(pin.lat, pin.lng), content: el, yAnchor: 1, zIndex: isT ? 3 : 1 });
+      }
+      // 출발역·도착역·숙소 (같은 곳은 한 번만)
+      const seen = new Set<string>();
+      for (const x of p.extraPins ?? []) {
+        const key = `${x.lat.toFixed(4)},${x.lng.toFixed(4)}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const el = pinElement(`${x.label} · ${x.name}`);
+        new k.CustomOverlay({ map: map.current, position: new k.LatLng(x.lat, x.lng), content: el, yAnchor: 1, zIndex: 2 });
       }
       setMapOk(true);
     });

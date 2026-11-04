@@ -95,7 +95,7 @@ const REFINE_RULES = `규칙
 export function planHash(input: PlanInput, lessWalk = false): string {
   const { concert, parent, prefs, transport, seat, places } = input;
   const key = JSON.stringify({
-    v: 3, lessWalk, data: concert.pilgrim ? PILGRIM_REV : MOCK_REV,
+    v: 4, lessWalk, data: concert.pilgrim ? PILGRIM_REV : MOCK_REV,
     concert: [concert.id, concert.title, concert.date, concert.start_time, concert.est_end_time, concert.gate_map],
     places: places.map((p) => `${p.id}:${p.updated_at}`).sort(),
     parent, prefs, transport, seat,
@@ -103,8 +103,41 @@ export function planHash(input: PlanInput, lessWalk = false): string {
   return createHash("sha256").update(key).digest("hex");
 }
 
+/** 지도 핀·이동 시간용 좌표를 카카오로 찾아 둔다: 열차 출발역·도착역, 1박 숙소 */
+const stName = (s: string) => (/역$/.test(s.trim()) ? s.trim() : `${s.trim()}역`);
+async function withGeo(input: PlanInput): Promise<PlanInput> {
+  if (input.stationLL !== undefined || !kakaoConfigured()) return input;
+  const t = input.transport;
+  const find = async (q: string, near?: { lat: number; lng: number }) => {
+    if (!q.trim()) return null;
+    const hit = await geocode(q.trim(), near).catch(() => null);
+    return hit ? { lat: hit.lat, lng: hit.lng } : null;
+  };
+  const venue = input.concert.venue_lat != null && input.concert.venue_lng != null ? { lat: input.concert.venue_lat, lng: input.concert.venue_lng } : undefined;
+  const [stationLL, fromLL, stayLL] = await Promise.all([
+    t.mode === "train" ? find(stName(t.train_to)) : null,
+    t.mode === "train" ? find(stName(t.train_from)) : null,
+    t.stay === "overnight" && t.stay_name ? find(t.stay_name, venue).then((r) => r ?? find(t.stay_name!)) : null,
+  ]);
+  return { ...input, stationLL, fromLL, stayLL };
+}
+
+/** 장소 목록에 없는 핀(출발역·도착역·숙소)을 일정에 붙인다 */
+function withPins(plan: Plan, input: PlanInput): Plan {
+  const t = input.transport;
+  const pins: NonNullable<Plan["pins"]> = [];
+  const checkin = plan.items.find((i) => i.title.startsWith("숙소 체크인"));
+  const ret2 = plan.items.find((i) => i.type === "return" && (i.day ?? 1) > 1);
+  if (input.fromLL) pins.push({ label: "출발역", name: stName(t.train_from), ...input.fromLL, time: t.train_depart || undefined });
+  if (input.stationLL) pins.push({ label: "도착역", name: stName(t.train_to), ...input.stationLL, time: t.train_arrive || undefined });
+  if (input.stayLL && checkin) pins.push({ label: "숙소", name: t.stay_name || "숙소", ...input.stayLL, time: checkin.start, day: checkin.day });
+  if (input.stationLL && ret2 && t.mode === "train") pins.push({ label: "귀가 열차", name: stName(t.train_to), ...input.stationLL, time: ret2.start, day: ret2.day });
+  return pins.length ? { ...plan, pins } : plan;
+}
+
 export async function generatePlan(input: PlanInput, opts: { lessWalk?: boolean } = {}): Promise<Plan> {
   const t0 = Date.now();
+  input = await withGeo(input);
   const hash = planHash(input, opts.lessWalk);
   const cached = await getCachedPlan(hash).catch(() => null);
   if (cached) return cached;
@@ -140,7 +173,7 @@ export async function generatePlan(input: PlanInput, opts: { lessWalk?: boolean 
   if (!v.ok) plan = skeleton;
   trace.push({ step: "⑤ 검증(코드)", detail: v.ok ? "목록 밖 장소·시각 겹침·입장 시각 검사 통과" : "검증 실패 → 규칙 일정으로 대체" });
   trace.push({ step: "⑥ 완성", detail: `${((Date.now() - t0) / 1000).toFixed(1)}초 · 같은 입력이면 저장된 일정을 그대로 사용` });
-  plan = annotateWhy({ ...plan, trace }, input);
+  plan = withPins(annotateWhy({ ...plan, trace }, input), input);
   if (!plan.fallback_reason) await setCachedPlan(hash, plan).catch(() => undefined);
   return plan;
 }
@@ -155,7 +188,7 @@ async function generatePilgrimPlan(input: PlanInput, hash: string, t0: number, l
     const hit = await geocode(input.transport.origin.trim()).catch(() => null);
     if (hit) originLL = { lat: hit.lat, lng: hit.lng };
   }
-  const skeleton = buildPilgrimPlan({ view: c, parent: input.parent, transport: input.transport, places: input.places, lessWalk, originLL });
+  const skeleton = buildPilgrimPlan({ view: c, parent: input.parent, transport: input.transport, places: input.places, lessWalk, originLL, stationLL: input.stationLL, stayLL: input.stayLL });
   if (lessWalk) skeleton.less_walk = true;
   const fan = input.places.filter((p) => p.origin === "concertrip");
   const near = input.places.length - fan.length;
@@ -178,7 +211,7 @@ async function generatePilgrimPlan(input: PlanInput, hash: string, t0: number, l
   if (!v.ok) plan = skeleton;
   trace.push({ step: "⑤ 검증(코드)", detail: v.ok ? "목록 밖 장소·시각 겹침 검사 통과" : "검증 실패 → 기본 일정으로 대체" });
   trace.push({ step: "⑥ 완성", detail: `${((Date.now() - t0) / 1000).toFixed(1)}초 · 같은 입력이면 저장된 일정을 그대로 사용` });
-  plan = annotateWhy({ ...plan, trace }, input);
+  plan = withPins(annotateWhy({ ...plan, trace }, input), input);
   await setCachedPlan(hash, plan).catch(() => undefined);
   return plan;
 }

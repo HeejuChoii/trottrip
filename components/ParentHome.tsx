@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Brand from "./Brand";
 import { clientNow, ls, track } from "@/lib/client";
-import { fmtDateLongKo, fmtShort, fmtTimeKo, toMin, isHHMM } from "@/lib/time";
+import { absEnd, absMin, addDays, daysBetween, fmtDateLongKo, fmtShort, fmtTimeKo, toMin, isHHMM } from "@/lib/time";
 import { kidHonorific } from "@/lib/text";
 import type { Plan, PlanItem } from "@/lib/types";
 
@@ -38,7 +38,7 @@ export function AskFab({ token }: { token: string }) {
         <rect x="36" y="18" width="5" height="9" rx="2.5" fill="#fff" />
         <rect x="11" y="12" width="26" height="21" rx="9" fill="#fff" />
         <path d="M16 31 L14.5 39 L23.5 32.5 Z" fill="#fff" />
-        <rect x="15" y="16" width="18" height="13" rx="5.5" fill="#ff7aa8" />
+        <rect x="15" y="16" width="18" height="13" rx="5.5" fill="#fa2d48" />
         <circle cx="20" cy="21.2" r="1.9" fill="#fff" />
         <circle cx="28" cy="21.2" r="1.9" fill="#fff" />
         <path d="M20.5 24.6 Q24 27.4 27.5 24.6" stroke="#fff" strokeWidth="1.8" fill="none" strokeLinecap="round" />
@@ -106,17 +106,23 @@ export default function ParentHome(p: Props) {
     return () => clearInterval(t);
   }, [token, p.opened]);
 
-  const items = useMemo(() => [...plan.items].sort((a, b) => toMin(a.start) - toMin(b.start)), [plan.items]);
+  const items = useMemo(() => [...plan.items].sort((a, b) => absMin(a) - absMin(b)), [plan.items]);
   const ret = items.find((i) => i.type === "return");
 
   if (!now) return <main className="shell pv"><div className="top"><Brand href={null} /></div></main>;
 
-  const rel = now.date < p.concertDate ? "before" : now.date > p.concertDate ? "after" : "today";
-  const minNow = rel === "before" ? -1 : rel === "after" ? 24 * 60 + 1 : now.min;
-  const remaining = items.filter((i) => !done.has(i.id) && (rel === "before" || toMin(i.end) > minNow || i.type === "return"));
+  // 여러 날 일정(1박): 공연 날 0시 기준 절대 분으로 비교한다
+  const lastDay = Math.max(1, ...items.map((i) => i.day ?? 1));
+  const diff = daysBetween(p.concertDate, now.date);
+  const rel = diff < 0 ? "before" : diff >= lastDay ? "after" : "today";
+  const minNow = rel === "before" ? -1 : rel === "after" ? lastDay * 1440 + 1 : diff * 1440 + now.min;
+  const remaining = items.filter((i) => !done.has(i.id) && (rel === "before" || absEnd(i) > minNow || i.type === "return"));
   const current = remaining[0] ?? null;
   const showEndMin = isHHMM(p.showEnd) ? toMin(p.showEnd) : Infinity;
-  const returnMode = !!ret && !done.has(ret.id) && rel !== "before" && (minNow >= showEndMin || current?.id === ret.id);
+  /** 아직 그날이 오지 않은 둘째 날 일정이면 "다음 날"을 붙인다 */
+  const dayPre = (i: PlanItem) => ((i.day ?? 1) > 1 && (rel === "before" || diff < (i.day ?? 1) - 1) ? "다음 날 " : "");
+  // 귀가 화면: 마지막 귀가 카드 차례가 됐을 때(당일 귀가면 공연이 끝난 뒤에도)
+  const returnMode = !!ret && !done.has(ret.id) && rel !== "before" && (current?.id === ret.id || ((ret.day ?? 1) === 1 && minNow >= showEndMin));
   const finished = !current || (ret && done.has(ret.id) && rel !== "before");
 
   async function complete(it: PlanItem) {
@@ -156,7 +162,7 @@ export default function ParentHome(p: Props) {
         <div className="card">
           <b style={{ fontSize: 19 }}>하루 한눈에</b>
           <div className="mini" style={{ marginTop: 8 }}>
-            {glance.map((i) => <div key={i.id} className="mi"><span>{mainTitle(i)}</span><b>{fmtShort(i.start)}</b></div>)}
+            {glance.map((i) => <div key={i.id} className="mi"><span>{mainTitle(i)}</span><b>{dayPre(i)}{fmtShort(i.start)}</b></div>)}
           </div>
         </div>
         <div className="card" style={{ fontSize: 18, lineHeight: 1.5 }}>
@@ -192,7 +198,7 @@ export default function ParentHome(p: Props) {
 
   // P4 귀가 안내
   if (returnMode && ret) {
-    const left = toMin(ret.start) - minNow;
+    const left = absMin(ret) - minNow;
     const place = ret.place_id ? p.placeNames[ret.place_id] : undefined;
     return (
       <main className="shell pv">
@@ -237,17 +243,17 @@ export default function ParentHome(p: Props) {
   const row = (list: PlanItem[], label: string) => list.length ? (
     <div className="mini" aria-label={label}>
       {list.map((i) => {
-        const past = done.has(i.id) || (rel === "today" && toMin(i.end) <= minNow && i.type !== "return") || rel === "after";
+        const past = done.has(i.id) || (rel === "today" && absEnd(i) <= minNow && i.type !== "return") || rel === "after";
         return (
           <div key={i.id} className={`mi ${past ? "past" : ""} ${i.type === "goods" || i.type === "photo" || i.type === "enter" ? "pk" : ""}`}>
-            <span>{mainTitle(i)}</span><b>{done.has(i.id) ? "완료" : fmtShort(i.start)}</b>
+            <span>{mainTitle(i)}</span><b>{done.has(i.id) ? "완료" : `${dayPre(i)}${fmtShort(i.start)}`}</b>
           </div>
         );
       })}
     </div>
   ) : null;
   const curPlace = cur.place_id ? p.placeNames[cur.place_id] : undefined;
-  const started = rel === "today" && toMin(cur.start) <= minNow;
+  const started = rel === "today" && absMin(cur) <= minNow;
   const pink = cur.type === "goods" || cur.type === "photo";
 
   return (
@@ -265,7 +271,7 @@ export default function ParentHome(p: Props) {
       {rel === "before" && (
         <div className="card" style={{ fontSize: 17, lineHeight: 1.5 }}>{DAY}은 <b>{fmtDateLongKo(p.concertDate)}</b>이에요. 그날 이 화면을 열면 지금 할 일을 순서대로 알려 드려요.</div>
       )}
-      {row(items.filter((i) => i.id !== cur.id && i.type !== "show" && toMin(i.start) < toMin(cur.start)), "지난 일정")}
+      {row(items.filter((i) => i.id !== cur.id && i.type !== "show" && absMin(i) < absMin(cur)), "지난 일정")}
       <section className={`next ${pink ? "pk" : ""}`} aria-live="polite">
         <div className="k">{rel === "before" ? `${DAY} 처음 할 일` : started ? "지금 할 일" : "다음 할 일"}</div>
         <div className="w">{mainTitle(cur)}</div>
@@ -273,11 +279,11 @@ export default function ParentHome(p: Props) {
           {curPlace ? `${curPlace.name} · ` : ""}{cur.parent_text}
           {cur.walk_min != null && cur.walk_min > 0 && !/택시/.test(cur.parent_text) ? ` 걸어서 ${cur.walk_min}분.` : ""}
         </div>
-        <span className="when">{started ? `${fmtTimeKo(cur.end)}까지` : `${fmtTimeKo(cur.start)}부터`}</span>
+        <span className="when">{started ? `${fmtTimeKo(cur.end)}까지` : `${dayPre(cur)}${fmtTimeKo(cur.start)}부터`}</span>
       </section>
-      {cur.type !== "show" && <button className="bigbtn ok" disabled={busy} onClick={() => complete(cur)}>{cur.done_label || "했어요"} ✓</button>}
+      {(cur.type !== "show" || started) && <button className="bigbtn ok" disabled={busy} onClick={() => complete(cur)}>{cur.done_label || "했어요"} ✓</button>}
       <Actions it={cur} place={curPlace} token={token} />
-      {row(items.filter((i) => i.id !== cur.id && i.type !== "show" && toMin(i.start) >= toMin(cur.start)), "남은 일정")}
+      {row(items.filter((i) => i.id !== cur.id && i.type !== "show" && absMin(i) >= absMin(cur)), "남은 일정")}
       <Link className="bigbtn pk" href={`/p/${token}/change`} style={{ fontSize: 19, padding: 14 }}>일정 바꾸기</Link>
       <BottomBar token={token} pilgrim={p.pilgrim} current="home" />
     </main>

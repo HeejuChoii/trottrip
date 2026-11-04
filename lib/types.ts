@@ -186,6 +186,8 @@ export interface PlanItem {
   optional?: boolean;
   /** "왜 여기?" 한 줄. 장소 태그·거리·조건에서 코드가 만든다(AI가 쓰지 않음) */
   why?: string;
+  /** 며칠째 일정인지 (1박이면 둘째 날 = 2). 없으면 1 */
+  day?: number;
   /** 길찾기·예약 등 바로 가는 링크 (예: 숙소 카카오맵) */
   link?: { label: string; url: string };
 }
@@ -207,6 +209,8 @@ export interface Plan {
   trace?: TraceStep[];
   /** 공연 없는 성지순례 여행 일정 */
   pilgrim?: boolean;
+  /** 장소 목록에 없는 지도 핀(출발역·도착역·숙소). time/day는 동선 순서용 */
+  pins?: { label: string; name: string; lat: number; lng: number; time?: string; day?: number }[];
 }
 
 export interface Trip {
