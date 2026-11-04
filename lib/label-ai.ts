@@ -27,21 +27,24 @@ export async function labelSpice(places: Place[]): Promise<Map<string, FoodLabel
   const targets = places.filter((p) => p.category === "restaurant");
   if (!targets.length || !aiEnabled() || !(await budgetLeft()).ok) return out;
   const client = new Anthropic({ timeout: 40_000, maxRetries: 1 });
-  for (let i = 0; i < targets.length; i += 60) {
-    const chunk = targets.slice(i, i + 60);
+  const ask = async (chunk: Place[]) => {
     try {
       const res = await client.beta.messages.parse({
         model: SMALL_MODEL,
-        max_tokens: 6000,
+        max_tokens: 4000,
         output_config: { effort: "low", format: betaZodOutputFormat(LabelSchema) },
-        system: "너는 한국 식당의 이름과 카카오 분류만 보고 대표 메뉴의 맵기, 국물 요리 여부, 주식(밥/면/빵), 날것 여부를 추정한다. 모르면 unknown/null. 메뉴를 지어내지 말고 이름·분류에서 알 수 있는 것만 근거로 쓴다.",
-        messages: [{ role: "user", content: JSON.stringify(chunk.map((p) => ({ id: p.id, name: p.name, category: p.category_detail ?? "" }))) }],
+        system: "너는 한국 식당의 이름과 카카오 분류만 보고 대표 메뉴의 맵기, 국물 요리 여부, 주식(밥/면/빵), 날것 여부를 추정한다. 받은 식당 하나하나마다 빠짐없이 한 줄씩 답한다(입력 개수 = 출력 개수). 모르면 unknown/null. 메뉴를 지어내지 말고 이름·분류에서 알 수 있는 것만 근거로 쓴다.",
+        messages: [{ role: "user", content: `식당 ${chunk.length}곳:\n${JSON.stringify(chunk.map((p) => ({ id: p.id, name: p.name, category: p.category_detail ?? "" })))}` }],
       });
       await recordUsage("label", SMALL_MODEL, res.usage);
       for (const x of res.parsed_output?.items ?? []) if (chunk.some((p) => p.id === x.id)) out.set(x.id, { spice: x.spice, note: x.note.slice(0, 40), soup: x.soup, staple: x.staple, raw: x.raw });
     } catch (e) {
-      console.warn("[label] 맵기 추정 실패:", e instanceof Error ? e.message : e);
+      console.warn("[label] 라벨 추정 실패:", e instanceof Error ? e.message : e);
     }
-  }
+  };
+  // 한 번에 많이 보내면 몇 곳을 빠뜨려서 20곳씩 나누고, 빠진 곳은 한 번 더 묻는다
+  for (let i = 0; i < targets.length; i += 20) await ask(targets.slice(i, i + 20));
+  const missing = targets.filter((p) => !out.has(p.id));
+  for (let i = 0; i < missing.length; i += 10) await ask(missing.slice(i, i + 10));
   return out;
 }

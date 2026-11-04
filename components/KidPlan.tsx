@@ -123,12 +123,19 @@ export default function KidPlan(props: Props) {
     copy(url, toSelf ? "kid" : "parent");
   }
 
-  async function sendEmail() {
+  /** 휴대폰이면 공유창(문자·밴드·카톡 등)을 열고, 컴퓨터면 링크를 복사한다. 미리보기(OG) 카드는 링크에서 자동으로 뜬다 */
+  async function shareLink() {
     if (!(await saveShare())) return;
-    const body = `${props.parentHonorific}, ${title}이에요.\n\n${desc}\n\n아래 링크를 누르시면 공연 날 할 일을 큰 글씨로 보실 수 있어요.\n${parentUrl}\n\n앱을 설치하지 않으셔도 돼요.`;
-    track("share_email", kidToken);
-    askSurvey();
-    location.href = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
+    const mobile = typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (mobile && navigator.share) {
+      try {
+        await navigator.share({ title, text: `${title}\n${desc}`, url: parentUrl });
+        track("share_copy", kidToken, undefined, { via: "webshare" });
+        askSurvey();
+        return;
+      } catch { /* 취소하면 아래로 */ }
+    }
+    copy(parentUrl, "parent");
   }
 
   async function saveEdit() {
@@ -305,9 +312,9 @@ export default function KidPlan(props: Props) {
 
       <div className="row2">
         <button className="kakao" onClick={() => sendKakao(false)}>카카오톡으로<br />보내기</button>
-        <button className="ghost" onClick={sendEmail}>이메일로<br />보내기</button>
+        <button className="ghost" onClick={shareLink}>링크 복사·<br />문자로 보내기</button>
       </div>
-      <button className="linkbtn" onClick={() => copy(parentUrl, "parent")}>링크 복사</button>
+      <p className="fine" style={{ margin: "-4px 0 0" }}>문자·밴드로 보내도 공연 카드 미리보기가 함께 떠요.</p>
 
       {survey === "open" && (
         <div className="intent" style={{ borderColor: "var(--purple)" }}>
