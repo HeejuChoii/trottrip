@@ -102,7 +102,8 @@ export async function POST(req: Request) {
         const gate_map = { ...concert.gate_map };
         for (const g of e.gate_map) if (g.zone.trim() && g.gate.trim()) gate_map[g.zone.trim()] = g.gate.trim();
         const notice = [e.summary, e.md_hours ? `MD 부스: ${e.md_hours}` : "", e.entry_start ? `입장 시작: ${e.entry_start}` : ""].filter(Boolean).join("\n");
-        await upsertConcert({ ...concert, gate_map, notice_text: notice || concert.notice_text });
+        // 공연장 공통(팬 정리글·시설 정보)으로 저장할 때는 그 공연의 게이트·공지 문구를 건드리지 않는다
+        if (b.scope !== "venue") await upsertConcert({ ...concert, gate_map, notice_text: notice || concert.notice_text });
         const near = concert.venue_lat != null && concert.venue_lng != null ? { lat: concert.venue_lat, lng: concert.venue_lng } : undefined;
         const rows: TtPlaceRow[] = [];
         for (const np of e.places) {
@@ -111,10 +112,11 @@ export async function POST(req: Request) {
             const g = await geocode(np.location_query, near).catch(() => null);
             if (g && (g.distance_m == null || g.distance_m < 3000)) { lat = g.lat; lng = g.lng; address = g.address; }
           }
-          rows.push(toRow(concert, "concert", "notice", PlaceInput.parse({
+          rows.push(toRow(concert, b.scope === "venue" && concert.venue_key ? "venue" : "concert", "notice", PlaceInput.parse({
             name: np.name, category: np.category, description_ko: [np.description_ko, np.hours ? `운영 ${np.hours}` : ""].filter(Boolean).join(" · "),
             lat, lng, address, evidence_urls: typeof b.source_url === "string" && /^https?:\/\//.test(b.source_url) ? [b.source_url] : [],
-            source: "verified",
+            // 공식 공지면 확인됨, 팬 정리글(공연장 공통으로 저장)이면 확인 전
+            source: b.scope === "venue" ? "needs_check" : "verified",
           })));
         }
         await upsertTtPlaces(rows);

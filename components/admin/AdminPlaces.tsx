@@ -21,6 +21,7 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { c
   const [filter, setFilter] = useState<string>("all");
   const [notice, setNotice] = useState("");
   const [noticeUrl, setNoticeUrl] = useState("");
+  const [noticeScope, setNoticeScope] = useState<"concert" | "venue">("concert");
   const [ex, setEx] = useState<NoticeExtract | null>(null);
 
   async function run<T>(key: string, data: Record<string, unknown>, done?: (r: T) => string) {
@@ -95,10 +96,14 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { c
         </div>
 
         <div className="card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <b>② 공연 공지 붙여 넣기 → AI 정리</b>
+          <b>② 공지·팬 정리글 붙여 넣기 → AI 정리</b>
           <small style={{ color: "var(--sub)", lineHeight: 1.5 }}>예매처·소속사 SNS·팬카페의 MD 부스, 포토존, 게이트, 셔틀 승하차 공지를 그대로 붙여 넣으세요. 정리 결과를 확인한 뒤에만 저장돼요.</small>
           <textarea className="inp" rows={5} value={notice} onChange={(e) => setNotice(e.target.value)} placeholder="공지 원문" />
           <input className="inp sm" value={noticeUrl} onChange={(e) => setNoticeUrl(e.target.value)} placeholder="공지 링크(근거로 저장)" />
+          <span className="chips">
+            <button type="button" className="chip" aria-pressed={noticeScope === "concert"} onClick={() => setNoticeScope("concert")}>이 공연 공지 (게이트·MD·셔틀)</button>
+            <button type="button" className="chip" aria-pressed={noticeScope === "venue"} onClick={() => setNoticeScope("venue")}>공연장 시설·팬 꿀팁 (공통, 확인 전)</button>
+          </span>
           <button className="mini-btn" disabled={!ai || !!busy || notice.length < 20} onClick={async () => { const r = await run<{ extract: NoticeExtract }>("ex", { action: "notice_extract", text: notice }); if (r) setEx(r.extract); }}>{busy === "ex" ? "정리 중…" : "정리하기"}</button>
           {!ai && <small className="err">ANTHROPIC_API_KEY가 필요해요</small>}
         </div>
@@ -121,7 +126,7 @@ export default function AdminPlaces({ concert, places, scopeOf, kakao, ai }: { c
           {ex.unclear.length > 0 && <p className="err" style={{ fontSize: 13 }}>확인 필요: {ex.unclear.join(" / ")}</p>}
           <span style={{ display: "flex", gap: 8 }}>
             <button className="mini-btn" onClick={() => setEx(null)}>취소</button>
-            <button className="mini-btn" style={{ background: "var(--deep)", color: "#fff" }} disabled={!!busy} onClick={async () => { const r = await run<{ places: number }>("apply", { action: "notice_apply", extract: ex, source_url: noticeUrl }, (r) => `공지 반영: 장소 ${r.places}곳, 게이트·공지 문구 저장`); if (r) { setEx(null); setNotice(""); } }}>저장</button>
+            <button className="mini-btn" style={{ background: "var(--deep)", color: "#fff" }} disabled={!!busy} onClick={async () => { const r = await run<{ places: number }>("apply", { action: "notice_apply", extract: ex, source_url: noticeUrl, scope: noticeScope }, (r) => `공지 반영: 장소 ${r.places}곳, 게이트·공지 문구 저장`); if (r) { setEx(null); setNotice(""); } }}>저장</button>
           </span>
         </div>
       )}
