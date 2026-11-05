@@ -159,7 +159,7 @@ export default function ParentHome(p: Props) {
         <p className="hello">{p.honorific}, {kidH}이 보낸 {p.pilgrim ? "팬덤 스팟 여행" : "공연 날"} 안내장이에요</p>
         {p.poster && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={p.poster} alt="공연 포스터" referrerPolicy="no-referrer" style={{ width: "100%", maxHeight: 300, objectFit: "contain", borderRadius: 18, background: "#fff" }} />
+          <img src={p.poster} alt={p.pilgrim ? `${p.artist ?? ""} 사진` : "공연 포스터"} referrerPolicy="no-referrer" style={p.pilgrim ? { width: "100%", height: 260, objectFit: "cover", objectPosition: "center 25%", borderRadius: 18 } : { width: "100%", maxHeight: 300, objectFit: "contain", borderRadius: 18, background: "#fff" }} />
         )}
         <section className="next pk">
           <div className="k">{fmtDateLongKo(p.concertDate)}</div>

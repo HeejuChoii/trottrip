@@ -258,18 +258,21 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
   // 저녁에만 여는 가수 단골집: 낮 일정이 15:30 넘어 끝나고 돌아갈 시간이 넉넉하면 이른 저녁으로
   let sch = schedule(best);
   const lateOk = t.mode !== "train" || !isHHMM(t.train_return_depart) || toMin(t.train_return_depart) >= 19 * 60 + 30;
-  // 1박이면 첫날 저녁은 숙소 근처에서 드시니 낮 일정이 짧아도 넣는다
-  if (!input.lessWalk && dinnerFood.length && lateOk && (overnight || sch.end >= 15 * 60 + 30)) {
-    // 점심에 간 곳은 빼고, 저녁에만 여는 단골집을 먼저(같은 조건이면 가까운 곳)
-    const cand = (dinnerFood as (Place & LL)[]).filter((p) => p.id !== lunchPlace?.id);
+  // 저녁: 1박이면 첫날 저녁은 꼭 넣는다(덜 걷기여도). 당일이면 낮 일정이 15:30 넘게 이어지고 돌아갈 시간이 넉넉할 때만
+  if (overnight || (!input.lessWalk && dinnerFood.length && lateOk && sch.end >= 15 * 60 + 30)) {
+    // 점심에 간 곳은 빼고, 저녁에만 여는 단골집을 먼저(같은 조건이면 가까운 곳) → 없으면 근처 식성 맞는 식당 → 그래도 없으면 '숙소 근처에서 저녁'
+    const near = (list: (Place & LL)[]) => nearestOrder(sch.last, list.filter((p) => p.id !== lunchPlace?.id)).find((p) => leg(sch.last, p, maxWalk).min <= 45) ?? null;
+    const cand = dinnerFood as (Place & LL)[];
     const dOnly = cand.filter((p) => !lunchOpen(p));
-    const d = nearestOrder(sch.last, dOnly.length ? dOnly : cand)[0];
-    if (d && d.id !== lunchPlace?.id && leg(sch.last, d, maxWalk).min <= 45) {
+    const d = near(dOnly) ?? near(cand)
+      ?? (overnight ? near(others.filter((p) => p.category === "restaurant" && restaurantMatches(p, parent) && openAt(p, date, 18 * 60, 19 * 60))) : null);
+    if (d || overnight) {
       const tried = schedule([...best, { kind: "dinner", p: d }]);
-      // 저녁이 너무 늦어지면(19:30 넘게) 넣지 않는다
-      if ((tried.out.at(-1)?.start ?? 0) <= 19 * 60 + 30) { best.push({ kind: "dinner", p: d }); sch = tried; }
+      // 저녁이 너무 늦어지면(19:30 넘게) 당일 여행에서는 넣지 않는다
+      if (overnight || (tried.out.at(-1)?.start ?? 0) <= 19 * 60 + 30) { best.push({ kind: "dinner", p: d }); sch = tried; }
     }
   }
+
 
   // 4) 일정 항목
   let seq = 0;
@@ -326,7 +329,7 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
       items.push({
         id: nid(), start: toHHMM(x.start), end: toHHMM(x.end), type: "meal", title: p ? `${word} · ${p.name}` : `${word} 식사`,
         place_id: p?.id ?? null, walk_min: lg?.mode === "walk" ? lg.min : null,
-        parent_text: p ? `${p.description_ko || p.name}.${legText(lg, prevName, rough)} 붐비기 전에 드세요.` : "근처 식당에서 붐비기 전에 드세요.",
+        parent_text: p ? `${p.description_ko || p.name}.${legText(lg, prevName, rough)} 붐비기 전에 드세요.` : x.stop.kind === "dinner" ? "숙소 근처 식당에서 편하게 저녁 드세요." : "근처 식당에서 붐비기 전에 드세요.",
         done_label: "다 먹었어요",
         kid_note: [p?.fan_type && p.origin === "concertrip" ? "가수 단골집" : p ? "근처 식당" : "", moveNote, unfit ? "식성 확인 필요" : "", status].filter(Boolean).join(" · "),
         source: p?.source ?? "needs_check",

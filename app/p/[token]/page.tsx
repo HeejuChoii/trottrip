@@ -6,6 +6,7 @@ import { estimateSteps } from "@/lib/steps";
 import { parentKit } from "@/lib/checklist";
 import { EMPTY_TICKET } from "@/lib/schemas";
 import { listPosters, posterFor } from "@/lib/db";
+import { artistPhoto } from "@/lib/community";
 
 // P1 지금 할 일 (F7) + P4 귀가 안내 (F12)
 export default async function Page({ params }: { params: Promise<{ token: string }> }) {
@@ -34,7 +35,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
       concertLine={d.concert.pilgrim ? `${d.concert.city} · ${fmtTimeKo(d.concert.start_time)} ${d.concert.venue_name}에서 출발` : `${d.concert.venue_name} · ${fmtTimeKo(d.concert.start_time)} 시작`}
       pilgrim={!!d.concert.pilgrim}
       artist={d.concert.artist_display}
-      poster={posterFor(await listPosters(), { id: d.trip.concert_id, artist_display: d.concert.artist_display })}
+      poster={d.concert.pilgrim ? artistPhoto(d.concert.artist_display) : posterFor(await listPosters(), { id: d.trip.concert_id, artist_display: d.concert.artist_display })}
     />
   );
 }
