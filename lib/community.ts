@@ -57,7 +57,7 @@ export interface FanComment { id: string; post_id: string; author_id: string; au
 /** 우리가 올린 사진 주소만 받는다(Supabase Storage 공개 주소, 로컬 개발 주소, 시연용 public/mock) */
 export const PHOTO_URL_RE = /^(https:\/\/[\w.-]+\/storage\/v1\/object\/public\/community\/|\/api\/community\/file\?n=)/;
 
-type MockPost = Omit<FanPost, "id" | "created_at" | "author_id" | "comments" | "mock"> & { hours_ago: number; comments?: { author_name: string; body: string; images?: string[] }[] };
+type MockPost = Omit<FanPost, "id" | "created_at" | "author_id" | "comments" | "mock"> & { hours_ago: number; retired?: boolean; comments?: { author_name: string; body: string; images?: string[] }[] };
 const M = (mock as { posts: MockPost[] }).posts;
 
 /** 목데이터 글 주소: 실제 글처럼 보이는 고정 UUID. 저장(댓글·좋아요·투표)은 예전처럼 "mock-N" 키로 한다 */
@@ -82,13 +82,14 @@ export const MOCK_BASE = Date.parse("2026-11-05T23:30:00+09:00");
 
 /** 목데이터 글(시연용) */
 export function mockPosts(now = MOCK_BASE): FanPost[] {
-  return M.map((p, i) => ({
+  return M.flatMap((p, i) => p.retired ? [] : [{
     id: MOCK_IDS[i], artist: p.artist, category: p.category, title: p.title, body: p.body, author_id: `mock-${p.author_name}`,
     author_name: p.author_name, likes: p.likes, comments: p.comments?.length ?? 0, ...(p.images ? { images: p.images } : {}), created_at: new Date(now - p.hours_ago * 3600000).toISOString(), mock: true,
     ...(p.poll ? { poll: p.poll } : {}),
-  }));
+  }]);
 }
-export const findMockPost = (id: string) => { const k = mockKey(id); return k ? mockPosts()[Number(k.slice(5)) - 1] ?? null : null; };
+/** 화면에서 뺀 글(retired)은 null. 주소가 바뀌지 않게 데이터 순서는 그대로 둔다 */
+export const findMockPost = (id: string) => { const k = mockKey(id); return k ? mockPosts().find((p) => p.id === MOCK_IDS[Number(k.slice(5)) - 1]) ?? null : null; };
 export function mockComments(postId: string, now = MOCK_BASE): FanComment[] {
   const key = mockKey(postId);
   const i = key ? Number(key.slice(5)) - 1 : -1;
