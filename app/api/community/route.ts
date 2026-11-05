@@ -2,11 +2,11 @@
 import { z } from "zod";
 import { createFanPost } from "@/lib/db";
 import { getFanUser } from "@/lib/fanauth";
-import { FAN_ARTISTS, POST_CATEGORIES } from "@/lib/community";
+import { ALL_SLUG, FAN_ARTISTS, POST_CATEGORIES } from "@/lib/community";
 import { bad, body, ok } from "@/lib/http";
 
 const Input = z.object({
-  artist: z.string().refine((s) => FAN_ARTISTS.some((a) => a.slug === s), "가수를 골라 주세요"),
+  artist: z.string().refine((s) => s === ALL_SLUG || FAN_ARTISTS.some((a) => a.slug === s), "가수를 골라 주세요"),
   category: z.enum(POST_CATEGORIES),
   title: z.string().trim().min(1, "제목을 써 주세요").max(60),
   body: z.string().trim().min(2, "내용을 써 주세요").max(2000),

@@ -53,7 +53,7 @@ export default function WriteForm({ artist, defaultCategory }: { artist: string;
     }}>
       <div className="chips">{POST_CATEGORIES.map((k) => <button key={k} type="button" className="chip" aria-pressed={category === k} onClick={() => setCategory(k)}>{k}</button>)}</div>
       <input className="inp" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="제목" maxLength={60} />
-      <textarea className="inp" rows={5} value={body} onChange={(e) => setBody(e.target.value)} placeholder={category === "팬덤 스팟 여행" ? "어디를 다녀오셨어요? 가는 법·맛집 팁도 나눠 주세요" : category === "스밍 인증" ? "오늘 몇 번 들으셨어요?" : "자유롭게 나눠 주세요"} maxLength={2000} />
+      <textarea className="inp" rows={5} value={body} onChange={(e) => setBody(e.target.value)} placeholder={category === "질문·투표" ? "팬들에게 묻고 싶은 걸 써 주세요. 예) 여러분의 입덕곡은? 저는 ○○예요" : category === "팬덤 스팟 여행" ? "어디를 다녀오셨어요? 가는 법·맛집 팁도 나눠 주세요" : category === "스밍 인증" ? "오늘 몇 번 들으셨어요?" : "자유롭게 나눠 주세요"} maxLength={2000} />
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         {images.map((u) => (
           <span key={u} style={{ position: "relative" }}>

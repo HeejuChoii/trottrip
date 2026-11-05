@@ -21,8 +21,10 @@ export function inkOn(hex: string): string {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.35 ? "#111" : "#fff";
 }
 export const artistBySlug = (slug: string) => FAN_ARTISTS.find((a) => a.slug === slug) ?? null;
+/** 가수 상관없이 이야기하는 트롯 수다방(라운지 홈) */
+export const ALL_SLUG = "all";
 
-export const POST_CATEGORIES = ["공연 후기", "팬덤 스팟 여행", "스밍 인증", "사진 자랑", "같이 가요", "자유"] as const;
+export const POST_CATEGORIES = ["질문·투표", "공연 후기", "팬덤 스팟 여행", "스밍 인증", "사진 자랑", "같이 가요", "자유"] as const;
 export type PostCategory = (typeof POST_CATEGORIES)[number];
 
 export interface FanPost {
@@ -42,7 +44,10 @@ export interface FanPost {
   /** 관리자가 숨긴 글 / 신고 수 */
   hidden?: boolean;
   reports?: number;
+  /** 투표 글: 보기와 표 수(목데이터 기본 표 + 실제 표) */
+  poll?: PollOption[];
 }
+export interface PollOption { label: string; votes: number }
 export interface FanComment { id: string; post_id: string; author_id: string; author_name: string; body: string; created_at: string }
 
 type MockPost = Omit<FanPost, "id" | "created_at" | "author_id" | "comments" | "mock"> & { hours_ago: number; comments?: { author_name: string; body: string }[] };
@@ -53,6 +58,7 @@ export function mockPosts(now = Date.now()): FanPost[] {
   return M.map((p, i) => ({
     id: `mock-${i + 1}`, artist: p.artist, category: p.category, title: p.title, body: p.body, author_id: `mock-${p.author_name}`,
     author_name: p.author_name, likes: p.likes, comments: p.comments?.length ?? 0, created_at: new Date(now - p.hours_ago * 3600000).toISOString(), mock: true,
+    ...(p.poll ? { poll: p.poll } : {}),
   }));
 }
 export function mockComments(postId: string, now = Date.now()): FanComment[] {

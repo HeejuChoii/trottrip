@@ -1,228 +1,722 @@
 {
- "_note": "팬 라운지 시연용 목데이터 글(가상 닉네임). 실제 글은 DB(community_posts)에 저장돼 함께 보여요.",
- "posts": [
-  {
-   "artist": "lim-youngwoong",
-   "category": "팬덤 스팟 여행",
-   "title": "포천 웅지순례 다녀왔어요~^^",
-   "body": "콩마루 두부전골 먹고 아트밸리 들렀다가 웅이나무 카페에서 쉬었어요. 딸이 트롯트립으로 코스 짜줘서 택시 타는 구간까지 다 알려주더라고요 ㅎㅎ",
-   "author_name": "포천사는영웅맘",
-   "likes": 58,
-   "hours_ago": 3,
-   "comments": [
+  "_note": "팬 라운지 시연용 목데이터 글(가상 닉네임). 실제 글은 DB(community_posts)에 저장돼 함께 보여요. artist가 all이면 가수 상관없는 트롯 수다방 글. poll은 투표 보기와 기본 표 수.",
+  "posts": [
     {
-     "author_name": "영웅시대 부산댁",
-     "body": "부럽네요! 저도 이번 주말에 가보려고요"
+      "artist": "lim-youngwoong",
+      "category": "팬덤 스팟 여행",
+      "title": "포천 웅지순례 다녀왔어요~^^",
+      "body": "콩마루 두부전골 먹고 아트밸리 들렀다가 웅이나무 카페에서 쉬었어요. 딸이 트롯트립으로 코스 짜줘서 택시 타는 구간까지 다 알려주더라고요 ㅎㅎ",
+      "author_name": "포천사는영웅맘",
+      "likes": 58,
+      "hours_ago": 3,
+      "comments": [
+        {
+          "author_name": "영웅시대 부산댁",
+          "body": "부럽네요! 저도 이번 주말에 가보려고요"
+        },
+        {
+          "author_name": "하늘빛영웅",
+          "body": "웅이나무 커피 맛있죠~"
+        }
+      ]
     },
     {
-     "author_name": "하늘빛영웅",
-     "body": "웅이나무 커피 맛있죠~"
-    }
-   ]
-  },
-  {
-   "artist": "lim-youngwoong",
-   "category": "스밍 인증",
-   "title": "오늘도 스밍 완료했습니다 💙",
-   "body": "출근길에 '모래 알갱이' 반복 재생 중이에요. 우리 영웅이 노래 들으면 하루가 편안해요",
-   "author_name": "하늘빛영웅",
-   "likes": 41,
-   "hours_ago": 6,
-   "comments": [
-    {
-     "author_name": "영웅시대 대구지부",
-     "body": "같이 달려요!"
-    }
-   ]
-  },
-  {
-   "artist": "lee-chanwon",
-   "category": "자유",
-   "title": "찬스감사제 티켓팅 성공했어요 ㅠㅠ",
-   "body": "12/18 첫공 잡았어요! 킨텍스 5홀은 처음인데 엄마랑 같이 가요. 딸이 트롯트립으로 일정 짜준다네요 ㅎㅎ",
-   "author_name": "찬또사랑 수원댁",
-   "likes": 73,
-   "hours_ago": 2,
-   "comments": [
-    {
-     "author_name": "찬스 막내",
-     "body": "저는 12/19 둘째 날 가요! 굿즈 줄 길대요"
+      "artist": "lim-youngwoong",
+      "category": "스밍 인증",
+      "title": "오늘도 스밍 완료했습니다 💙",
+      "body": "출근길에 '모래 알갱이' 반복 재생 중이에요. 우리 영웅이 노래 들으면 하루가 편안해요",
+      "author_name": "하늘빛영웅",
+      "likes": 41,
+      "hours_ago": 6,
+      "comments": [
+        {
+          "author_name": "영웅시대 대구지부",
+          "body": "같이 달려요!"
+        }
+      ]
     },
     {
-     "author_name": "찬또사랑 수원댁",
-     "body": "대화역 셔틀 타면 편하대요~"
-    }
-   ]
-  },
-  {
-   "artist": "lee-chanwon",
-   "category": "팬덤 스팟 여행",
-   "title": "대구 누른국수 집 성지순례 🍜",
-   "body": "전현무계획에 나온 동곡 누른국수 먹고 카페 찬스까지 다녀왔어요. 월요일은 쉬니까 꼭 확인하고 가세요~",
-   "author_name": "대구찬스",
-   "likes": 36,
-   "hours_ago": 9,
-   "comments": []
-  },
-  {
-   "artist": "park-seojin",
-   "category": "팬덤 스팟 여행",
-   "title": "삼천포 박서진길 걸었어요 ⚓",
-   "body": "용궁수산시장에서 회 먹고 노을빛공원까지 쭉 걸었어요. 서진이네 건어물에서 쥐포 한 봉지 사왔네요 ㅎㅎ",
-   "author_name": "닻별 창원지부",
-   "likes": 64,
-   "hours_ago": 14,
-   "comments": [
+      "artist": "lee-chanwon",
+      "category": "자유",
+      "title": "찬스감사제 티켓팅 성공했어요 ㅠㅠ",
+      "body": "12/18 첫공 잡았어요! 킨텍스 5홀은 처음인데 엄마랑 같이 가요. 딸이 트롯트립으로 일정 짜준다네요 ㅎㅎ",
+      "author_name": "찬또사랑 수원댁",
+      "likes": 73,
+      "hours_ago": 2,
+      "comments": [
+        {
+          "author_name": "찬스 막내",
+          "body": "저는 12/19 둘째 날 가요! 굿즈 줄 길대요"
+        },
+        {
+          "author_name": "찬또사랑 수원댁",
+          "body": "대화역 셔틀 타면 편하대요~"
+        }
+      ]
+    },
     {
-     "author_name": "닻별 진주맘",
-     "body": "건어물 가게 사장님 너무 친절하시죠^^"
-    }
-   ]
-  },
-  {
-   "artist": "park-seojin",
-   "category": "같이 가요",
-   "title": "12/25 코엑스 공연 같이 가실 분~",
-   "body": "대구에서 KTX 타고 가요. 동대구역 10시 기차예요. 혼자 가기 심심해서요 ^^",
-   "author_name": "닻별 대구맘",
-   "likes": 22,
-   "hours_ago": 20,
-   "comments": [
+      "artist": "lee-chanwon",
+      "category": "팬덤 스팟 여행",
+      "title": "대구 누른국수 집 성지순례 🍜",
+      "body": "전현무계획에 나온 동곡 누른국수 먹고 카페 찬스까지 다녀왔어요. 월요일은 쉬니까 꼭 확인하고 가세요~",
+      "author_name": "대구찬스",
+      "likes": 36,
+      "hours_ago": 9,
+      "comments": []
+    },
     {
-     "author_name": "닻별 경산댁",
-     "body": "저도 그 기차예요! 같이 가요"
-    }
-   ]
-  },
-  {
-   "artist": "song-gain",
-   "category": "팬덤 스팟 여행",
-   "title": "진도 송가인마을 다녀왔어요",
-   "body": "생가 앞 포토존에서 사진 찍고 꽈배기어라에서 꽈배기 먹었어요. 옥향식당 뜸부기갈비탕 강추합니다!",
-   "author_name": "어게인 광주지부",
-   "likes": 51,
-   "hours_ago": 26,
-   "comments": []
-  },
-  {
-   "artist": "song-gain",
-   "category": "사진 자랑",
-   "title": "6월 생일 카페 사진 이제 올려요 💐",
-   "body": "지난 6월 생일 카페 너무 예뻤어요. 등신대랑 한 장 찍었습니다",
-   "author_name": "어게인 막내",
-   "likes": 29,
-   "hours_ago": 30,
-   "comments": []
-  },
-  {
-   "artist": "youngtak",
-   "category": "공연 후기",
-   "title": "TAK SHOW5 서울 공연 최고였어요",
-   "body": "10월 화정체육관 공연, 한 달이 지났는데도 여운이 남아요. 찐이야 나올 때 다 같이 떼창했네요. 대구 공연(11/28)도 갑니다",
-   "author_name": "영블스 인천댁",
-   "likes": 47,
-   "hours_ago": 40,
-   "comments": [
+      "artist": "park-seojin",
+      "category": "팬덤 스팟 여행",
+      "title": "삼천포 박서진길 걸었어요 ⚓",
+      "body": "용궁수산시장에서 회 먹고 노을빛공원까지 쭉 걸었어요. 서진이네 건어물에서 쥐포 한 봉지 사왔네요 ㅎㅎ",
+      "author_name": "닻별 창원지부",
+      "likes": 64,
+      "hours_ago": 14,
+      "comments": [
+        {
+          "author_name": "닻별 진주맘",
+          "body": "건어물 가게 사장님 너무 친절하시죠^^"
+        }
+      ]
+    },
     {
-     "author_name": "영블스 안동댁",
-     "body": "대구에서 만나요~"
-    }
-   ]
-  },
-  {
-   "artist": "youngtak",
-   "category": "팬덤 스팟 여행",
-   "title": "안동 찜닭골목 영탁 성지 🍗",
-   "body": "구해줘홈즈에 나온 유진찜닭 먹고 월영교 야경 보고 왔어요. 월영교 밤에 꼭 가보세요",
-   "author_name": "영블스 안동댁",
-   "likes": 33,
-   "hours_ago": 45,
-   "comments": []
-  },
-  {
-   "artist": "lee-seungchul",
-   "category": "같이 가요",
-   "title": "THE VOICE 광주 공연 D-9!",
-   "body": "11/14(토) 오후 4시 광주여대 유니버시아드체육관이에요. 광주송정역에서 택시 같이 타실 분~ 주황색 응원봉 챙겨 가요",
-   "author_name": "새들의고향 광주",
-   "likes": 39,
-   "hours_ago": 8,
-   "comments": []
-  },
-  {
-   "artist": "cho-yongpil",
-   "category": "자유",
-   "title": "가왕 콘서트 3주 남았어요",
-   "body": "11/27 KSPO DOME 저녁 7시 공연 티켓팅 성공했어요! 딸이 공연 날 일정까지 짜준다고 하네요. 벌써 설레요",
-   "author_name": "위대한탄생 부산",
-   "likes": 62,
-   "hours_ago": 52,
-   "comments": [
+      "artist": "park-seojin",
+      "category": "같이 가요",
+      "title": "12/25 코엑스 공연 같이 가실 분~",
+      "body": "대구에서 KTX 타고 가요. 동대구역 10시 기차예요. 혼자 가기 심심해서요 ^^",
+      "author_name": "닻별 대구맘",
+      "likes": 22,
+      "hours_ago": 20,
+      "comments": [
+        {
+          "author_name": "닻별 경산댁",
+          "body": "저도 그 기차예요! 같이 가요"
+        }
+      ]
+    },
     {
-     "author_name": "오빠부대 1980",
-     "body": "저도 11월 27일 갑니다!"
+      "artist": "song-gain",
+      "category": "팬덤 스팟 여행",
+      "title": "진도 송가인마을 다녀왔어요",
+      "body": "생가 앞 포토존에서 사진 찍고 꽈배기어라에서 꽈배기 먹었어요. 옥향식당 뜸부기갈비탕 강추합니다!",
+      "author_name": "어게인 광주지부",
+      "likes": 51,
+      "hours_ago": 26,
+      "comments": []
+    },
+    {
+      "artist": "song-gain",
+      "category": "사진 자랑",
+      "title": "6월 생일 카페 사진 이제 올려요 💐",
+      "body": "지난 6월 생일 카페 너무 예뻤어요. 등신대랑 한 장 찍었습니다",
+      "author_name": "어게인 막내",
+      "likes": 29,
+      "hours_ago": 30,
+      "comments": []
+    },
+    {
+      "artist": "youngtak",
+      "category": "공연 후기",
+      "title": "TAK SHOW5 서울 공연 최고였어요",
+      "body": "10월 화정체육관 공연, 한 달이 지났는데도 여운이 남아요. 찐이야 나올 때 다 같이 떼창했네요. 대구 공연(11/28)도 갑니다",
+      "author_name": "영블스 인천댁",
+      "likes": 47,
+      "hours_ago": 40,
+      "comments": [
+        {
+          "author_name": "영블스 안동댁",
+          "body": "대구에서 만나요~"
+        }
+      ]
+    },
+    {
+      "artist": "youngtak",
+      "category": "팬덤 스팟 여행",
+      "title": "안동 찜닭골목 영탁 성지 🍗",
+      "body": "구해줘홈즈에 나온 유진찜닭 먹고 월영교 야경 보고 왔어요. 월영교 밤에 꼭 가보세요",
+      "author_name": "영블스 안동댁",
+      "likes": 33,
+      "hours_ago": 45,
+      "comments": []
+    },
+    {
+      "artist": "lee-seungchul",
+      "category": "같이 가요",
+      "title": "THE VOICE 광주 공연 D-9!",
+      "body": "11/14(토) 오후 4시 광주여대 유니버시아드체육관이에요. 광주송정역에서 택시 같이 타실 분~ 주황색 응원봉 챙겨 가요",
+      "author_name": "새들의고향 광주",
+      "likes": 39,
+      "hours_ago": 8,
+      "comments": []
+    },
+    {
+      "artist": "cho-yongpil",
+      "category": "자유",
+      "title": "가왕 콘서트 3주 남았어요",
+      "body": "11/27 KSPO DOME 저녁 7시 공연 티켓팅 성공했어요! 딸이 공연 날 일정까지 짜준다고 하네요. 벌써 설레요",
+      "author_name": "위대한탄생 부산",
+      "likes": 62,
+      "hours_ago": 52,
+      "comments": [
+        {
+          "author_name": "오빠부대 1980",
+          "body": "저도 11월 27일 갑니다!"
+        }
+      ]
+    },
+    {
+      "artist": "cho-yongpil",
+      "category": "팬덤 스팟 여행",
+      "title": "'돌아와요 부산항에' 따라 부산 여행",
+      "body": "북항 친수공원이랑 오륙도 스카이워크 다녀왔어요. 노래 들으면서 걸으니 감회가 새롭네요",
+      "author_name": "오빠부대 1980",
+      "likes": 27,
+      "hours_ago": 60,
+      "comments": []
+    },
+    {
+      "artist": "kim-gunmo",
+      "category": "팬덤 스팟 여행",
+      "title": "마라도 짜장면 투어 했어요",
+      "body": "미우새에서 봤던 마라도 짜장면집들 돌았어요. 배 시간 꼭 확인하세요! 바람 불면 결항돼요",
+      "author_name": "건모오빠 제주팬",
+      "likes": 31,
+      "hours_ago": 70,
+      "comments": []
+    },
+    {
+      "artist": "kim-gunmo",
+      "category": "같이 가요",
+      "title": "12/5 광주 공연 같이 가실 분",
+      "body": "광주송정역에서 택시 같이 타요~ 체육관이 역에서 좀 멀어요",
+      "author_name": "건모팬 목포댁",
+      "likes": 12,
+      "hours_ago": 15,
+      "comments": []
+    },
+    {
+      "artist": "lee-chanwon",
+      "category": "스밍 인증",
+      "title": "찬또 노래 스밍 100회 달성 🎉",
+      "body": "출퇴근길에 반복 재생 중이에요. 가족 단톡방에도 링크 돌렸어요 ㅎㅎ 다 같이 응원해요",
+      "author_name": "찬스 막내",
+      "likes": 18,
+      "hours_ago": 4,
+      "comments": []
+    },
+    {
+      "artist": "lim-youngwoong",
+      "category": "사진 자랑",
+      "title": "고양 스타디움 공연 하늘색 물결 사진",
+      "body": "9월 고양종합운동장 공연 때 찍은 사진 이제 올려요. 하늘색 물결 너무 예뻤어요",
+      "author_name": "영웅시대 부산댁",
+      "likes": 44,
+      "hours_ago": 80,
+      "comments": []
+    },
+    {
+      "artist": "park-seojin",
+      "category": "스밍 인증",
+      "title": "닻별 여러분 오늘도 스밍 화이팅!",
+      "body": "장구 치는 서진이 영상 보면서 힘내요",
+      "author_name": "닻별 진주맘",
+      "likes": 15,
+      "hours_ago": 11,
+      "comments": []
+    },
+    {
+      "artist": "all",
+      "category": "질문·투표",
+      "title": "여러분의 입덕곡은? 🎶",
+      "body": "저는 미스터트롯 볼 때 영탁 '막걸리 한잔' 듣고 그날로 입덕했어요. 아버지 생각나서 혼자 울었네요 ㅎㅎ\n여러분은 어떤 노래로 입덕하셨어요? 댓글로 알려 주세요~",
+      "author_name": "트롯입문3년차",
+      "likes": 112,
+      "hours_ago": 0.6,
+      "comments": [
+        {
+          "author_name": "영웅시대 부산댁",
+          "body": "저는 임영웅 '어느 60대 노부부 이야기'요. 그 무대 보고 남편이랑 같이 울었어요"
+        },
+        {
+          "author_name": "찬스 막내",
+          "body": "진또배기요!! 엄마 따라 보다가 제가 더 빠졌어요 ㅋㅋ"
+        },
+        {
+          "author_name": "가인이어라",
+          "body": "미스트롯 송가인 '한 많은 대동강'이요. 그때부터 본진은 어게인입니다💗"
+        },
+        {
+          "author_name": "닻별 진주맘",
+          "body": "박서진 장구 치면서 부른 '청춘고백'이요. 장구 소리에 반했어요"
+        },
+        {
+          "author_name": "탁이네",
+          "body": "저도 막걸리 한잔 ㅠㅠ 반가워요 같은 입덕곡!"
+        },
+        {
+          "author_name": "필님사랑 57년생",
+          "body": "나는 조용필 '단발머리'. 입덕이 40년 전이네요 허허"
+        }
+      ]
+    },
+    {
+      "artist": "all",
+      "category": "질문·투표",
+      "title": "듣고 눈물 흘린 트로트 노래 추천해 주세요 😢",
+      "body": "요즘 마음이 좀 허해서요. 듣고 펑펑 운 노래 있으면 하나씩 추천해 주세요. 저는 송가인 '엄마 아리랑' 듣다가 엄마한테 전화했어요",
+      "author_name": "막내딸 수진",
+      "likes": 96,
+      "hours_ago": 1.5,
+      "comments": [
+        {
+          "author_name": "영웅이 엄마",
+          "body": "임영웅 '어느 60대 노부부 이야기'요. 가사 한 줄 한 줄이 다 우리 얘기 같아요"
+        },
+        {
+          "author_name": "대구찬스",
+          "body": "이찬원 '시절인연'이요. 꼰대인턴 OST였는데 들을수록 마음이 찡해요"
+        },
+        {
+          "author_name": "트롯아재",
+          "body": "나훈아 '홍시'요. 엄마 생각 나서 못 들어요"
+        },
+        {
+          "author_name": "닻별 창원지부",
+          "body": "박서진이 나트가에서 부른 '어매'요. 그 무대 다시 봐도 울어요"
+        },
+        {
+          "author_name": "탁이네",
+          "body": "영탁 '막걸리 한잔' 또 나옵니다 ㅎㅎ 아버지 계신 분들 꼭 들어 보세요"
+        }
+      ]
+    },
+    {
+      "artist": "all",
+      "category": "질문·투표",
+      "title": "미스터트롯 레전드 무대 하나만 고르라면?",
+      "body": "시즌1 경연 무대 중에 아직도 다시 보는 무대 골라 주세요! 투표하고 이유도 댓글로 남겨 주세요~",
+      "author_name": "콜센타 애청자",
+      "likes": 74,
+      "hours_ago": 2.5,
+      "poll": [
+        {
+          "label": "임영웅 '어느 60대 노부부 이야기'",
+          "votes": 182
+        },
+        {
+          "label": "영탁 '막걸리 한잔'",
+          "votes": 141
+        },
+        {
+          "label": "이찬원 '진또배기'",
+          "votes": 118
+        },
+        {
+          "label": "정동원 '보릿고개'",
+          "votes": 67
+        }
+      ],
+      "comments": [
+        {
+          "author_name": "하늘빛영웅",
+          "body": "노부부 이야기는 MC 김성주 씨도 울었잖아요 ㅠ"
+        },
+        {
+          "author_name": "찬또사랑 수원댁",
+          "body": "진또배기 올하트 받던 순간 아직도 소름이요"
+        },
+        {
+          "author_name": "탁이네",
+          "body": "막걸리 한잔은 오디션에서 제일 많이 불린 노래래요. 그래도 영탁이 최고!"
+        }
+      ]
+    },
+    {
+      "artist": "all",
+      "category": "질문·투표",
+      "title": "트로트 처음 빠진 방송은 뭐였어요?",
+      "body": "저희 엄마는 미스트롯 보고 송가인 팬 되셨고, 저는 사랑의 콜센타 보다가 따라 빠졌어요 ㅋㅋ 다들 어떤 방송으로 입덕하셨나요?",
+      "author_name": "엄마따라입덕",
+      "likes": 58,
+      "hours_ago": 4,
+      "poll": [
+        {
+          "label": "미스트롯",
+          "votes": 96
+        },
+        {
+          "label": "미스터트롯",
+          "votes": 211
+        },
+        {
+          "label": "사랑의 콜센타",
+          "votes": 73
+        },
+        {
+          "label": "현역가왕·불타는 트롯맨",
+          "votes": 38
+        }
+      ],
+      "comments": [
+        {
+          "author_name": "가인이어라",
+          "body": "미스트롯 1이요! 그때 진짜 난리였죠"
+        },
+        {
+          "author_name": "영웅시대 대구지부",
+          "body": "미스터트롯이요. 목요일 밤마다 온 가족이 TV 앞에 모였어요"
+        },
+        {
+          "author_name": "닻별 진주맘",
+          "body": "저는 살림남 보다가 박서진한테 빠졌어요 ㅎㅎ"
+        }
+      ]
+    },
+    {
+      "artist": "all",
+      "category": "질문·투표",
+      "title": "부모님 콘서트 보내드릴 때 제일 걱정되는 건?",
+      "body": "다음 달에 엄마 혼자 콘서트 보내드리는데 걱정이 많네요. 다른 분들은 뭐가 제일 걱정되셨어요? 꿀팁도 나눠 주세요!",
+      "author_name": "걱정많은 장녀",
+      "likes": 47,
+      "hours_ago": 5.5,
+      "poll": [
+        {
+          "label": "끝나고 귀가길",
+          "votes": 154
+        },
+        {
+          "label": "입장·줄서기",
+          "votes": 88
+        },
+        {
+          "label": "식사·화장실",
+          "votes": 61
+        },
+        {
+          "label": "티켓·신분증 챙기기",
+          "votes": 43
+        }
+      ],
+      "comments": [
+        {
+          "author_name": "포천사는영웅맘",
+          "body": "딸이 귀갓길 버스 타는 곳까지 링크로 보내줘서 편했어요"
+        },
+        {
+          "author_name": "찬스 막내",
+          "body": "신분증 꼭 챙기시라고 전날 문자 한 번 더 보내 드리세요!"
+        },
+        {
+          "author_name": "트롯아재",
+          "body": "끝나면 사람 엄청 몰려요. 10분만 쉬었다 나오시라고 하세요"
+        }
+      ]
+    },
+    {
+      "artist": "all",
+      "category": "자유",
+      "title": "겨울에 듣기 좋은 트로트 한 곡씩 놓고 가요 ❄️",
+      "body": "곧 연말 공연 시즌이네요. 출근길에 들을 노래 한 곡씩만 추천 부탁드려요!",
+      "author_name": "출근길스밍러",
+      "likes": 33,
+      "hours_ago": 7,
+      "comments": [
+        {
+          "author_name": "필님사랑 57년생",
+          "body": "조용필 '그 겨울의 찻집'은 겨울엔 꼭 들어야지요"
+        },
+        {
+          "author_name": "영웅시대 부산댁",
+          "body": "임영웅 '별빛 같은 나의 사랑아'요. 따뜻해져요"
+        },
+        {
+          "author_name": "탁이네",
+          "body": "신나는 거 원하시면 영탁 '찐이야'!"
+        }
+      ]
+    },
+    {
+      "artist": "lee-chanwon",
+      "category": "질문·투표",
+      "title": "여러분은 찬원이 노래 중에 뭐가 젤 좋아요?",
+      "body": "저는 '편의점'이요! 음방 첫 1위 했을 때 엄마랑 같이 소리 질렀어요 ㅋㅋ 다들 최애곡 뭐예요?",
+      "author_name": "찬스 막내",
+      "likes": 67,
+      "hours_ago": 1,
+      "poll": [
+        {
+          "label": "진또배기",
+          "votes": 88
+        },
+        {
+          "label": "편의점",
+          "votes": 64
+        },
+        {
+          "label": "시절인연",
+          "votes": 102
+        }
+      ],
+      "comments": [
+        {
+          "author_name": "찬또사랑 수원댁",
+          "body": "시절인연이요. 들을 때마다 마음이 몽글몽글해요"
+        },
+        {
+          "author_name": "대구찬스",
+          "body": "그래도 근본은 진또배기 아입니까 ㅎㅎ"
+        },
+        {
+          "author_name": "찬스 강릉지부",
+          "body": "편의점 신나서 운전할 때 꼭 틀어요"
+        }
+      ]
+    },
+    {
+      "artist": "lim-youngwoong",
+      "category": "질문·투표",
+      "title": "웅이 노래 최애곡 하나만 골라 주세요 💙",
+      "body": "저는 '사랑은 늘 도망가'요. 드라마에서 처음 듣고 계속 듣고 있어요. 여러분은요? 건행하세요~",
+      "author_name": "하늘빛영웅",
+      "likes": 91,
+      "hours_ago": 2,
+      "poll": [
+        {
+          "label": "이제 나만 믿어요",
+          "votes": 143
+        },
+        {
+          "label": "사랑은 늘 도망가",
+          "votes": 127
+        },
+        {
+          "label": "우리들의 블루스",
+          "votes": 76
+        },
+        {
+          "label": "모래 알갱이",
+          "votes": 69
+        }
+      ],
+      "comments": [
+        {
+          "author_name": "영웅시대 부산댁",
+          "body": "이제 나만 믿어요! 가사가 꼭 우리한테 하는 말 같아요"
+        },
+        {
+          "author_name": "영웅이 엄마",
+          "body": "모래 알갱이 잔잔해서 자기 전에 들어요"
+        },
+        {
+          "author_name": "영웅시대 대구지부",
+          "body": "전 우리들의 블루스요. 가사가 너무 좋아요"
+        }
+      ]
+    },
+    {
+      "artist": "youngtak",
+      "category": "질문·투표",
+      "title": "영탁 노래 중에 최애곡은? 저는 '찐이야'!",
+      "body": "공연장에서 '찐이야' 떼창할 때 진짜 행복하더라고요. 영탁앤블루스 여러분 최애곡 남겨 주세요~",
+      "author_name": "탁이네",
+      "likes": 54,
+      "hours_ago": 3,
+      "poll": [
+        {
+          "label": "찐이야",
+          "votes": 71
+        },
+        {
+          "label": "막걸리 한잔",
+          "votes": 93
+        },
+        {
+          "label": "니가 왜 거기서 나와",
+          "votes": 48
+        },
+        {
+          "label": "신사답게",
+          "votes": 35
+        }
+      ],
+      "comments": [
+        {
+          "author_name": "코발트블루 안동댁",
+          "body": "막걸리 한잔은 들을 때마다 울컥해요"
+        },
+        {
+          "author_name": "영탁앤블루스 청주",
+          "body": "니가 왜 거기서 나와 무대 퍼포먼스 최고예요 ㅋㅋ"
+        }
+      ]
+    },
+    {
+      "artist": "song-gain",
+      "category": "질문·투표",
+      "title": "가인님 노래 중 뭐가 제일 좋으세요?",
+      "body": "저는 '가인이어라'요. 음악 교과서에도 실렸다니 괜히 제가 뿌듯하네요 ㅎㅎ 어게인 여러분 최애곡 궁금해요!",
+      "author_name": "가인이어라",
+      "likes": 62,
+      "hours_ago": 2.2,
+      "poll": [
+        {
+          "label": "가인이어라",
+          "votes": 84
+        },
+        {
+          "label": "엄마 아리랑",
+          "votes": 97
+        },
+        {
+          "label": "한 많은 대동강",
+          "votes": 66
+        }
+      ],
+      "comments": [
+        {
+          "author_name": "진도 어게인",
+          "body": "엄마 아리랑이요. 우리 엄마 생각나서요"
+        },
+        {
+          "author_name": "어게인 광주댁",
+          "body": "한 많은 대동강은 미스트롯 때부터 레전드죠"
+        }
+      ]
+    },
+    {
+      "artist": "park-seojin",
+      "category": "질문·투표",
+      "title": "박서진 무대 중에 최애 무대 뭐예요? ⚓",
+      "body": "저는 장구 치면서 부른 '청춘고백'이요. 장구 소리 들리면 그냥 행복해져요 ㅎㅎ 닻별 여러분은요?",
+      "author_name": "닻별 진주맘",
+      "likes": 49,
+      "hours_ago": 1.8,
+      "comments": [
+        {
+          "author_name": "닻별 창원지부",
+          "body": "나트가에서 부른 '어매'요. 1위 했을 때 같이 울었어요"
+        },
+        {
+          "author_name": "삼천포 닻별",
+          "body": "살림남 보다가 입덕했는데 장구 무대 직접 보면 더 멋져요!"
+        },
+        {
+          "author_name": "닻별 막내딸",
+          "body": "엄마가 '당신 이야기' 매일 들으세요 ㅋㅋ"
+        }
+      ]
+    },
+    {
+      "artist": "lee-seungchul",
+      "category": "질문·투표",
+      "title": "이승철 노래 하나만 고르라면?",
+      "body": "이번 THE VOICE 공연 가기 전에 플레이리스트 만들고 있어요. 새침데기 여러분 최애곡 추천해 주세요!",
+      "author_name": "소녀시대는이승철",
+      "likes": 38,
+      "hours_ago": 3.5,
+      "poll": [
+        {
+          "label": "소녀시대",
+          "votes": 52
+        },
+        {
+          "label": "그런 사람 또 없습니다",
+          "votes": 61
+        },
+        {
+          "label": "말리꽃",
+          "votes": 44
+        },
+        {
+          "label": "희야(부활)",
+          "votes": 39
+        }
+      ],
+      "comments": [
+        {
+          "author_name": "새침데기 광주",
+          "body": "말리꽃 라이브로 들으면 소름 돋아요"
+        },
+        {
+          "author_name": "80년대 소녀",
+          "body": "희야는 진짜 그 시절 추억이에요"
+        }
+      ]
+    },
+    {
+      "artist": "kim-gunmo",
+      "category": "질문·투표",
+      "title": "김건모 노래 중 노래방 18번은?",
+      "body": "12월 공연 앞두고 다시 듣는 중이에요. 저는 노래방 가면 무조건 '잘못된 만남'! 여러분 18번은요?",
+      "author_name": "90년대 노래방러",
+      "likes": 29,
+      "hours_ago": 5,
+      "poll": [
+        {
+          "label": "잘못된 만남",
+          "votes": 58
+        },
+        {
+          "label": "핑계",
+          "votes": 43
+        },
+        {
+          "label": "아름다운 이별",
+          "votes": 37
+        },
+        {
+          "label": "스피드",
+          "votes": 12
+        }
+      ],
+      "comments": [
+        {
+          "author_name": "광주 건모팬",
+          "body": "핑계요! 레게 리듬 나오면 몸이 먼저 움직여요"
+        },
+        {
+          "author_name": "이별노래 장인",
+          "body": "아름다운 이별은 지금 들어도 명곡이에요"
+        }
+      ]
+    },
+    {
+      "artist": "cho-yongpil",
+      "category": "질문·투표",
+      "title": "가왕 노래 딱 한 곡만 고르라면? 🎤",
+      "body": "콘서트 가기 전에 떼창 연습하려고요. 저는 '여행을 떠나요' 나오면 다 같이 일어나서 너무 좋더라고요. 여러분은요?",
+      "author_name": "필님사랑 57년생",
+      "likes": 44,
+      "hours_ago": 4.5,
+      "poll": [
+        {
+          "label": "단발머리",
+          "votes": 63
+        },
+        {
+          "label": "킬리만자로의 표범",
+          "votes": 41
+        },
+        {
+          "label": "바운스",
+          "votes": 57
+        },
+        {
+          "label": "돌아와요 부산항에",
+          "votes": 49
+        }
+      ],
+      "comments": [
+        {
+          "author_name": "위대한 탄생 부산",
+          "body": "돌아와요 부산항에는 부산 사람한테 국룰이죠"
+        },
+        {
+          "author_name": "필님 막내팬",
+          "body": "바운스로 입덕한 30대입니다 ㅎㅎ"
+        }
+      ]
     }
-   ]
-  },
-  {
-   "artist": "cho-yongpil",
-   "category": "팬덤 스팟 여행",
-   "title": "'돌아와요 부산항에' 따라 부산 여행",
-   "body": "북항 친수공원이랑 오륙도 스카이워크 다녀왔어요. 노래 들으면서 걸으니 감회가 새롭네요",
-   "author_name": "오빠부대 1980",
-   "likes": 27,
-   "hours_ago": 60,
-   "comments": []
-  },
-  {
-   "artist": "kim-gunmo",
-   "category": "팬덤 스팟 여행",
-   "title": "마라도 짜장면 투어 했어요",
-   "body": "미우새에서 봤던 마라도 짜장면집들 돌았어요. 배 시간 꼭 확인하세요! 바람 불면 결항돼요",
-   "author_name": "건모오빠 제주팬",
-   "likes": 31,
-   "hours_ago": 70,
-   "comments": []
-  },
-  {
-   "artist": "kim-gunmo",
-   "category": "같이 가요",
-   "title": "12/5 광주 공연 같이 가실 분",
-   "body": "광주송정역에서 택시 같이 타요~ 체육관이 역에서 좀 멀어요",
-   "author_name": "건모팬 목포댁",
-   "likes": 12,
-   "hours_ago": 15,
-   "comments": []
-  },
-  {
-   "artist": "lee-chanwon",
-   "category": "스밍 인증",
-   "title": "찬또 노래 스밍 100회 달성 🎉",
-   "body": "출퇴근길에 반복 재생 중이에요. 가족 단톡방에도 링크 돌렸어요 ㅎㅎ 다 같이 응원해요",
-   "author_name": "찬스 막내",
-   "likes": 18,
-   "hours_ago": 4,
-   "comments": []
-  },
-  {
-   "artist": "lim-youngwoong",
-   "category": "사진 자랑",
-   "title": "고양 스타디움 공연 하늘색 물결 사진",
-   "body": "9월 고양종합운동장 공연 때 찍은 사진 이제 올려요. 하늘색 물결 너무 예뻤어요",
-   "author_name": "영웅시대 부산댁",
-   "likes": 44,
-   "hours_ago": 80,
-   "comments": []
-  },
-  {
-   "artist": "park-seojin",
-   "category": "스밍 인증",
-   "title": "닻별 여러분 오늘도 스밍 화이팅!",
-   "body": "장구 치는 서진이 영상 보면서 힘내요",
-   "author_name": "닻별 진주맘",
-   "likes": 15,
-   "hours_ago": 11,
-   "comments": []
-  }
- ]
+  ]
 }

@@ -563,3 +563,43 @@ export async function setFanPostHidden(postId: string, hidden: boolean): Promise
   const p = (db.community_posts ?? []).find((x) => x.id === postId);
   if (p) { p.hidden = hidden; await flush(); }
 }
+
+// ---------- 팬 라운지 투표 ----------
+// 새 표를 만들지 않으려고 community_likes에 post_id "{글}#v{보기 번호}"로 한 표씩 저장한다(한 사람 한 표, 다시 누르면 바꾸기)
+const voteKey = (postId: string, i: number) => `${postId}#v${i}`;
+const voteIdx = (key: string) => Number(key.split("#v")[1]);
+
+/** 보기별 실제 표 수와 내 표 */
+export async function pollVotes(postId: string, authorId?: string | null): Promise<{ counts: Record<number, number>; mine: number | null }> {
+  const s = supa();
+  let rows: { post_id: string; author_id: string }[];
+  if (s) {
+    const r = await s.from("community_likes").select("post_id, author_id").like("post_id", `${postId}#v%`);
+    rows = r.error ? [] : (r.data as typeof rows);
+  } else rows = ((await local()).community_likes ?? []).filter((l) => l.post_id.startsWith(`${postId}#v`));
+  const counts: Record<number, number> = {};
+  let mine: number | null = null;
+  for (const r of rows) {
+    const i = voteIdx(r.post_id);
+    counts[i] = (counts[i] ?? 0) + 1;
+    if (authorId && r.author_id === authorId) mine = i;
+  }
+  return { counts, mine };
+}
+
+/** 투표하기(이미 했으면 다른 보기로 바꾼다) */
+export async function votePoll(postId: string, authorId: string, i: number): Promise<{ counts: Record<number, number>; mine: number | null }> {
+  const prev = await pollVotes(postId, authorId);
+  const s = supa();
+  if (s) {
+    if (prev.mine != null) must(await s.from("community_likes").delete().eq("post_id", voteKey(postId, prev.mine)).eq("author_id", authorId));
+    must(await s.from("community_likes").insert({ post_id: voteKey(postId, i), author_id: authorId }));
+  } else {
+    const db = await local();
+    const list = (db.community_likes ??= []);
+    db.community_likes = list.filter((l) => !(l.author_id === authorId && l.post_id.startsWith(`${postId}#v`)));
+    db.community_likes.push({ post_id: voteKey(postId, i), author_id: authorId });
+    await flush();
+  }
+  return pollVotes(postId, authorId);
+}
