@@ -62,7 +62,7 @@ export async function GET(req: Request) {
       <div style={{ width: "100%", height: "100%", display: "flex", background: color, fontFamily: "Noto", padding: 40 }}>
         <div style={{ display: "flex", flexDirection: "column", width: "100%", background: "#FFFFFF", borderRadius: 36, padding: "40px 48px", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-            {img ? <img src={img} width={76} height={76} style={{ borderRadius: 999, objectFit: "cover" }} /> : <div style={{ display: "flex", width: 76, height: 76, borderRadius: 999, background: color, alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 900, color: "#fff" }}>트롯</div>}
+            {img ? <img src={img} width={76} height={76} style={{ borderRadius: 999, objectFit: "cover" }} /> : (logoImg ? <img src={logoImg} width={76} height={76} style={{ borderRadius: 999 }} /> : <div style={{ display: "flex", width: 76, height: 76, borderRadius: 999, background: color }} />)}
             <div style={{ display: "flex", flexDirection: "column" }}>
               <div style={{ display: "flex", fontSize: 30, fontWeight: 900, color: "#111" }}>{where}</div>
               {post ? <div style={{ display: "flex", fontSize: 24, fontWeight: 500, color: "#6B7780" }}>{`${post.category} · ${post.author_name}`}</div> : null}
