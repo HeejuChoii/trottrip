@@ -1,0 +1,19 @@
+import Link from "next/link";
+import { artistBySlug, timeAgo, type FanPost } from "@/lib/community";
+
+const CAT_ICON: Record<string, string> = { "공연 후기": "🎤", "팬덤 스팟 여행": "📍", "스밍 인증": "🎧", "사진 자랑": "📸", "같이 가요": "🙌", "자유": "💬" };
+
+export default function PostCard({ p, showArtist = false }: { p: FanPost; showArtist?: boolean }) {
+  const a = artistBySlug(p.artist);
+  return (
+    <Link href={`/fan/post/${p.id}`} className="card post" style={{ textDecoration: "none", color: "inherit" }}>
+      <span className="pmeta">
+        {showArtist && a && <span className="tag" style={{ background: a.color, color: "#fff", marginTop: 0 }}>{a.name}</span>}
+        <span className="tag pk" style={{ marginTop: 0 }}>{CAT_ICON[p.category] ?? ""} {p.category}</span>
+      </span>
+      <b className="ptitle">{p.title}</b>
+      <span className="pbody">{p.body}</span>
+      <small className="pfoot">{p.author_name} · {timeAgo(p.created_at)} · ♥ {p.likes} · 💬 {p.comments}</small>
+    </Link>
+  );
+}

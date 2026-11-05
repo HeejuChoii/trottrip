@@ -10,6 +10,7 @@ import { CATEGORY_LABEL, FAN_LABEL } from "@/lib/concertrip";
 import type { ConcertView, ParentProfile, Place, Plan, PlanItem, Prefs, TicketInfo, Transport } from "@/lib/types";
 import { estimateSteps, fmtMin } from "@/lib/steps";
 import { buildChecklist } from "@/lib/checklist";
+import { SHOW_PRICING } from "@/lib/flags";
 
 // 포토존·굿즈 부스는 보통 한 곳뿐이라 바꾸기 버튼을 두지 않는다
 const SWAPPABLE = new Set(["meal", "rest"]);
@@ -370,14 +371,14 @@ export default function KidPlan(props: Props) {
         </div>
       </div>
 
-      <div className="intent">
+      {SHOW_PRICING && <div className="intent">
         <b>정식 출시되면 3,900원이에요</b>
         <p>지금은 얼리버드라 무료예요. 출시 때 결제하실 생각이 있으면 알려 주세요.</p>
         {intent
           ? <p style={{ color: "var(--deep)", fontWeight: 700 }}>{intent === "yes" ? "고마워요! 출시되면 알려 드릴게요." : "알려 주셔서 고마워요."}</p>
           : <div className="row2"><button className="y" onClick={() => sendIntent("yes")}>출시되면 결제할게요</button><button onClick={() => sendIntent("no")}>괜찮아요</button></div>}
         <p style={{ textAlign: "center" }}>지금 결제되지는 않아요.</p>
-      </div>
+      </div>}
       <p className="fine">부모님 링크는 {pil ? "여행" : "공연"} 다음 날 23:59까지 열려요. 장소 정보는 콘서트립(concertrip.kr)에서 불러와요.</p>
       {toast && <div className="toast" role="status">{toast}</div>}
     </main>

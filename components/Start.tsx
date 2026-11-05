@@ -2,15 +2,19 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Brand from "./Brand";
-import { captureSrc, ss } from "@/lib/client";
+import { captureSrc, ls, ss } from "@/lib/client";
+import { SHOW_PRICING } from "@/lib/flags";
+import HomeTabs from "./HomeTabs";
 
 export default function Start() {
   const router = useRouter();
   const [privacy, setPrivacy] = useState(false);
   const [marketing, setMarketing] = useState(false);
   const [err, setErr] = useState("");
+  // 첫 방문: 자녀인지, 공연 보러 가는 본인(팬)인지 묻는다
+  const [ask, setAsk] = useState(false);
 
-  useEffect(() => { captureSrc(); }, []);
+  useEffect(() => { captureSrc(); if (!ls.get("tt_role")) setAsk(true); }, []);
 
   function start(fan = false) {
     if (!privacy) { setErr("개인정보 수집·이용에 동의해 주세요."); return; }
@@ -19,8 +23,8 @@ export default function Start() {
   }
 
   return (
-    <main className="shell">
-      <div className="top"><Brand href={null} /><span className="eb">얼리버드 <s>3,900원</s> 0원</span></div>
+    <main className="shell with-tabs">
+      <div className="top"><Brand href={null} />{SHOW_PRICING && <span className="eb">얼리버드 <s>3,900원</s> 0원</span>}</div>
       <div className="hero2"><b>엄마 혼자 콘서트<br />보내드려도 안심</b><p>부모님의 최애를 만나러 가는 길, 여행까지 선물하세요.</p></div>
       <div className="st3">
         <div><i>1</i><span>공연과 부모님 정보를 넣어요</span></div>
@@ -41,7 +45,17 @@ export default function Start() {
       <button className="cta" onClick={() => start()}>공연 날 하루 짜기</button>
       <button className="cta acc" style={{ fontSize: 16.5, letterSpacing: "-.02em" }} onClick={() => start(true)}>공연 없이 팬덤 스팟(성지순례) 여행 선물하기</button>
       <p className="fine" style={{ marginTop: -4 }}>가수가 다녀간 식당·여행지를 하루 코스로 · 이번 주말 선물로</p>
-      <p className="fine">로그인 없이 바로 시작해요. 해커톤 기간 얼리버드는 무료예요.</p>
+      <p className="fine">로그인 없이 바로 시작해요.{SHOW_PRICING ? " 해커톤 기간 얼리버드는 무료예요." : ""}</p>
+      <HomeTabs />
+      {ask && (
+        <div className="modal-bg" role="dialog" aria-modal="true" aria-label="누가 쓰시나요">
+          <div className="modal">
+            <h2>공연을 보러 가는 분의<br />자녀이신가요, 본인이신가요?</h2>
+            <button className="cta" onClick={() => { ls.set("tt_role", "kid"); setAsk(false); }}>자녀예요<br /><small style={{ fontWeight: 500, fontSize: 14 }}>부모님이 트로트 공연·콘서트를 보러 가세요</small></button>
+            <button className="cta acc" onClick={() => { ls.set("tt_role", "fan"); router.push("/fan"); }}>제가 공연을 보러 가요<br /><small style={{ fontWeight: 500, fontSize: 14 }}>가수별 팬 라운지로 갈게요</small></button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

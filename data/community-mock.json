@@ -1,0 +1,228 @@
+{
+ "_note": "팬 라운지 시연용 목데이터 글(가상 닉네임). 실제 글은 DB(community_posts)에 저장돼 함께 보여요.",
+ "posts": [
+  {
+   "artist": "lim-youngwoong",
+   "category": "팬덤 스팟 여행",
+   "title": "포천 웅지순례 다녀왔어요~^^",
+   "body": "콩마루 두부전골 먹고 아트밸리 들렀다가 웅이나무 카페에서 쉬었어요. 딸이 트롯트립으로 코스 짜줘서 택시 타는 구간까지 다 알려주더라고요 ㅎㅎ",
+   "author_name": "포천사는영웅맘",
+   "likes": 58,
+   "hours_ago": 3,
+   "comments": [
+    {
+     "author_name": "영웅시대 부산댁",
+     "body": "부럽네요! 저도 이번 주말에 가보려고요"
+    },
+    {
+     "author_name": "하늘빛영웅",
+     "body": "웅이나무 커피 맛있죠~"
+    }
+   ]
+  },
+  {
+   "artist": "lim-youngwoong",
+   "category": "스밍 인증",
+   "title": "오늘도 스밍 완료했습니다 💙",
+   "body": "출근길에 '모래 알갱이' 반복 재생 중이에요. 우리 영웅이 노래 들으면 하루가 편안해요",
+   "author_name": "하늘빛영웅",
+   "likes": 41,
+   "hours_ago": 6,
+   "comments": [
+    {
+     "author_name": "영웅시대 대구지부",
+     "body": "같이 달려요!"
+    }
+   ]
+  },
+  {
+   "artist": "lee-chanwon",
+   "category": "공연 후기",
+   "title": "찬스감사제 첫날 다녀왔어요",
+   "body": "킨텍스 5홀 앞 포토월 줄이 길었지만 금방 빠졌어요. 찬또 노래 한 곡 한 곡 다 좋았고 엄마랑 같이 울었네요 ㅠㅠ",
+   "author_name": "찬또사랑 수원댁",
+   "likes": 73,
+   "hours_ago": 2,
+   "comments": [
+    {
+     "author_name": "찬스 막내",
+     "body": "저는 둘째날 가요! 굿즈 줄 얼마나 길었어요?"
+    },
+    {
+     "author_name": "찬또사랑 수원댁",
+     "body": "1시간쯤 기다렸어요~ 일찍 가세요"
+    }
+   ]
+  },
+  {
+   "artist": "lee-chanwon",
+   "category": "팬덤 스팟 여행",
+   "title": "대구 누른국수 집 성지순례 🍜",
+   "body": "전현무계획에 나온 동곡 누른국수 먹고 카페 찬스까지 다녀왔어요. 월요일은 쉬니까 꼭 확인하고 가세요~",
+   "author_name": "대구찬스",
+   "likes": 36,
+   "hours_ago": 9,
+   "comments": []
+  },
+  {
+   "artist": "park-seojin",
+   "category": "팬덤 스팟 여행",
+   "title": "삼천포 박서진길 걸었어요 ⚓",
+   "body": "용궁수산시장에서 회 먹고 노을빛공원까지 쭉 걸었어요. 서진이네 건어물에서 쥐포 한 봉지 사왔네요 ㅎㅎ",
+   "author_name": "닻별 창원지부",
+   "likes": 64,
+   "hours_ago": 14,
+   "comments": [
+    {
+     "author_name": "닻별 진주맘",
+     "body": "건어물 가게 사장님 너무 친절하시죠^^"
+    }
+   ]
+  },
+  {
+   "artist": "park-seojin",
+   "category": "같이 가요",
+   "title": "12/25 코엑스 공연 같이 가실 분~",
+   "body": "대구에서 KTX 타고 가요. 동대구역 10시 기차예요. 혼자 가기 심심해서요 ^^",
+   "author_name": "닻별 대구맘",
+   "likes": 22,
+   "hours_ago": 20,
+   "comments": [
+    {
+     "author_name": "닻별 경산댁",
+     "body": "저도 그 기차예요! 같이 가요"
+    }
+   ]
+  },
+  {
+   "artist": "song-gain",
+   "category": "팬덤 스팟 여행",
+   "title": "진도 송가인마을 다녀왔어요",
+   "body": "생가 앞 포토존에서 사진 찍고 꽈배기어라에서 꽈배기 먹었어요. 옥향식당 뜸부기갈비탕 강추합니다!",
+   "author_name": "어게인 광주지부",
+   "likes": 51,
+   "hours_ago": 26,
+   "comments": []
+  },
+  {
+   "artist": "song-gain",
+   "category": "사진 자랑",
+   "title": "가인이 생일 카페 다녀온 사진 💐",
+   "body": "올해 생일 카페 너무 예뻤어요. 등신대랑 한 장 찍었습니다",
+   "author_name": "어게인 막내",
+   "likes": 29,
+   "hours_ago": 30,
+   "comments": []
+  },
+  {
+   "artist": "youngtak",
+   "category": "공연 후기",
+   "title": "TAK SHOW5 서울 공연 최고였어요",
+   "body": "화정체육관 꽉 찼어요! 찐이야 나올 때 다 같이 떼창했네요. 대구 공연도 갑니다",
+   "author_name": "영블스 인천댁",
+   "likes": 47,
+   "hours_ago": 40,
+   "comments": [
+    {
+     "author_name": "영블스 안동댁",
+     "body": "대구에서 만나요~"
+    }
+   ]
+  },
+  {
+   "artist": "youngtak",
+   "category": "팬덤 스팟 여행",
+   "title": "안동 찜닭골목 영탁 성지 🍗",
+   "body": "구해줘홈즈에 나온 유진찜닭 먹고 월영교 야경 보고 왔어요. 월영교 밤에 꼭 가보세요",
+   "author_name": "영블스 안동댁",
+   "likes": 33,
+   "hours_ago": 45,
+   "comments": []
+  },
+  {
+   "artist": "lee-seungchul",
+   "category": "공연 후기",
+   "title": "THE VOICE 광주 공연 다녀왔어요",
+   "body": "40주년이라 그런지 명곡 퍼레이드였어요. 말리꽃 나올 때 소름 돋았습니다. 주황색 응원봉 물결 장관이었어요",
+   "author_name": "새들의고향 광주",
+   "likes": 39,
+   "hours_ago": 8,
+   "comments": []
+  },
+  {
+   "artist": "cho-yongpil",
+   "category": "공연 후기",
+   "title": "가왕은 역시 가왕이에요",
+   "body": "2시간 넘게 게스트 없이 혼자 무대를 채우시는데 음정 하나 안 흔들리더라고요. 딸이 일정 짜줘서 편하게 다녀왔어요",
+   "author_name": "위대한탄생 부산",
+   "likes": 62,
+   "hours_ago": 52,
+   "comments": [
+    {
+     "author_name": "오빠부대 1980",
+     "body": "저도 11월 27일 갑니다!"
+    }
+   ]
+  },
+  {
+   "artist": "cho-yongpil",
+   "category": "팬덤 스팟 여행",
+   "title": "'돌아와요 부산항에' 따라 부산 여행",
+   "body": "북항 친수공원이랑 오륙도 스카이워크 다녀왔어요. 노래 들으면서 걸으니 감회가 새롭네요",
+   "author_name": "오빠부대 1980",
+   "likes": 27,
+   "hours_ago": 60,
+   "comments": []
+  },
+  {
+   "artist": "kim-gunmo",
+   "category": "팬덤 스팟 여행",
+   "title": "마라도 짜장면 투어 했어요",
+   "body": "미우새에서 봤던 마라도 짜장면집들 돌았어요. 배 시간 꼭 확인하세요! 바람 불면 결항돼요",
+   "author_name": "건모오빠 제주팬",
+   "likes": 31,
+   "hours_ago": 70,
+   "comments": []
+  },
+  {
+   "artist": "kim-gunmo",
+   "category": "같이 가요",
+   "title": "12/5 광주 공연 같이 가실 분",
+   "body": "광주송정역에서 택시 같이 타요~ 체육관이 역에서 좀 멀어요",
+   "author_name": "건모팬 목포댁",
+   "likes": 12,
+   "hours_ago": 15,
+   "comments": []
+  },
+  {
+   "artist": "lee-chanwon",
+   "category": "스밍 인증",
+   "title": "찬또 신곡 스밍 100회 달성 🎉",
+   "body": "가족 단톡방에도 링크 돌렸어요 ㅎㅎ 다 같이 응원해요",
+   "author_name": "찬스 막내",
+   "likes": 18,
+   "hours_ago": 4,
+   "comments": []
+  },
+  {
+   "artist": "lim-youngwoong",
+   "category": "사진 자랑",
+   "title": "상암 앞 응원 현수막 사진",
+   "body": "지난번 공연 때 찍은 사진 올려요. 하늘색 물결 너무 예뻤어요",
+   "author_name": "영웅시대 부산댁",
+   "likes": 44,
+   "hours_ago": 80,
+   "comments": []
+  },
+  {
+   "artist": "park-seojin",
+   "category": "스밍 인증",
+   "title": "닻별 여러분 오늘도 스밍 화이팅!",
+   "body": "장구 치는 서진이 영상 보면서 힘내요",
+   "author_name": "닻별 진주맘",
+   "likes": 15,
+   "hours_ago": 11,
+   "comments": []
+  }
+ ]
+}
