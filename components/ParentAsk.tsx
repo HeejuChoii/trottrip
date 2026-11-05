@@ -48,7 +48,7 @@ export default function ParentAsk({ token, kidH, history, mode = "fan_bus", pilg
 
   return (
     <main className="shell pv">
-      <div className="top"><Link className="back" href={`/p/${token}`} style={{ fontSize: 18 }}>← 일정으로</Link>{msgs.length > 0 ? <button className="mini-btn" style={{ fontSize: 15, padding: "6px 12px" }} onClick={clearChat}>새로 묻기</button> : <span style={{ fontSize: 14, color: "var(--sub)" }}>대화는 {kidH}도 볼 수 있어요</span>}</div>
+      <div className="top"><Link className="back" href={`/p/${token}`} style={{ fontSize: 18 }}>← 안내장으로</Link>{msgs.length > 0 ? <button className="mini-btn" style={{ fontSize: 15, padding: "6px 12px" }} onClick={clearChat}>새로 묻기</button> : <span style={{ fontSize: 14, color: "var(--sub)" }}>대화는 {kidH}도 볼 수 있어요</span>}</div>
       <h1 className="h" style={{ fontSize: 26 }}>무엇이든 물어보세요</h1>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }} aria-live="polite">
         {msgs.length === 0 && <p className="hello">오늘 일정과 공연장 안내를 보고 답해 드려요.</p>}

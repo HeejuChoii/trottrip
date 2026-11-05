@@ -49,13 +49,13 @@ export function AskFab({ token }: { token: string }) {
   );
 }
 
-/** 아래 메뉴: 일정 · 지도 · 공연장(내 티켓 포함) — 물어보기는 동그란 버튼으로 따로 */
+/** 아래 메뉴: 안내장 · 지도 · 공연장(내 티켓 포함) — 물어보기는 동그란 버튼으로 따로 */
 export function BottomBar({ token, pilgrim, current }: { token: string; pilgrim?: boolean; current?: "home" | "map" | "venue" | "ask" }) {
   return (
     <>
       {current !== "ask" && <AskFab token={token} />}
       <nav className="bbar" aria-label="부모님 메뉴">
-        <Link href={`/p/${token}`} className={current === "home" ? "on" : ""}>일정</Link>
+        <Link href={`/p/${token}`} className={current === "home" ? "on" : ""}>안내장</Link>
         <Link href={`/p/${token}/map`} className={current === "map" ? "on" : ""}>지도</Link>
         <Link href={`/p/${token}/venue`} className={current === "venue" ? "on" : ""}>{pilgrim ? "여행 일정" : "공연장·티켓"}</Link>
       </nav>

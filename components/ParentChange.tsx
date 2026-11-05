@@ -26,7 +26,7 @@ export default function ParentChange({ token, kidH, kidLabel, pilgrim }: { token
 
   return (
     <main className="shell pv">
-      <div className="top"><Link className="back" href={`/p/${token}`} style={{ fontSize: 18 }}>← 일정으로</Link></div>
+      <div className="top"><Link className="back" href={`/p/${token}`} style={{ fontSize: 18 }}>← 안내장으로</Link></div>
       <h1 className="h">무슨 일이 있으세요?</h1>
       <button className="bigbtn pk" disabled={!!busy} onClick={() => send("leg_pain")}>{busy === "leg_pain" ? "바꾸는 중…" : "다리가 아파요"}</button>
       <button className="bigbtn line" disabled={!!busy} onClick={() => send("long_line")}>{busy === "long_line" ? "바꾸는 중…" : "줄이 너무 길어요"}</button>
