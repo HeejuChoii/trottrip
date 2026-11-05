@@ -49,14 +49,15 @@ export function AskFab({ token }: { token: string }) {
   );
 }
 
-/** 아래 메뉴: 안내장 · 지도 · 공연장(내 티켓 포함) — 물어보기는 동그란 버튼으로 따로 */
+/** 아래 메뉴: 안내장 · 일정·지도(팬덤 여행은 지도) · 공연장(내 티켓 포함) — 물어보기는 동그란 버튼으로 따로 */
 export function BottomBar({ token, pilgrim, current }: { token: string; pilgrim?: boolean; current?: "home" | "map" | "venue" | "ask" }) {
   return (
     <>
       {current !== "ask" && <AskFab token={token} />}
       <nav className="bbar" aria-label="부모님 메뉴">
         <Link href={`/p/${token}`} className={current === "home" ? "on" : ""}>안내장</Link>
-        <Link href={`/p/${token}/map`} className={current === "map" ? "on" : ""}>지도</Link>
+        {/* 공연 날은 가운데 탭이 동선 지도 + 전체 일정, 팬덤 여행은 그 화면이 오른쪽 '여행 일정'이라 가운데는 지도 */}
+        <Link href={pilgrim ? `/p/${token}/map` : `/p/${token}/plan`} className={current === "map" ? "on" : ""}>{pilgrim ? "지도" : "일정·지도"}</Link>
         <Link href={`/p/${token}/venue`} className={current === "venue" ? "on" : ""}>{pilgrim ? "여행 일정" : "공연장·티켓"}</Link>
       </nav>
     </>
