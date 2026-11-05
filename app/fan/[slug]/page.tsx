@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import HomeTabs from "@/components/HomeTabs";
+import MeIcon from "@/components/fan/MeIcon";
 import SiteFooter from "@/components/SiteFooter";
 import ArtistAvatar from "@/components/fan/ArtistAvatar";
 import LoginBar from "@/components/fan/LoginBar";
@@ -23,7 +24,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const list = c ? all.filter((p) => p.category === c) : all;
   return (
     <main className="shell with-tabs">
-      <div className="top"><Link className="back" href="/fan">← 팬 라운지</Link></div>
+      <div className="top"><Link className="back" href="/fan">← 팬 라운지</Link><MeIcon /></div>
       <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
         <ArtistAvatar a={a} size={76} />
         <div><h1 className="h" style={{ margin: 0 }}>{a.name}</h1><p className="lead" style={{ margin: "4px 0 0" }}>{a.fandom ? `${a.fandom} 라운지` : "팬 라운지"} · 글 {all.length}개</p></div>

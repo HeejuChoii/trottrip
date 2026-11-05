@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Brand from "@/components/Brand";
 import HomeTabs from "@/components/HomeTabs";
+import MeIcon from "@/components/fan/MeIcon";
 import SiteFooter from "@/components/SiteFooter";
 import ArtistAvatar from "@/components/fan/ArtistAvatar";
 import LoginBar from "@/components/fan/LoginBar";
@@ -23,7 +24,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ l
   const feed = every.filter((p) => !talk.includes(p)).slice(0, 30);
   return (
     <main className="shell with-tabs">
-      <div className="top"><Brand href="/" /><span style={{ fontSize: 14, color: "var(--sub)" }}>팬 라운지</span></div>
+      <div className="top"><Brand href="/" /><span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ fontSize: 14, color: "var(--sub)" }}>팬 라운지</span><MeIcon /></span></div>
       <h1 className="h">우리 가수 팬들과<br />덕질 이야기 나눠요</h1>
       <p className="lead">공연 후기, 팬덤 스팟(성지순례) 여행, 스밍 인증까지</p>
       {login === "fail" && <p className="err">카카오 로그인에 실패했어요. 잠시 뒤 다시 해 주세요.</p>}

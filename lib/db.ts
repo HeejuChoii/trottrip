@@ -659,3 +659,29 @@ export async function listFanMembers(): Promise<{ rows: MemberRow[]; tableReady:
   comments.forEach((x) => touch(x, "comments"));
   return { rows: [...rows.values()].sort((a, b) => b.first_at.localeCompare(a.first_at)), tableReady };
 }
+
+/** 닉네임 바꾸기: 가입 기록과 지금까지 쓴 글·댓글의 이름도 함께 바꾼다 */
+export async function renameFanAuthor(id: string, name: string): Promise<void> {
+  const s = supa();
+  if (s) {
+    must(await s.from("community_posts").update({ author_name: name }).eq("author_id", id));
+    must(await s.from("community_comments").update({ author_name: name }).eq("author_id", id));
+    const m = await s.from("community_members").update({ name }).eq("id", id);
+    if (m.error) console.warn("[members] 이름 바꾸기 실패(0010 SQL 실행 전일 수 있어요):", m.error.message);
+    return;
+  }
+  const db = await local();
+  for (const p of db.community_posts ?? []) if (p.author_id === id) p.author_name = name;
+  for (const c of db.community_comments ?? []) if (c.author_id === id) c.author_name = name;
+  for (const m of db.community_members ?? []) if (m.id === id) m.name = name;
+  await flush();
+}
+/** 내가 쓴 글(숨김 포함, 최신순) */
+export async function listMyFanPosts(authorId: string): Promise<FanPost[]> {
+  const s = supa();
+  if (s) {
+    const r = await s.from("community_posts").select("*").eq("author_id", authorId).order("created_at", { ascending: false }).limit(100);
+    return r.error ? [] : (r.data as FanPost[]);
+  }
+  return ((await local()).community_posts ?? []).filter((p) => p.author_id === authorId).sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
