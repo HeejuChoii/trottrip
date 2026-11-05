@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import HomeTabs from "@/components/HomeTabs";
+import SiteFooter from "@/components/SiteFooter";
 import ArtistAvatar from "@/components/fan/ArtistAvatar";
 import LoginBar from "@/components/fan/LoginBar";
 import PostCard from "@/components/fan/PostCard";
@@ -34,6 +35,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       {user ? <WriteForm artist={slug} defaultCategory={(POST_CATEGORIES as readonly string[]).includes(c ?? "") ? c! : "공연 후기"} /> : <LoginBar user={null} kakao={kakaoLoginReady()} next={`/fan/${slug}`} />}
       {list.map((p) => <PostCard key={p.id} p={p} />)}
       {!list.length && <p className="note">아직 글이 없어요. 첫 글을 남겨 주세요!</p>}
+      <SiteFooter />
       <HomeTabs />
     </main>
   );

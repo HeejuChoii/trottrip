@@ -11,6 +11,14 @@ export default function PostActions({ id, likes, liked, comments, loggedIn, kaka
   const [text, setText] = useState("");
   const [err, setErr] = useState("");
   const loginHref = `/api/auth/kakao?next=${encodeURIComponent(`/fan/post/${id}`)}`;
+  const [reporting, setReporting] = useState(false);
+  const [reported, setReported] = useState(false);
+  async function report(reason: string) {
+    if (!loggedIn) { setErr("로그인하면 신고할 수 있어요"); setReporting(false); return; }
+    try { await postJSON(`/api/community/${id}`, { action: "report", body: reason }); setReported(true); }
+    catch (x) { setErr(x instanceof Error ? x.message : "신고하지 못했어요"); }
+    setReporting(false);
+  }
   return (
     <>
       <button className="bigbtn line" style={{ fontSize: 18, padding: 12, minHeight: 52, borderColor: on ? "#fa2d48" : undefined, color: on ? "#fa2d48" : undefined }} onClick={async () => {
@@ -31,6 +39,11 @@ export default function PostActions({ id, likes, liked, comments, loggedIn, kaka
         </form>
       ) : <a className={kakao ? "kakao" : "ghost"} href={kakao ? loginHref : "/fan"} style={{ textAlign: "center", textDecoration: "none", display: "block" }}>{kakao ? "카카오로 로그인하고 댓글 달기" : "로그인하고 댓글 달기"}</a>}
       {err && <p className="err" style={{ margin: 0 }}>{err}</p>}
+      <div style={{ textAlign: "right" }}>
+        {reported ? <small style={{ color: "var(--sub)" }}>신고했어요. 운영자가 확인할게요.</small>
+          : !reporting ? <button className="linkbtn" style={{ fontSize: 13 }} onClick={() => setReporting(true)}>🚨 신고</button>
+          : <span className="chips" style={{ justifyContent: "flex-end" }}>{["광고·스팸", "욕설·비방", "초상권·저작권", "기타"].map((r) => <button key={r} className="chip" style={{ fontSize: 13, padding: "6px 10px" }} onClick={() => report(r)}>{r}</button>)}</span>}
+      </div>
     </>
   );
 }

@@ -1,5 +1,5 @@
 // POST /api/community/{id} — 댓글 달기 {action:"comment", body} · 좋아요 {action:"like"}
-import { addFanComment, toggleFanLike } from "@/lib/db";
+import { addFanComment, reportFanPost, toggleFanLike } from "@/lib/db";
 import { getFanUser } from "@/lib/fanauth";
 import { bad, body, ok } from "@/lib/http";
 
@@ -9,6 +9,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!user) return bad("로그인이 필요해요", 401);
   const b = await body<{ action?: string; body?: string }>(req);
   if (b.action === "like") return ok(await toggleFanLike(id, user.id));
+  if (b.action === "report") return ok(await reportFanPost(id, user.id, String(b.body ?? "").slice(0, 100)));
   if (b.action === "comment") {
     const text = String(b.body ?? "").trim().slice(0, 500);
     if (!text) return bad("댓글을 써 주세요");

@@ -432,17 +432,24 @@ export async function sumUsage(): Promise<number> {
 
 // ---------- 팬 라운지 (community_*) ----------
 /** 글 목록: artist(slug)가 없으면 전체, 최신순 */
-export async function listFanPosts(o: { artist?: string; limit?: number } = {}): Promise<FanPost[]> {
+export async function listFanPosts(o: { artist?: string; limit?: number; withHidden?: boolean } = {}): Promise<FanPost[]> {
   const limit = o.limit ?? 50;
   const s = supa();
   if (s) {
     let q = s.from("community_posts").select("*").order("created_at", { ascending: false }).limit(limit);
     if (o.artist) q = q.eq("artist", o.artist);
-    const r = await q;
+    if (!o.withHidden) q = q.eq("hidden", false);
+    let r = await q;
+    // 0008 SQL(숨김 칸) 실행 전이면 숨김 조건 없이 다시 읽는다
+    if (r.error && /hidden/.test(r.error.message)) {
+      let q2 = s.from("community_posts").select("*").order("created_at", { ascending: false }).limit(limit);
+      if (o.artist) q2 = q2.eq("artist", o.artist);
+      r = await q2;
+    }
     if (r.error) { console.warn("[community] 목록 실패(0007 SQL 실행 전일 수 있어요):", r.error.message); return []; }
     return r.data as FanPost[];
   }
-  return ((await local()).community_posts ?? []).filter((p) => !o.artist || p.artist === o.artist).sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, limit);
+  return ((await local()).community_posts ?? []).filter((p) => (!o.artist || p.artist === o.artist) && (o.withHidden || !p.hidden)).sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, limit);
 }
 export async function getFanPost(id: string): Promise<FanPost | null> {
   const s = supa();
@@ -450,7 +457,7 @@ export async function getFanPost(id: string): Promise<FanPost | null> {
   return ((await local()).community_posts ?? []).find((p) => p.id === id) ?? null;
 }
 export async function createFanPost(p: Omit<FanPost, "id" | "likes" | "comments" | "created_at">): Promise<FanPost> {
-  const row: FanPost = { ...p, id: randomUUID(), likes: 0, comments: 0, created_at: new Date().toISOString() };
+  const row: FanPost = { ...p, images: p.images ?? [], id: randomUUID(), likes: 0, comments: 0, created_at: new Date().toISOString() };
   const s = supa();
   if (s) { must(await s.from("community_posts").insert(row)); return row; }
   const db = await local();
@@ -505,4 +512,54 @@ export async function likedFanPosts(authorId: string): Promise<Set<string>> {
   const s = supa();
   if (s) { const r = await s.from("community_likes").select("post_id").eq("author_id", authorId); return new Set(r.error ? [] : (r.data as { post_id: string }[]).map((x) => x.post_id)); }
   return new Set(((await local()).community_likes ?? []).filter((l) => l.author_id === authorId).map((l) => l.post_id));
+}
+
+/** 사진 올리기: Supabase Storage(community 버킷), 로컬은 .data/uploads에 저장하고 /api/community/file로 보여 준다 */
+export async function uploadFanImage(name: string, data: Buffer, contentType: string): Promise<string> {
+  const s = supa();
+  if (s) {
+    const r = await s.storage.from("community").upload(name, data, { contentType, upsert: false });
+    if (r.error) throw new Error(`사진을 올리지 못했어요: ${r.error.message}`);
+    return s.storage.from("community").getPublicUrl(name).data.publicUrl;
+  }
+  const dir = path.join(path.dirname(LOCAL_PATH), "uploads");
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(path.join(dir, name.replace(/\//g, "_")), data);
+  return `/api/community/file?n=${encodeURIComponent(name.replace(/\//g, "_"))}`;
+}
+export async function readLocalUpload(n: string): Promise<Buffer | null> {
+  if (!/^[\w.-]+$/.test(n)) return null;
+  try { return await fs.readFile(path.join(path.dirname(LOCAL_PATH), "uploads", n)); } catch { return null; }
+}
+
+/** 신고: 한 사람당 한 번. 3건이 쌓이면 자동으로 숨긴다 */
+export async function reportFanPost(postId: string, reporterId: string, reason: string): Promise<{ reports: number; hidden: boolean }> {
+  const s = supa();
+  if (s) {
+    const ins = await s.from("community_reports").insert({ post_id: postId, reporter_id: reporterId, reason });
+    if (ins.error && !/duplicate|unique/i.test(ins.error.message)) throw new Error(ins.error.message);
+    const cnt = await s.from("community_reports").select("post_id", { count: "exact", head: true }).eq("post_id", postId);
+    const reports = cnt.count ?? 0;
+    const hidden = reports >= 3;
+    if (!postId.startsWith("mock-")) await s.from("community_posts").update({ reports, ...(hidden ? { hidden: true } : {}) }).eq("id", postId);
+    return { reports, hidden };
+  }
+  const db = await local();
+  const p = (db.community_posts ?? []).find((x) => x.id === postId);
+  const key = `${postId}|${reporterId}`;
+  const list = ((db as unknown as { community_reports?: string[] }).community_reports ??= []);
+  if (!list.includes(key)) list.push(key);
+  const reports = list.filter((k) => k.startsWith(`${postId}|`)).length;
+  if (p) { p.reports = reports; if (reports >= 3) p.hidden = true; }
+  await flush();
+  return { reports, hidden: reports >= 3 };
+}
+
+/** 관리자: 숨기기·다시 보이기 */
+export async function setFanPostHidden(postId: string, hidden: boolean): Promise<void> {
+  const s = supa();
+  if (s) { must(await s.from("community_posts").update({ hidden }).eq("id", postId)); return; }
+  const db = await local();
+  const p = (db.community_posts ?? []).find((x) => x.id === postId);
+  if (p) { p.hidden = hidden; await flush(); }
 }

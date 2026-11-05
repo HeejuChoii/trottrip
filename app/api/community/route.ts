@@ -10,6 +10,8 @@ const Input = z.object({
   category: z.enum(POST_CATEGORIES),
   title: z.string().trim().min(1, "제목을 써 주세요").max(60),
   body: z.string().trim().min(2, "내용을 써 주세요").max(2000),
+  // 우리가 올린 사진 주소만(Supabase Storage 공개 주소 또는 로컬 개발 주소), 최대 4장
+  images: z.array(z.string().max(500).refine((u) => /^https:\/\/[\w.-]+\/storage\/v1\/object\/public\/community\//.test(u) || u.startsWith("/api/community/file?n="), "사진 주소를 확인해 주세요")).max(4).default([]),
 });
 
 export async function POST(req: Request) {
