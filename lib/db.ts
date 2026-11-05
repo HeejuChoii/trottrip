@@ -9,6 +9,7 @@ import type { ChatRow, Concert, EventType, Place, Plan, Trip, TripEvent, TtPlace
 import { SEED_CONCERTS, SEED_TT_PLACES } from "./seed.ts";
 import venueMock from "../data/venue-mock.json" with { type: "json" };
 import { sightsNear } from "./sights.ts";
+import type { FanComment, FanPost } from "./community.ts";
 
 type MockVenue = { name: string; lat: number; lng: number; tips: string[]; places: (Partial<Place> & { id: string; name: string })[] };
 const MOCK = (venueMock as unknown as { venues: Record<string, MockVenue> }).venues;
@@ -58,6 +59,9 @@ interface LocalDB {
   tt_places?: TtPlaceRow[];
   plan_cache?: { hash: string; plan: Plan; created_at: string }[];
   api_usage?: UsageRow[];
+  community_posts?: FanPost[];
+  community_comments?: FanComment[];
+  community_likes?: { post_id: string; author_id: string }[];
 }
 
 export interface UsageRow { id: string; kind: string; model: string; input_tokens: number; output_tokens: number; cost_usd: number; created_at: string }
@@ -424,4 +428,81 @@ export async function listUsage(): Promise<UsageRow[]> {
 
 export async function sumUsage(): Promise<number> {
   return (await listUsage()).reduce((a, r) => a + Number(r.cost_usd), 0);
+}
+
+// ---------- 팬 라운지 (community_*) ----------
+/** 글 목록: artist(slug)가 없으면 전체, 최신순 */
+export async function listFanPosts(o: { artist?: string; limit?: number } = {}): Promise<FanPost[]> {
+  const limit = o.limit ?? 50;
+  const s = supa();
+  if (s) {
+    let q = s.from("community_posts").select("*").order("created_at", { ascending: false }).limit(limit);
+    if (o.artist) q = q.eq("artist", o.artist);
+    const r = await q;
+    if (r.error) { console.warn("[community] 목록 실패(0007 SQL 실행 전일 수 있어요):", r.error.message); return []; }
+    return r.data as FanPost[];
+  }
+  return ((await local()).community_posts ?? []).filter((p) => !o.artist || p.artist === o.artist).sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, limit);
+}
+export async function getFanPost(id: string): Promise<FanPost | null> {
+  const s = supa();
+  if (s) { const r = await s.from("community_posts").select("*").eq("id", id).maybeSingle(); return r.error ? null : (r.data as FanPost | null); }
+  return ((await local()).community_posts ?? []).find((p) => p.id === id) ?? null;
+}
+export async function createFanPost(p: Omit<FanPost, "id" | "likes" | "comments" | "created_at">): Promise<FanPost> {
+  const row: FanPost = { ...p, id: randomUUID(), likes: 0, comments: 0, created_at: new Date().toISOString() };
+  const s = supa();
+  if (s) { must(await s.from("community_posts").insert(row)); return row; }
+  const db = await local();
+  (db.community_posts ??= []).push(row);
+  await flush();
+  return row;
+}
+export async function listFanComments(postId: string): Promise<FanComment[]> {
+  const s = supa();
+  if (s) { const r = await s.from("community_comments").select("*").eq("post_id", postId).order("created_at"); return r.error ? [] : (r.data as FanComment[]); }
+  return ((await local()).community_comments ?? []).filter((c) => c.post_id === postId).sort((a, b) => a.created_at.localeCompare(b.created_at));
+}
+export async function addFanComment(c: Omit<FanComment, "id" | "created_at">): Promise<FanComment> {
+  const row: FanComment = { ...c, id: randomUUID(), created_at: new Date().toISOString() };
+  const s = supa();
+  if (s) {
+    must(await s.from("community_comments").insert(row));
+    const p = await getFanPost(c.post_id);
+    if (p) await s.from("community_posts").update({ comments: p.comments + 1 }).eq("id", p.id);
+    return row;
+  }
+  const db = await local();
+  (db.community_comments ??= []).push(row);
+  const p = (db.community_posts ?? []).find((x) => x.id === c.post_id);
+  if (p) p.comments += 1;
+  await flush();
+  return row;
+}
+/** 좋아요 누르기/취소. 반환: 지금 좋아요 상태, 이번에 더해진 수(+1/-1) */
+export async function toggleFanLike(postId: string, authorId: string): Promise<{ liked: boolean; delta: number }> {
+  const s = supa();
+  if (s) {
+    const has = await s.from("community_likes").select("post_id").eq("post_id", postId).eq("author_id", authorId).maybeSingle();
+    const liked = !has.data;
+    if (liked) must(await s.from("community_likes").insert({ post_id: postId, author_id: authorId }));
+    else must(await s.from("community_likes").delete().eq("post_id", postId).eq("author_id", authorId));
+    const p = await getFanPost(postId);
+    if (p) await s.from("community_posts").update({ likes: Math.max(0, p.likes + (liked ? 1 : -1)) }).eq("id", p.id);
+    return { liked, delta: liked ? 1 : -1 };
+  }
+  const db = await local();
+  const list = (db.community_likes ??= []);
+  const i = list.findIndex((l) => l.post_id === postId && l.author_id === authorId);
+  const liked = i < 0;
+  if (liked) list.push({ post_id: postId, author_id: authorId }); else list.splice(i, 1);
+  const p = (db.community_posts ?? []).find((x) => x.id === postId);
+  if (p) p.likes = Math.max(0, p.likes + (liked ? 1 : -1));
+  await flush();
+  return { liked, delta: liked ? 1 : -1 };
+}
+export async function likedFanPosts(authorId: string): Promise<Set<string>> {
+  const s = supa();
+  if (s) { const r = await s.from("community_likes").select("post_id").eq("author_id", authorId); return new Set(r.error ? [] : (r.data as { post_id: string }[]).map((x) => x.post_id)); }
+  return new Set(((await local()).community_likes ?? []).filter((l) => l.author_id === authorId).map((l) => l.post_id));
 }

@@ -201,3 +201,22 @@ h1.h, h2.h { font-size: 24px; line-height: 1.3; margin: 4px 0 0; font-weight: 90
 details[open] .sum-more { display: none; }
 .linkrow { display: flex; gap: 8px; flex-wrap: wrap; }
 .linkrow a { flex: 1; min-width: 120px; text-align: center; border: 1.5px solid var(--mint); border-radius: 12px; padding: 10px; font-size: 14px; font-weight: 700; color: var(--deep); text-decoration: none; background: #fff; }
+
+/* 첫 화면·팬 라운지 아래 탭 */
+.tabs2 { position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; width: min(440px, 100%); display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  padding: 8px 16px max(10px, env(safe-area-inset-bottom)); background: linear-gradient(to top, var(--bg) 80%, transparent); z-index: 30; }
+.tabs2 a { text-align: center; text-decoration: none; padding: 12px 6px; border-radius: 14px; background: #fff; border: 1.5px solid var(--line); color: var(--ink); font-weight: 700; font-size: 16px; }
+.tabs2 a.on { border-color: var(--mint); background: var(--mintS); color: var(--deep); }
+.with-tabs { padding-bottom: 96px; }
+/* 첫 방문 팝업 */
+.modal-bg { position: fixed; inset: 0; background: rgba(15, 25, 30, .45); z-index: 60; display: flex; align-items: flex-end; justify-content: center; }
+.modal { background: #fff; width: min(440px, 100%); border-radius: 22px 22px 0 0; padding: 22px 18px max(22px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 10px; }
+.modal h2 { margin: 0 0 4px; font-size: 21px; line-height: 1.35; }
+/* 팬 라운지 */
+.post { display: flex; flex-direction: column; gap: 6px; }
+.pmeta { display: flex; gap: 6px; flex-wrap: wrap; }
+.ptitle { font-size: 17px; }
+.pbody { font-size: 15px; color: var(--ink); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pfoot { font-size: 13px; color: var(--sub); }
+.agrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.agrid a { display: flex; flex-direction: column; align-items: center; gap: 6px; text-decoration: none; color: var(--ink); font-size: 14px; font-weight: 700; }
