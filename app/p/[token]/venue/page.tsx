@@ -5,7 +5,7 @@ import { BottomBar } from "@/components/ParentHome";
 import { gateForSeat } from "@/lib/planner";
 import { EMPTY_TICKET } from "@/lib/schemas";
 import { absMin, addDays, fmtDateKo, fmtDateLongKo, fmtTimeKo } from "@/lib/time";
-import { RouteMapBox } from "@/components/RouteMap";
+import { FocusStop, RouteMapBox } from "@/components/RouteMap";
 import { routeStops } from "@/lib/stops";
 import { tipsFor } from "@/lib/text";
 import type { PlaceCategory } from "@/lib/types";
@@ -48,12 +48,13 @@ export default async function Page({ params }: { params: Promise<{ token: string
     const items = [...trip.plan!.items].sort((x, y) => absMin(x) - absMin(y));
     const byId = new Map(places.map((p) => [p.id, p]));
     const multi = items.some((i) => (i.day ?? 1) > 1);
+    const stops = routeStops(d);
     return (
       <main className="shell pv">
         <div className="top"><Link className="back" href={`/p/${token}`} style={{ fontSize: 18 }}>← 안내장으로</Link></div>
         <h1 className="h">{concert.artist_display} 팬덤 여행 일정</h1>
         <p className="hello">{fmtDateLongKo(concert.date)} · {concert.city}</p>
-        <RouteMapBox stops={routeStops(d)} kakaoKey={process.env.NEXT_PUBLIC_KAKAO_JS_KEY ?? ""} height="42vh" />
+        <RouteMapBox stops={stops} kakaoKey={process.env.NEXT_PUBLIC_KAKAO_JS_KEY ?? ""} height="42vh" />
         <div className="tl">
           {items.map((it, idx) => {
             const p = it.place_id ? byId.get(it.place_id) : undefined;
@@ -73,13 +74,17 @@ export default async function Page({ params }: { params: Promise<{ token: string
                 <div className={`ti ${fan ? "pk" : ""}`}>
                   <div className="t">{it.start}</div>
                   <div className="dot" />
-                  {p ? <Link className="box" href={`/p/${token}/map?place=${encodeURIComponent(p.id)}`} style={{ textDecoration: "none", color: "inherit", display: "block" }}>{box}</Link> : <div className="box">{box}</div>}
+                  {(() => {
+                    // 지도 핀: 장소 좌표, 없으면 같은 시각의 역·숙소 핀
+                    const ll = p?.lat != null && p?.lng != null ? { lat: p.lat, lng: p.lng, name: p.name } : stops.find((x) => x.time === it.start && x.day === day) ?? null;
+                    return ll ? <FocusStop className="box" lat={ll.lat} lng={ll.lng} name={ll.name}>{box}</FocusStop> : <div className="box">{box}</div>;
+                  })()}
                 </div>
               </div>
             );
           })}
         </div>
-        <p className="note">장소를 누르면 지도에서 볼 수 있어요. 영업시간·휴무일을 반영해 짰어요.</p>
+        <p className="note">장소를 누르면 위 지도에서 그 자리를 크게 보여 드려요. 영업시간·휴무일을 반영해 짰어요.</p>
         <BottomBar token={token} pilgrim current="venue" />
       </main>
     );

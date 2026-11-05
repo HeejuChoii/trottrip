@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { clientNow } from "@/lib/client";
-import { absMin, toMin } from "@/lib/time";
+import { absEnd, absMin, daysBetween } from "@/lib/time";
 import { kidHonorific } from "@/lib/text";
 import { CATEGORY_LABEL } from "@/lib/concertrip";
 import { BottomBar } from "./ParentHome";
@@ -17,7 +17,7 @@ interface Props {
   token: string; items: PlanItem[]; done: string[]; concertDate: string; pins: Place[]; focus: string | null;
   venue: { name: string; lat: number | null; lng: number | null }; kakaoKey: string; kidLabel: string; pilgrim?: boolean;
   /** 출발역·도착역·숙소 같은 추가 핀 */
-  extraPins?: { label: string; name: string; lat: number; lng: number }[];
+  extraPins?: { label: string; name: string; lat: number; lng: number; time?: string; day?: number }[];
 }
 
 export default function ParentMap(p: Props) {
@@ -31,24 +31,38 @@ export default function ParentMap(p: Props) {
   const [route, setRoute] = useState<{ walk: number; taxi: number; km: number; road: boolean } | null>(null);
   const lines = useRef<any[]>([]);
 
+  // 지금 시각은 브라우저에서만 안다(서버 렌더 때는 비워 둔다)
+  const [now, setNow] = useState<{ date: string; min: number } | null>(null);
+  useEffect(() => { setNow(clientNow()); }, []);
+  // "다음 장소"는 여행(공연) 당일에만 보여 준다. 그 전에는 전체 동선이 한눈에 보이게 지도만
   const target = useMemo(() => {
     if (p.focus) {
       const f = p.pins.find((x) => x.id === p.focus);
       if (f) return { place: f, label: CATEGORY_LABEL[f.category] };
     }
-    const { date, min } = clientNow();
+    if (!now) return null;
+    const { date, min } = now;
+    const sorted = [...p.items].sort((a, b) => absMin(a) - absMin(b));
+    const lastDay = Math.max(1, ...sorted.map((i) => i.day ?? 1));
+    const diff = daysBetween(p.concertDate, date);
+    if (diff < 0 || diff >= lastDay) return null;
+    const minNow = diff * 1440 + min;
     const done = new Set(p.done);
-    const upcoming = [...p.items].sort((a, b) => absMin(a) - absMin(b))
-      .filter((i) => !done.has(i.id) && i.place_id && (date < p.concertDate || toMin(i.end) > min || i.type === "return"));
-    for (const i of upcoming) {
-      const pl = p.pins.find((x) => x.id === i.place_id);
+    for (const i of sorted.filter((x) => !done.has(x.id) && (absEnd(x) > minNow || x.type === "return"))) {
+      // 장소가 있는 일정이면 그 장소, 열차·이동처럼 장소가 없으면 같은 시각의 역·숙소 핀
+      const pl = i.place_id ? p.pins.find((x) => x.id === i.place_id) : undefined;
       if (pl) return { place: pl, label: i.title.split(" · ")[0] };
+      const ex = (p.extraPins ?? []).find((x) => x.time === i.start && (x.day ?? 1) === (i.day ?? 1));
+      if (ex) {
+        const place = { id: `pin:${ex.name}`, name: ex.name, lat: ex.lat, lng: ex.lng, category: "rest", walk_min_from_venue: null, description_ko: i.parent_text } as unknown as Place;
+        return { place, label: ex.name };
+      }
     }
     return null;
-  }, [p.focus, p.pins, p.items, p.done, p.concertDate]);
+  }, [p.focus, p.pins, p.items, p.done, p.concertDate, p.extraPins, now]);
 
   useEffect(() => {
-    if (!p.kakaoKey) return;
+    if (!p.kakaoKey || !now) return;
     const init = () => window.kakao.maps.load(() => {
       if (!box.current) return;
       const k = window.kakao.maps;
@@ -73,6 +87,13 @@ export default function ParentMap(p: Props) {
         const el = pinElement(`${x.label} · ${x.name}`);
         new k.CustomOverlay({ map: map.current, position: new k.LatLng(x.lat, x.lng), content: el, yAnchor: 1, zIndex: 2 });
       }
+      // 다음 장소가 없으면(당일 전·후) 모든 핀이 보이게
+      if (!target) {
+        const b = new k.LatLngBounds();
+        let n = 0;
+        for (const x of [...p.pins, ...(p.extraPins ?? [])]) if (x.lat != null && x.lng != null) { b.extend(new k.LatLng(x.lat, x.lng)); n++; }
+        if (n > 1) map.current.setBounds(b, 50, 30, 50, 30);
+      }
       setMapOk(true);
     });
     if (window.kakao?.maps) return init();
@@ -82,7 +103,7 @@ export default function ParentMap(p: Props) {
     s.onload = init;
     s.onerror = () => setMapOk(false);
     document.head.appendChild(s);
-  }, [p.kakaoKey, p.pins, p.venue, target]);
+  }, [p.kakaoKey, p.pins, p.venue, target, now]);
 
   // 내 위치: 이 기기 화면에만 표시. 서버로 보내지 않는다.
   function locate() {
@@ -155,7 +176,7 @@ export default function ParentMap(p: Props) {
           <div className="d" style={{ fontSize: 18 }}>{[t.walk_min_from_venue != null ? `공연장에서 걸어서 ${t.walk_min_from_venue}분` : null, t.description_ko || t.name].filter(Boolean).join(" · ")}</div>
         </div>
       ) : (
-        <div className="next" style={{ padding: "14px 16px" }}><div className="w" style={{ fontSize: 24 }}>{p.venue.name}</div><div className="d">다음 장소 정보가 없어요.</div></div>
+        <h1 className="h" style={{ margin: "0 0 4px" }}>{p.pilgrim ? "여행 동선 지도" : "공연 날 지도"}</h1>
       )}
       {p.kakaoKey && mapOk !== false && <div ref={box} className="mapbox" role="application" aria-label="오늘 쓰는 장소 지도" />}
       {mapOk === false && (
