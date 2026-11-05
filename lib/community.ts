@@ -4,15 +4,22 @@ import mock from "../data/community-mock.json" with { type: "json" };
 export interface FanArtist { slug: string; name: string; fandom: string; color: string }
 /** 가수 사진은 public/artists/{slug}.jpg (없으면 색 동그라미에 이름) */
 export const FAN_ARTISTS: FanArtist[] = [
-  { slug: "lim-youngwoong", name: "임영웅", fandom: "영웅시대", color: "#3A8DDE" },
-  { slug: "lee-chanwon", name: "이찬원", fandom: "찬스", color: "#F2A33A" },
-  { slug: "park-seojin", name: "박서진", fandom: "닻별", color: "#E8B400" },
-  { slug: "song-gain", name: "송가인", fandom: "어게인", color: "#E2557B" },
-  { slug: "youngtak", name: "영탁", fandom: "영탁앤블루스", color: "#2F7D6D" },
-  { slug: "lee-seungchul", name: "이승철", fandom: "새들의 고향", color: "#E07A1F" },
+  // 색: 영웅시대 하늘색, 찬스 노랑, 닻별 노랑, 어게인 분홍, 영탁앤블루스 코발트 블루(보도·팬덤 기준). 이승철·김건모·조용필은 공식 색을 확인하지 못해 임의 색
+  { slug: "lim-youngwoong", name: "임영웅", fandom: "영웅시대", color: "#5BB8EE" },
+  { slug: "lee-chanwon", name: "이찬원", fandom: "찬스", color: "#F7C531" },
+  { slug: "park-seojin", name: "박서진", fandom: "닻별", color: "#FFD43B" },
+  { slug: "song-gain", name: "송가인", fandom: "어게인", color: "#F06292" },
+  { slug: "youngtak", name: "영탁", fandom: "영탁앤블루스", color: "#0047AB" },
+  { slug: "lee-seungchul", name: "이승철", fandom: "새침데기", color: "#E07A1F" },
   { slug: "kim-gunmo", name: "김건모", fandom: "", color: "#6B5BD6" },
   { slug: "cho-yongpil", name: "조용필", fandom: "위대한 탄생", color: "#555B6E" },
 ];
+/** 칩 글자색: 밝은 색(노랑·하늘색) 위에는 검정, 진한 색 위에는 흰색 */
+export function inkOn(hex: string): string {
+  const n = parseInt(hex.slice(1), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.35 ? "#111" : "#fff";
+}
 export const artistBySlug = (slug: string) => FAN_ARTISTS.find((a) => a.slug === slug) ?? null;
 
 export const POST_CATEGORIES = ["공연 후기", "팬덤 스팟 여행", "스밍 인증", "사진 자랑", "같이 가요", "자유"] as const;
