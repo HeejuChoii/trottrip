@@ -16,7 +16,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
   const ret = d.trip.plan!.items.find((i) => i.type === "return");
   // 성지순례 여행은 공연이 없으니 귀가 시각이 되어야 귀가 화면으로 바뀐다
   const showEnd = d.concert.pilgrim ? ret?.start ?? "23:59" : d.concert.est_end_time || show?.end || toHHMM(toMin(d.concert.start_time) + 150);
-  const placeNames = Object.fromEntries(d.places.map((p) => [p.id, { name: p.name, walk: p.walk_min_from_venue, lat: p.lat, lng: p.lng }]));
+  const placeNames = Object.fromEntries(d.places.map((p) => [p.id, { name: p.name, walk: p.walk_min_from_venue, lat: p.lat, lng: p.lng, fan: !!p.fan_type && p.fan_type !== "none" }]));
   return (
     <ParentHome
       token={token}
@@ -33,6 +33,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
       kit={parentKit({ concert: d.concert, parent: d.trip.parent_profile, prefs: d.trip.prefs, ticket: { ...EMPTY_TICKET, ...(d.trip.ticket ?? {}) } })}
       concertLine={d.concert.pilgrim ? `${d.concert.city} · ${fmtTimeKo(d.concert.start_time)} ${d.concert.venue_name}에서 출발` : `${d.concert.venue_name} · ${fmtTimeKo(d.concert.start_time)} 시작`}
       pilgrim={!!d.concert.pilgrim}
+      artist={d.concert.artist_display}
       poster={posterFor(await listPosters(), { id: d.trip.concert_id, artist_display: d.concert.artist_display })}
     />
   );

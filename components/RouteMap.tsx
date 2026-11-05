@@ -5,9 +5,11 @@ import Link from "next/link";
 import { pinElement } from "./mapPin";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export interface Stop { n: number; time: string; label: string; name: string; lat: number; lng: number }
+import type { Stop } from "@/lib/stops";
+export type { Stop };
 
-export default function RouteMap({ kidToken, title, stops, kakaoKey }: { kidToken: string; title: string; stops: Stop[]; kakaoKey: string }) {
+/** 번호 핀을 선으로 이은 지도 상자(자녀 동선 지도·부모님 여행 일정에서 같이 쓴다) */
+export function RouteMapBox({ stops, kakaoKey, height = "62vh" }: { stops: Stop[]; kakaoKey: string; height?: string }) {
   const box = useRef<HTMLDivElement>(null);
   const [ok, setOk] = useState<boolean | null>(kakaoKey ? null : false);
 
@@ -37,11 +39,16 @@ export default function RouteMap({ kidToken, title, stops, kakaoKey }: { kidToke
     document.head.appendChild(s);
   }, [kakaoKey, stops]);
 
+  if (ok === false) return null;
+  return <div ref={box} className="mapbox" style={{ height }} role="application" aria-label="일정 순서 지도" />;
+}
+
+export default function RouteMap({ kidToken, title, stops, kakaoKey }: { kidToken: string; title: string; stops: Stop[]; kakaoKey: string }) {
   return (
     <main className="shell">
       <div className="top"><Link className="back" href={`/k/${kidToken}`}>← 일정으로</Link></div>
       <h1 className="h" style={{ fontSize: 20 }}>{title} 동선</h1>
-      {ok !== false && <div ref={box} className="mapbox" style={{ height: "62vh" }} role="application" aria-label="일정 순서 지도" />}
+      <RouteMapBox stops={stops} kakaoKey={kakaoKey} />
       <div className="mini">
         {stops.map((s) => (
           <a key={s.n} className="mi" style={{ fontSize: 15, textDecoration: "none", color: "inherit" }} href={`https://map.kakao.com/link/to/${encodeURIComponent(s.name)},${s.lat},${s.lng}`} target="_blank" rel="noopener noreferrer">

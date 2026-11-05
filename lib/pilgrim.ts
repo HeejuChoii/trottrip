@@ -180,7 +180,9 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
   const sights = fan.filter((p) => p.category !== "restaurant" && openAt(p, date, 10 * 60, 17 * 60) || (p.category !== "restaurant" && openAt(p, date, 14 * 60)));
   const lunchOpen = (p: Place) => openAt(p, date, 11 * 60 + 30, 13 * 60);
   const fanFood = fan.filter((p) => p.category === "restaurant" && lunchOpen(p));
-  const dinnerFood = fan.filter((p) => p.category === "restaurant" && !lunchOpen(p) && openAt(p, date, 17 * 60 + 30, 18 * 60 + 30) && (restaurantMatches(p, parent) || parent.food.includes("any")));
+  // 저녁 후보: 저녁에 여는 가수 단골집(점심에 안 여는 곳 먼저)
+  const dinnerFood = fan.filter((p) => p.category === "restaurant" && openAt(p, date, 17 * 60 + 30, 18 * 60 + 30) && (restaurantMatches(p, parent) || parent.food.includes("any")))
+    .sort((a, b) => Number(lunchOpen(a)) - Number(lunchOpen(b)));
   const okFood = fanFood.filter((p) => restaurantMatches(p, parent) || (parent.food.includes("any") && !isSpicyByName(p)));
   const nSpots = spotsFor(parent.walk, input.lessWalk);
   // 점심 먼저: 식성에 맞는 가수 단골집 → 근처 식당(카카오) → 단골집(식성 확인 필요)
@@ -191,12 +193,15 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
     : null;
   const lunch = lunchPick ?? lunchAlt;
   const lunchFanUnfit = !lunch && fanFood.length ? nearestOrder(start, fanFood)[0] : null;
-  // 둘러볼 곳이 모자라면(단골집 순례 코스) 남은 단골집도 들르는 곳으로 쓴다
-  let visit = sightsNear;
-  if (visit.length < nSpots) {
-    const extra = nearestOrder(start, fanFood.filter((p) => p.id !== (lunch ?? lunchFanUnfit)?.id)).slice(0, nSpots - visit.length);
-    visit = nearestOrder(start, [...visit, ...extra]);
-  }
+  // 식당은 끼니 때(점심·저녁, 1박이면 다음 날 점심)에만 넣는다. 남은 단골집을 '들르는 곳'으로 끼워 넣으면 몇 시간 사이에 연달아 먹게 돼서 넣지 않는다
+  // 대신 둘러볼 팬덤 스팟이 모자라면 출발점 10km 안의 가볼 만한 곳(부모님 취향 우선)으로 채운다. 1박이면 둘째 날 몫을 남겨 1곳만
+  const overnight = t.stay === "overnight" && !!(t.stay_name || t.stay_link);
+  const likes = parent.likes ?? [];
+  const fill = others.filter((p) => p.category === "sight" && km(start, p) <= 10)
+    .sort((a, b) => ((b.likes ?? []).filter((l) => likes.includes(l)).length - (a.likes ?? []).filter((l) => likes.includes(l)).length) || km(start, a) - km(start, b))
+    .slice(0, Math.min(nSpots - sightsNear.length, overnight ? 1 : 2));
+  const fillIds = new Set(fill.map((p) => p.id));
+  const visit = nearestOrder(start, [...sightsNear, ...fill]);
   const lunchPlace = lunch ?? lunchFanUnfit;
 
   // 2) 시작 시각
@@ -211,26 +216,30 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
   if (t.mode === "train" && isHHMM(t.train_arrive)) T0 = toMin(t.train_arrive) + (stLeg?.min ?? 10);
 
   // 3) 점심을 몇 번째에 넣을지: 11:40에 가장 가깝고 덜 돌아가는 자리
-  type Stop = { kind: "spot" | "meal" | "rest" | "dinner"; p: (Place & LL) | null };
+  type Stop = { kind: "spot" | "sight" | "meal" | "rest" | "dinner"; p: (Place & LL) | null };
+  const asStop = (p: Place & LL): Stop => ({ kind: fillIds.has(p.id) ? "sight" : "spot", p });
   const schedule = (stops: Stop[]) => {
-    let cur: LL = start, c = T0 + 10;
+    let cur: LL = start, c = T0 + 10, lunchAt = -Infinity;
     const out: { stop: Stop; start: number; end: number; leg: ReturnType<typeof leg> | null }[] = [];
     for (const s of stops) {
       const lg = s.p ? leg(cur, s.p, maxWalk) : null;
       c += lg ? lg.min : 10;
-      if (s.kind === "dinner") c = Math.max(c, 17 * 60 + 30);
-      const len = s.kind === "meal" || s.kind === "dinner" ? (parent.food.includes("quick") ? 45 : 60) : s.kind === "rest" ? (parent.rest_often ? 40 : 30) : SPOT_MIN;
+      // 저녁은 17:30 이후, 그리고 점심 시작에서 4시간은 지나서
+      if (s.kind === "dinner") c = Math.max(c, 17 * 60 + 30, lunchAt + 240);
+      // 점심은 11시 전에는 먹지 않는다
+      if (s.kind === "meal") { c = Math.max(c, 11 * 60); lunchAt = c; }
+      const len = s.kind === "meal" || s.kind === "dinner" ? (parent.food.includes("quick") ? 45 : 60) : s.kind === "rest" ? (parent.rest_often ? 40 : 30) : s.kind === "sight" ? 60 : SPOT_MIN;
       out.push({ stop: s, start: c, end: c + len, leg: lg });
       c += len + 5;
       if (s.p) cur = s.p;
     }
     return { out, end: c, last: cur };
   };
-  let best: Stop[] = visit.map((p) => ({ kind: "spot" as const, p }));
+  let best: Stop[] = visit.map(asStop);
   if (lunchPlace || true) {
     let bestCost = Infinity;
     for (let i = 0; i <= visit.length; i++) {
-      const stops: Stop[] = [...visit.slice(0, i).map((p) => ({ kind: "spot" as const, p })), { kind: "meal", p: lunchPlace as (Place & LL) | null }, ...visit.slice(i).map((p) => ({ kind: "spot" as const, p }))];
+      const stops: Stop[] = [...visit.slice(0, i).map(asStop), { kind: "meal", p: lunchPlace as (Place & LL) | null }, ...visit.slice(i).map(asStop)];
       const s = schedule(stops);
       const m = s.out.find((x) => x.stop.kind === "meal")!;
       const late = m.start < 11 * 60 ? (11 * 60 - m.start) * 2 : m.start > 13 * 60 ? (m.start - 13 * 60) * 2 : 0;
@@ -249,9 +258,17 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
   // 저녁에만 여는 가수 단골집: 낮 일정이 15:30 넘어 끝나고 돌아갈 시간이 넉넉하면 이른 저녁으로
   let sch = schedule(best);
   const lateOk = t.mode !== "train" || !isHHMM(t.train_return_depart) || toMin(t.train_return_depart) >= 19 * 60 + 30;
-  if (!input.lessWalk && dinnerFood.length && lateOk && sch.end >= 15 * 60 + 30) {
-    const d = nearestOrder(sch.last, dinnerFood as (Place & LL)[])[0];
-    if (d && leg(sch.last, d, maxWalk).min <= 45) { best.push({ kind: "dinner", p: d }); sch = schedule(best); }
+  // 1박이면 첫날 저녁은 숙소 근처에서 드시니 낮 일정이 짧아도 넣는다
+  if (!input.lessWalk && dinnerFood.length && lateOk && (overnight || sch.end >= 15 * 60 + 30)) {
+    // 점심에 간 곳은 빼고, 저녁에만 여는 단골집을 먼저(같은 조건이면 가까운 곳)
+    const cand = (dinnerFood as (Place & LL)[]).filter((p) => p.id !== lunchPlace?.id);
+    const dOnly = cand.filter((p) => !lunchOpen(p));
+    const d = nearestOrder(sch.last, dOnly.length ? dOnly : cand)[0];
+    if (d && d.id !== lunchPlace?.id && leg(sch.last, d, maxWalk).min <= 45) {
+      const tried = schedule([...best, { kind: "dinner", p: d }]);
+      // 저녁이 너무 늦어지면(19:30 넘게) 넣지 않는다
+      if ((tried.out.at(-1)?.start ?? 0) <= 19 * 60 + 30) { best.push({ kind: "dinner", p: d }); sch = tried; }
+    }
   }
 
   // 4) 일정 항목
@@ -295,8 +312,16 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
         parent_text: `${p.description_ko || p.name}.${legText(lg, prevName, rough)} ${p.category === "restaurant" ? "가게 앞에서 사진 한 장 남기세요. 출출하시면 간단히 드셔도 좋아요." : p.category === "cafe" ? "앉아서 차 한잔하며 쉬어 가세요." : "사진 한 장 남기세요."}`,
         done_label: "다녀왔어요", kid_note: ["팬덤 장소", moveNote, status].filter(Boolean).join(" · "), source: p.source,
       });
+    } else if (x.stop.kind === "sight" && p) {
+      const liked = (p.likes ?? []).filter((l) => likes.includes(l));
+      items.push({
+        id: nid(), start: toHHMM(x.start), end: toHHMM(x.end), type: "extra", title: `둘러보기 · ${p.name}`,
+        place_id: p.id, walk_min: lg?.mode === "walk" ? lg.min : null,
+        parent_text: `${p.description_ko || p.name}.${legText(lg, prevName, rough)} ${liked.length ? `${liked.join("·")}을 좋아하셔서 넣었어요.` : "천천히 둘러보세요."}`,
+        done_label: "다녀왔어요", kid_note: ["근처 가볼 곳", liked.length ? `${liked.join("·")} 취향` : "", moveNote].filter(Boolean).join(" · "), source: p.source,
+      });
     } else if (x.stop.kind === "meal" || x.stop.kind === "dinner") {
-      const word = x.start >= 16 * 60 ? "이른 저녁" : "점심";
+      const word = x.start >= 18 * 60 ? "저녁" : x.start >= 16 * 60 ? "이른 저녁" : "점심";
       const unfit = p && p === lunchFanUnfit;
       items.push({
         id: nid(), start: toHHMM(x.start), end: toHHMM(x.end), type: "meal", title: p ? `${word} · ${p.name}` : `${word} 식사`,
@@ -322,17 +347,38 @@ export function buildPilgrimPlan(input: PilgrimInput): Plan {
     items.push({ id: nid(), start: toHHMM(m), end: toHHMM(m + 5), type: "medicine", title: "약 드실 시간", place_id: null, walk_min: null, parent_text: "챙겨 오신 약을 드세요.", done_label: "약 먹었어요", kid_note: "", source: "user_input" });
   }
   // 1박이고 숙소를 넣었으면: 마지막은 귀가 대신 숙소 체크인
-  const stay = t.stay === "overnight" && (t.stay_name || t.stay_link) ? (t.stay_name || "숙소") : null;
+  const stay = overnight ? (t.stay_name || "숙소") : null;
   if (stay) {
-    const at = Math.max(sch.end + 20, 15 * 60);
     const url = stayLink(t);
-    items.push({
-      id: nid(), start: toHHMM(at), end: toHHMM(at + 30), type: "extra", title: `숙소 체크인 · ${stay}`,
-      place_id: null, walk_min: null,
-      parent_text: `${stay}에 가서 체크인하고 짐 푸세요. 오늘 푹 쉬세요.`,
-      done_label: "체크인했어요", kid_note: "1박", source: "user_input",
-      ...(url ? { link: { label: "🧭 숙소 길찾기 (카카오맵)", url } } : {}),
-    });
+    const link = url ? { link: { label: "🧭 숙소 길찾기 (카카오맵)", url } } : {};
+    const din = sch.out.find((x) => x.stop.kind === "dinner");
+    const preEnd = Math.max(T0 + 10, ...sch.out.filter((x) => x !== din).map((x) => x.end));
+    if (din && din.start - preEnd >= 90) {
+      // 저녁까지 시간이 많이 남으면: 먼저 체크인해서 쉬셨다가 저녁 먹고 숙소로
+      const at = Math.min(Math.max(preEnd + 20, 15 * 60), din.start - 60);
+      items.push({
+        id: nid(), start: toHHMM(at), end: toHHMM(at + 30), type: "extra", title: `숙소 체크인 · ${stay}`,
+        place_id: null, walk_min: null,
+        parent_text: `${stay}에 먼저 체크인하고 짐 푸세요. 저녁 전까지 숙소에서 푹 쉬세요.`,
+        done_label: "체크인했어요", kid_note: "1박 · 저녁 전 휴식", source: "user_input", ...link,
+      });
+      const dm = items.find((i) => i.type === "meal" && i.start === toHHMM(din.start));
+      if (dm && din.stop.p) dm.parent_text = `${din.stop.p.description_ko || din.stop.p.name}. 숙소에서 택시나 차로 이동하세요.`;
+      const back = din.end + 5;
+      items.push({
+        id: nid(), start: toHHMM(back), end: toHHMM(back + 30), type: "extra", title: `숙소로 · ${stay}`,
+        place_id: null, walk_min: null, parent_text: "저녁 드시고 숙소로 돌아가 푹 쉬세요. 내일 아침은 천천히 시작해요.",
+        done_label: "숙소에 왔어요", kid_note: "1박", source: "user_input", ...link,
+      });
+    } else {
+      const at = Math.max(sch.end + 20, 15 * 60);
+      items.push({
+        id: nid(), start: toHHMM(at), end: toHHMM(at + 30), type: "extra", title: `숙소 체크인 · ${stay}`,
+        place_id: null, walk_min: null,
+        parent_text: `${stay}에 가서 체크인하고 짐 푸세요. 오늘 푹 쉬세요.`,
+        done_label: "체크인했어요", kid_note: "1박", source: "user_input", ...link,
+      });
+    }
   }
   // 귀가
   const back = leg(sch.last, start, maxWalk);

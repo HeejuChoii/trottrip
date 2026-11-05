@@ -95,7 +95,7 @@ const REFINE_RULES = `규칙
 export function planHash(input: PlanInput, lessWalk = false): string {
   const { concert, parent, prefs, transport, seat, places } = input;
   const key = JSON.stringify({
-    v: 4, lessWalk, data: concert.pilgrim ? PILGRIM_REV : MOCK_REV,
+    v: 6, lessWalk, data: concert.pilgrim ? PILGRIM_REV : MOCK_REV,
     concert: [concert.id, concert.title, concert.date, concert.start_time, concert.est_end_time, concert.gate_map],
     places: places.map((p) => `${p.id}:${p.updated_at}`).sort(),
     parent, prefs, transport, seat,
