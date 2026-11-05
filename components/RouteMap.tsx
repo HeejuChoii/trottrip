@@ -11,6 +11,19 @@ export type { Stop };
 /** 번호 핀을 선으로 이은 지도 상자(자녀 동선 지도·부모님 여행 일정에서 같이 쓴다) */
 export function RouteMapBox({ stops, kakaoKey, height = "62vh" }: { stops: Stop[]; kakaoKey: string; height?: string }) {
   const box = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<any>(null);
+  // 일정 목록에서 장소를 누르면(FocusStop) 그 핀으로 지도를 옮기고 확대한다
+  useEffect(() => {
+    const on = (e: Event) => {
+      const { lat, lng } = (e as CustomEvent<{ lat: number; lng: number }>).detail;
+      const k = (window as any).kakao?.maps;
+      if (!k || !mapRef.current) return;
+      mapRef.current.setLevel(4);
+      mapRef.current.panTo(new k.LatLng(lat, lng));
+    };
+    window.addEventListener("tt:focus-stop", on);
+    return () => window.removeEventListener("tt:focus-stop", on);
+  }, []);
   const [ok, setOk] = useState<boolean | null>(kakaoKey ? null : false);
 
   useEffect(() => {
@@ -30,6 +43,7 @@ export function RouteMapBox({ stops, kakaoKey, height = "62vh" }: { stops: Stop[
         new k.CustomOverlay({ map, position: pos, content: el, yAnchor: 1, zIndex: 2 });
       }
       if (stops.length > 1) map.setBounds(bounds, 60, 40, 60, 40);
+      mapRef.current = map;
       setOk(true);
     });
     if ((window as any).kakao?.maps) return init();
@@ -40,7 +54,7 @@ export function RouteMapBox({ stops, kakaoKey, height = "62vh" }: { stops: Stop[
   }, [kakaoKey, stops]);
 
   if (ok === false) return null;
-  return <div ref={box} className="mapbox" style={{ height }} role="application" aria-label="일정 순서 지도" />;
+  return <div ref={box} id="route-map" className="mapbox" style={{ height, scrollMarginTop: 12 }} role="application" aria-label="일정 순서 지도" />;
 }
 
 export default function RouteMap({ kidToken, title, stops, kakaoKey }: { kidToken: string; title: string; stops: Stop[]; kakaoKey: string }) {
@@ -58,5 +72,20 @@ export default function RouteMap({ kidToken, title, stops, kakaoKey }: { kidToke
         {!stops.length && <p className="note">아직 좌표가 있는 장소가 없어요.</p>}
       </div>
     </main>
+  );
+}
+
+/** 일정 칸: 누르면 위 지도로 올라가 그 장소 핀을 크게 보여 준다(지도가 없으면 카카오맵으로) */
+export function FocusStop({ lat, lng, name, className, children }: { lat: number; lng: number; name: string; className?: string; children: React.ReactNode }) {
+  return (
+    <button type="button" className={className} style={{ textAlign: "left", width: "100%", font: "inherit", color: "inherit", cursor: "pointer" }} aria-label={`${name} 지도에서 보기`} onClick={() => {
+      const el = document.getElementById("route-map");
+      if (!el) { window.open(`https://map.kakao.com/link/map/${encodeURIComponent(name)},${lat},${lng}`, "_blank", "noopener"); return; }
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      window.dispatchEvent(new CustomEvent("tt:focus-stop", { detail: { lat, lng } }));
+    }}>
+      {children}
+      <small style={{ color: "var(--deep)", fontWeight: 700, marginTop: 4 }}>📍 지도에서 보기</small>
+    </button>
   );
 }
