@@ -1,18 +1,20 @@
 // POST /api/community/{id} — 댓글 달기 {action:"comment", body} · 좋아요 {action:"like"} · 투표 {action:"vote", option}
 import { addFanComment, getFanPost, reportFanPost, toggleFanLike, votePoll } from "@/lib/db";
-import { mockPosts, PHOTO_URL_RE } from "@/lib/community";
+import { findMockPost, mockKey, PHOTO_URL_RE } from "@/lib/community";
 import { getFanUser } from "@/lib/fanauth";
 import { bad, body, ok } from "@/lib/http";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+  const { id: raw } = await params;
+  // 목데이터 글은 공개 주소(UUID)로 오지만 댓글·좋아요·투표는 "mock-N" 키로 저장한다
+  const id = mockKey(raw) ?? raw;
   const user = await getFanUser();
   if (!user) return bad("로그인이 필요해요", 401);
   const b = await body<{ action?: string; body?: string; option?: number; images?: unknown }>(req);
   if (b.action === "like") return ok(await toggleFanLike(id, user.id));
   if (b.action === "report") return ok(await reportFanPost(id, user.id, String(b.body ?? "").slice(0, 100)));
   if (b.action === "vote") {
-    const post = id.startsWith("mock-") ? mockPosts().find((p) => p.id === id) : await getFanPost(id);
+    const post = id.startsWith("mock-") ? findMockPost(id) : await getFanPost(id);
     const i = Number(b.option);
     if (!post?.poll || !Number.isInteger(i) || i < 0 || i >= post.poll.length) return bad("투표할 수 없는 글이에요");
     return ok(await votePoll(id, user.id, i));

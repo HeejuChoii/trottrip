@@ -60,16 +60,34 @@ export const PHOTO_URL_RE = /^(https:\/\/[\w.-]+\/storage\/v1\/object\/public\/c
 type MockPost = Omit<FanPost, "id" | "created_at" | "author_id" | "comments" | "mock"> & { hours_ago: number; comments?: { author_name: string; body: string; images?: string[] }[] };
 const M = (mock as { posts: MockPost[] }).posts;
 
+/** 목데이터 글 주소: 실제 글처럼 보이는 고정 UUID. 저장(댓글·좋아요·투표)은 예전처럼 "mock-N" 키로 한다 */
+function fnv(t: string): number { let h = 0x811c9dc5; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h >>> 0; }
+function mockPublicId(i: number): string {
+  const hex = [0, 1, 2, 3].map((k) => fnv(`trottrip-post:${i}:${k}`).toString(16).padStart(8, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-${"89ab"[parseInt(hex[16], 16) % 4]}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
+const MOCK_IDS = M.map((_, i) => mockPublicId(i + 1));
+/** 공개 주소(UUID)나 예전 "mock-N" → 저장 키 "mock-N". 목데이터 글이 아니면 null */
+export function mockKey(id: string): string | null {
+  if (/^mock-\d+$/.test(id)) return Number(id.slice(5)) >= 1 && Number(id.slice(5)) <= M.length ? id : null;
+  const i = MOCK_IDS.indexOf(id);
+  return i < 0 ? null : `mock-${i + 1}`;
+}
+/** 저장 키 "mock-N" → 공개 주소 */
+export const mockPublicFor = (key: string) => MOCK_IDS[Number(key.replace("mock-", "")) - 1] ?? key;
+
 /** 목데이터 글(시연용). 시각은 지금 기준 몇 시간 전으로 */
 export function mockPosts(now = Date.now()): FanPost[] {
   return M.map((p, i) => ({
-    id: `mock-${i + 1}`, artist: p.artist, category: p.category, title: p.title, body: p.body, author_id: `mock-${p.author_name}`,
+    id: MOCK_IDS[i], artist: p.artist, category: p.category, title: p.title, body: p.body, author_id: `mock-${p.author_name}`,
     author_name: p.author_name, likes: p.likes, comments: p.comments?.length ?? 0, ...(p.images ? { images: p.images } : {}), created_at: new Date(now - p.hours_ago * 3600000).toISOString(), mock: true,
     ...(p.poll ? { poll: p.poll } : {}),
   }));
 }
+export const findMockPost = (id: string) => { const k = mockKey(id); return k ? mockPosts()[Number(k.slice(5)) - 1] ?? null : null; };
 export function mockComments(postId: string, now = Date.now()): FanComment[] {
-  const i = Number(postId.replace("mock-", "")) - 1;
+  const key = mockKey(postId);
+  const i = key ? Number(key.slice(5)) - 1 : -1;
   const p = M[i];
   const cs = p?.comments ?? [];
   // 댓글 시각: 글 올린 뒤부터 지금 사이에 들쭉날쭉 퍼뜨린다(전부 '방금'이면 수상해 보여서). 글마다 같은 값이 나오게 고정
