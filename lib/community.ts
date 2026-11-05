@@ -29,6 +29,18 @@ export function artistPhoto(name: string): string | null {
 /** 가수 상관없이 이야기하는 트롯 수다방(라운지 홈 + /fan/all 게시판) */
 export const ALL_SLUG = "all";
 export const TALK_BOARD: FanArtist = { slug: ALL_SLUG, name: "트롯 수다방", fandom: "", color: "#14C1AD" };
+/** 가수를 부르는 말(이름·애칭). 수다방 글 중 한 가수만 이야기하는 글은 그 가수 라운지에도 보여 준다 */
+const ALIASES: Record<string, string[]> = {
+  "lim-youngwoong": ["임영웅", "영웅이", "영웅님", "웅이", "영웅시대"], "lee-chanwon": ["이찬원", "찬원", "찬또"],
+  "park-seojin": ["박서진", "닻별"], "song-gain": ["송가인", "가인님", "어게인"], youngtak: ["영탁"],
+  "lee-seungchul": ["이승철", "승철"], "kim-gunmo": ["김건모", "건모"], "cho-yongpil": ["조용필", "용필", "가왕"],
+};
+/** 수다방 글이 이야기하는 가수(딱 한 명일 때만). 없거나 여럿이면 null */
+export function talkArtist(p: Pick<FanPost, "title" | "body">): string | null {
+  const t = `${p.title} ${p.body}`;
+  const hit = Object.entries(ALIASES).filter(([, ws]) => ws.some((w) => t.includes(w))).map(([slug]) => slug);
+  return hit.length === 1 ? hit[0] : null;
+}
 /** 글 시각 비교(DB·목데이터 시각 형식이 달라도 맞게) */
 export const byNewest = (a: { created_at: string }, b: { created_at: string }) => Date.parse(b.created_at) - Date.parse(a.created_at);
 

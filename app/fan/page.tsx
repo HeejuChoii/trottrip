@@ -38,8 +38,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ l
       </div>
       <div className="qhead"><span className="lab" style={{ margin: 0 }}>💬 트롯 수다방 · 댓글로 답해 주세요</span><Link href={`/fan/${ALL_SLUG}`} style={{ fontSize: 14, fontWeight: 700, color: "var(--deep)", textDecoration: "none" }}>전체 보기 ›</Link></div>
       {talk.map((p) => <PostCard key={p.id} p={p} showArtist />)}
-      {user && <WriteForm artist={ALL_SLUG} defaultCategory="질문·투표" />}
-      <span className="lab" style={{ margin: "8px 0 -4px" }}>지금 팬들은요</span>
+      {user && <WriteForm artist={ALL_SLUG} defaultCategory="질문·투표" pickArtist />}
+      <span className="lab" style={{ margin: "8px 0 -4px" }}>가수별 라운지 새 글</span>
       {feed.map((p) => <PostCard key={p.id} p={p} showArtist />)}
       <SiteFooter />
       <HomeTabs />

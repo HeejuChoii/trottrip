@@ -2,10 +2,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { postJSON } from "@/lib/client";
-import { POST_CATEGORIES } from "@/lib/community";
+import { ALL_SLUG, FAN_ARTISTS, POST_CATEGORIES } from "@/lib/community";
 import { uploadPhoto } from "@/lib/photo";
 
-export default function WriteForm({ artist, defaultCategory }: { artist: string; defaultCategory: string }) {
+export default function WriteForm({ artist: fixed, defaultCategory, pickArtist = false }: { artist: string; defaultCategory: string; pickArtist?: boolean }) {
+  // 라운지 홈에서 쓰면 어디에 올릴지 고른다(수다방 또는 가수 라운지)
+  const [artist, setArtist] = useState(fixed);
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState(defaultCategory);
@@ -40,6 +42,16 @@ export default function WriteForm({ artist, defaultCategory }: { artist: string;
         router.push(`/fan/post/${r.post.id}`);
       } catch (x) { setErr(x instanceof Error ? x.message : "올리지 못했어요"); setBusy(false); }
     }}>
+      {pickArtist && (
+        <>
+          <b style={{ fontSize: 15 }}>어디에 올릴까요?</b>
+          <div className="chips">
+            <button type="button" className="chip" aria-pressed={artist === ALL_SLUG} onClick={() => setArtist(ALL_SLUG)}>트롯 수다방</button>
+            {FAN_ARTISTS.map((a) => <button key={a.slug} type="button" className="chip" aria-pressed={artist === a.slug} onClick={() => setArtist(a.slug)}>{a.name}</button>)}
+          </div>
+          {artist === ALL_SLUG && category === "팬덤 스팟 여행" && <small style={{ color: "var(--sub)" }}>가수를 고르면 그 가수 라운지 &apos;팬덤 스팟 여행&apos;에도 모여요.</small>}
+        </>
+      )}
       <div className="chips">{POST_CATEGORIES.map((k) => <button key={k} type="button" className="chip" aria-pressed={category === k} onClick={() => setCategory(k)}>{k}</button>)}</div>
       <input className="inp" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="제목" maxLength={60} />
       <textarea className="inp" rows={5} value={body} onChange={(e) => setBody(e.target.value)} placeholder={category === "질문·투표" ? "팬들에게 묻고 싶은 걸 써 주세요. 예) 여러분의 입덕곡은? 저는 ○○예요" : category === "팬덤 스팟 여행" ? "어디를 다녀오셨어요? 가는 법·맛집 팁도 나눠 주세요" : category === "스밍 인증" ? "오늘 몇 번 들으셨어요?" : "자유롭게 나눠 주세요"} maxLength={2000} />
