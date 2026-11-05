@@ -1,5 +1,6 @@
-// POST /api/community/{id} — 댓글 달기 {action:"comment", body} · 좋아요 {action:"like"}
-import { addFanComment, reportFanPost, toggleFanLike } from "@/lib/db";
+// POST /api/community/{id} — 댓글 달기 {action:"comment", body} · 좋아요 {action:"like"} · 투표 {action:"vote", option}
+import { addFanComment, getFanPost, reportFanPost, toggleFanLike, votePoll } from "@/lib/db";
+import { mockPosts } from "@/lib/community";
 import { getFanUser } from "@/lib/fanauth";
 import { bad, body, ok } from "@/lib/http";
 
@@ -7,9 +8,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const user = await getFanUser();
   if (!user) return bad("로그인이 필요해요", 401);
-  const b = await body<{ action?: string; body?: string }>(req);
+  const b = await body<{ action?: string; body?: string; option?: number }>(req);
   if (b.action === "like") return ok(await toggleFanLike(id, user.id));
   if (b.action === "report") return ok(await reportFanPost(id, user.id, String(b.body ?? "").slice(0, 100)));
+  if (b.action === "vote") {
+    const post = id.startsWith("mock-") ? mockPosts().find((p) => p.id === id) : await getFanPost(id);
+    const i = Number(b.option);
+    if (!post?.poll || !Number.isInteger(i) || i < 0 || i >= post.poll.length) return bad("투표할 수 없는 글이에요");
+    return ok(await votePoll(id, user.id, i));
+  }
   if (b.action === "comment") {
     const text = String(b.body ?? "").trim().slice(0, 500);
     if (!text) return bad("댓글을 써 주세요");

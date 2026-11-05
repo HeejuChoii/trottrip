@@ -220,3 +220,11 @@ details[open] .sum-more { display: none; }
 .pfoot { font-size: 13px; color: var(--sub); }
 .agrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .agrid a { display: flex; flex-direction: column; align-items: center; gap: 6px; text-decoration: none; color: var(--ink); font-size: 14px; font-weight: 700; }
+/* 팬 라운지 투표 */
+.poll { display: flex; flex-direction: column; gap: 8px; }
+.popt { position: relative; overflow: hidden; display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; min-height: 48px; padding: 10px 14px; border: 1.5px solid var(--line, #e5e5ea); border-radius: 12px; background: #fff; font: inherit; font-size: 16px; text-align: left; color: #111; cursor: pointer; }
+.popt[aria-pressed="true"] { border-color: var(--accent); font-weight: 700; }
+.popt .pbar { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--accent) 35%, transparent); z-index: 0; transition: width .3s; }
+.popt .plabel, .popt .ppct { position: relative; z-index: 1; }
+.popt .ppct { font-weight: 700; font-size: 15px; }
+.qhead { display: flex; justify-content: space-between; align-items: baseline; margin: 8px 0 -4px; }
