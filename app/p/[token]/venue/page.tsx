@@ -50,7 +50,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
     const multi = items.some((i) => (i.day ?? 1) > 1);
     return (
       <main className="shell pv">
-        <div className="top"><Link className="back" href={`/p/${token}`} style={{ fontSize: 18 }}>← 지금 할 일로</Link></div>
+        <div className="top"><Link className="back" href={`/p/${token}`} style={{ fontSize: 18 }}>← 안내장으로</Link></div>
         <h1 className="h">{concert.artist_display} 팬덤 여행 일정</h1>
         <p className="hello">{fmtDateLongKo(concert.date)} · {concert.city}</p>
         <RouteMapBox stops={routeStops(d)} kakaoKey={process.env.NEXT_PUBLIC_KAKAO_JS_KEY ?? ""} height="42vh" />
@@ -87,7 +87,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
 
   return (
     <main className="shell pv">
-      <div className="top"><Link className="back" href={`/p/${token}`} style={{ fontSize: 18 }}>← 일정으로</Link></div>
+      <div className="top"><Link className="back" href={`/p/${token}`} style={{ fontSize: 18 }}>← 안내장으로</Link></div>
       <h1 className="h">공연장 · 내 티켓</h1>
       <p className="hello">{concert.title}<br />{fmtDateLongKo(concert.date)} {fmtTimeKo(concert.start_time)} · {concert.venue_name}</p>
       <div className="seat">

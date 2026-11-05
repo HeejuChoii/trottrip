@@ -147,7 +147,7 @@ export default function ParentMap(p: Props) {
 
   return (
     <main className="shell pv">
-      <div className="top"><Link className="back" href={`/p/${p.token}`} style={{ fontSize: 18 }}>← 일정으로</Link></div>
+      <div className="top"><Link className="back" href={`/p/${p.token}`} style={{ fontSize: 18 }}>← 안내장으로</Link></div>
       {t ? (
         <div className="next" style={{ padding: "14px 16px" }}>
           <div className="k">{p.focus ? "찾는 곳" : "다음 장소"}</div>
