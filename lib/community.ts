@@ -30,6 +30,11 @@ export interface FanPost {
   comments: number;
   created_at: string;
   mock?: boolean;
+  /** 사진 주소(최대 4장) */
+  images?: string[];
+  /** 관리자가 숨긴 글 / 신고 수 */
+  hidden?: boolean;
+  reports?: number;
 }
 export interface FanComment { id: string; post_id: string; author_id: string; author_name: string; body: string; created_at: string }
 

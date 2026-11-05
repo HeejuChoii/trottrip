@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Brand from "@/components/Brand";
 import HomeTabs from "@/components/HomeTabs";
+import SiteFooter from "@/components/SiteFooter";
 import ArtistAvatar from "@/components/fan/ArtistAvatar";
 import LoginBar from "@/components/fan/LoginBar";
 import PostCard from "@/components/fan/PostCard";
@@ -31,6 +32,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ l
       </div>
       <span className="lab" style={{ margin: "8px 0 -4px" }}>지금 팬들은요</span>
       {feed.map((p) => <PostCard key={p.id} p={p} showArtist />)}
+      <SiteFooter />
       <HomeTabs />
     </main>
   );

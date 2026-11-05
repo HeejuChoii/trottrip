@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import HomeTabs from "@/components/HomeTabs";
+import SiteFooter from "@/components/SiteFooter";
 import PostActions from "@/components/fan/PostActions";
 import { artistBySlug, mockComments, mockPosts, timeAgo } from "@/lib/community";
 import { getFanPost, likedFanPosts, listFanComments } from "@/lib/db";
@@ -25,8 +26,17 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       <span className="tag pk" style={{ alignSelf: "flex-start" }}>{post.category}</span>
       <h1 className="h" style={{ fontSize: 22 }}>{post.title}</h1>
       <p className="lead" style={{ margin: 0 }}>{post.author_name} · {timeAgo(post.created_at)}</p>
-      <div className="card" style={{ fontSize: 17, lineHeight: 1.65, whiteSpace: "pre-wrap" }}>{post.body}</div>
+      {post.hidden ? (
+        <div className="card" style={{ fontSize: 16, color: "var(--sub)" }}>신고가 접수돼 운영자가 확인 중인 글이에요.</div>
+      ) : (
+        <>
+          <div className="card" style={{ fontSize: 17, lineHeight: 1.65, whiteSpace: "pre-wrap" }}>{post.body}</div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {(post.images ?? []).map((u) => <img key={u} src={u} alt="첨부 사진" style={{ width: "100%", borderRadius: 14, display: "block" }} />)}
+        </>
+      )}
       <PostActions id={id} likes={likes} liked={liked} comments={comments.map((c) => ({ id: c.id, author_name: c.author_name, body: c.body, ago: timeAgo(c.created_at) }))} loggedIn={!!user} kakao={kakaoLoginReady()} />
+      <SiteFooter />
       <HomeTabs />
     </main>
   );

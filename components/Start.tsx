@@ -5,6 +5,7 @@ import Brand from "./Brand";
 import { captureSrc, ls, ss } from "@/lib/client";
 import { SHOW_PRICING } from "@/lib/flags";
 import HomeTabs from "./HomeTabs";
+import SiteFooter from "./SiteFooter";
 
 export default function Start() {
   const router = useRouter();
@@ -46,6 +47,7 @@ export default function Start() {
       <button className="cta acc" style={{ fontSize: 16.5, letterSpacing: "-.02em" }} onClick={() => start(true)}>공연 없이 팬덤 스팟(성지순례) 여행 선물하기</button>
       <p className="fine" style={{ marginTop: -4 }}>가수가 다녀간 식당·여행지를 하루 코스로 · 이번 주말 선물로</p>
       <p className="fine">로그인 없이 바로 시작해요.{SHOW_PRICING ? " 해커톤 기간 얼리버드는 무료예요." : ""}</p>
+      <SiteFooter />
       <HomeTabs />
       {ask && (
         <div className="modal-bg" role="dialog" aria-modal="true" aria-label="누가 쓰시나요">
