@@ -12,11 +12,33 @@ export function kmBetween(a: LL, b: LL): number {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-/** 역 → 목적지: 택시 분, 대중교통 분(근사). 도로는 직선의 1.3배, 시내 택시 22km/h·지하철 버스는 그보다 1.5배 + 갈아타기 10분 */
-export function cityLeg(a: LL, b: LL): { taxi: number; transit: number; km: number } {
+/** GTX-A(운정중앙~서울역 구간): 서울역에서 몇 분인지(근사). 역 근처(1.5km)끼리면 GTX로 계산한다 */
+const GTX_A = [
+  { name: "서울역", lat: 37.5547, lng: 126.9707, min: 0 }, { name: "연신내역", lat: 37.619, lng: 126.921, min: 6 },
+  { name: "대곡역", lat: 37.6317, lng: 126.811, min: 12 }, { name: "킨텍스역", lat: 37.6716, lng: 126.7518, min: 16 },
+  { name: "운정중앙역", lat: 37.717, lng: 126.733, min: 20 },
+];
+function gtxLeg(a: LL, b: LL): { min: number; from: string; to: string; walk: number } | null {
+  const near = (p: LL) => GTX_A.map((g) => ({ g, km: kmBetween(p, g) })).sort((x, y) => x.km - y.km)[0];
+  const x = near(a), y = near(b);
+  if (x.km > 1.5 || y.km > 1.5 || x.g === y.g) return null;
+  // 어르신 걸음 시속 3.5km, 깊은 승강장 오르내리기·배차 기다림 10분
+  const walk = Math.round(((x.km + y.km) * 1.3 / 3.5) * 60);
+  return { min: Math.abs(x.g.min - y.g.min) + walk + 10, from: x.g.name, to: y.g.name, walk: Math.round((y.km * 1.3 / 3.5) * 60) };
+}
+
+/** 역 → 목적지: 택시 분, 대중교통 분(근사). 도로는 직선의 1.3배. 택시는 시내 10km까지 시속 25km, 그 뒤는 도시고속도로 시속 50km.
+ *  지하철·버스는 시속 30km + 걷기·기다림 15분. GTX-A 역끼리면 GTX로 */
+export function cityLeg(a: LL, b: LL): { taxi: number; transit: number; km: number; gtx?: { min: number; from: string; to: string; walk: number } } {
   const d = kmBetween(a, b) * 1.3;
-  const taxi = Math.max(8, Math.round(5 + (d / 22) * 60));
-  return { taxi, transit: Math.round(taxi * 1.5 + 10), km: d };
+  const taxi = Math.max(8, Math.round(5 + (Math.min(d, 10) / 25) * 60 + (Math.max(0, d - 10) / 50) * 60));
+  const subway = Math.max(15, Math.round(15 + (d / 30) * 60));
+  const gtx = gtxLeg(a, b);
+  return gtx && gtx.min < subway ? { taxi, transit: gtx.min, km: d, gtx } : { taxi, transit: subway, km: d };
+}
+/** "지하철·버스로 약 N분" 또는 "GTX-A로 약 N분(킨텍스역에서 걸어서 M분 포함)" */
+export function transitText(lg: ReturnType<typeof cityLeg>): string {
+  return lg.gtx ? `GTX-A(${lg.gtx.from}→${lg.gtx.to})로 약 ${lg.transit}분(역까지 걷는 시간 포함)` : `지하철·버스로 약 ${lg.transit}분`;
 }
 
 export function routeLink(from: { name: string } & LL, to: { name: string } & LL): string {
@@ -54,8 +76,8 @@ export function stationLegText(t: Transport, dest: { name: string; lat: number |
   if (stationLL && dest.lat != null && dest.lng != null) {
     const lg = cityLeg(stationLL, { lat: dest.lat, lng: dest.lng });
     return {
-      text: `${st}에서 ${dest.name}까지 택시로 약 ${lg.taxi}분, 지하철·버스로 약 ${lg.transit}분이에요.`,
-      note: `${st} → 택시 약 ${lg.taxi}분 · 대중교통 약 ${lg.transit}분`, min: lg.taxi + 10,
+      text: `${st}에서 ${dest.name}까지 택시로 약 ${lg.taxi}분, ${transitText(lg)}이에요.`,
+      note: `${st} → 택시 약 ${lg.taxi}분 · ${lg.gtx ? "GTX-A" : "대중교통"} 약 ${lg.transit}분`, min: Math.min(lg.taxi, lg.transit) + 10,
       link: { label: "🚇 역에서 가는 길 (카카오맵)", url: routeLink({ name: st, ...stationLL }, { name: dest.name, lat: dest.lat, lng: dest.lng }) },
     };
   }
@@ -95,7 +117,7 @@ export function buildDayTwo(o: DayTwoInput, nid: () => string): PlanItem[] {
     : o.stationLL && o.base.lat != null && o.base.lng != null
       ? (() => {
           const lg = cityLeg({ lat: o.base.lat!, lng: o.base.lng! }, o.stationLL!);
-          return { text: `${st0}까지 택시로 약 ${lg.taxi}분, 지하철·버스로 약 ${lg.transit}분이에요. 열차 20분 전에는 도착하세요.`, note: `→ ${st0} 택시 약 ${lg.taxi}분 · 대중교통 약 ${lg.transit}분`, min: lg.taxi + 10,
+          return { text: `${st0}까지 택시로 약 ${lg.taxi}분, ${transitText(lg)}이에요. 열차 20분 전에는 도착하세요.`, note: `→ ${st0} 택시 약 ${lg.taxi}분 · ${lg.gtx ? "GTX-A" : "대중교통"} 약 ${lg.transit}분`, min: Math.min(lg.taxi, lg.transit) + 10,
             link: { label: "🚇 역 가는 길 (카카오맵)", url: routeLink({ name: o.base.name, lat: o.base.lat!, lng: o.base.lng! }, { name: st0, ...o.stationLL! }) } };
         })()
       : { text: `${st0}까지 택시나 지하철로 가세요. 열차 20분 전에는 도착하세요.`, note: `→ ${st0} 이동 시간 확인 필요`, min: 50, link: undefined as { label: string; url: string } | undefined };
