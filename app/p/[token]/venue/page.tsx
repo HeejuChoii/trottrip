@@ -4,7 +4,9 @@ import { getParentData } from "../data";
 import { BottomBar } from "@/components/ParentHome";
 import { gateForSeat } from "@/lib/planner";
 import { EMPTY_TICKET } from "@/lib/schemas";
-import { fmtDateLongKo, fmtTimeKo } from "@/lib/time";
+import { absMin, addDays, fmtDateKo, fmtDateLongKo, fmtTimeKo } from "@/lib/time";
+import { RouteMapBox } from "@/components/RouteMap";
+import { routeStops } from "@/lib/stops";
 import { tipsFor } from "@/lib/text";
 import type { PlaceCategory } from "@/lib/types";
 
@@ -41,22 +43,43 @@ export default async function Page({ params }: { params: Promise<{ token: string
   const retPlace = ret?.place_id ? places.find((p) => p.id === ret.place_id) : undefined;
   const mapLink = (id?: string | null) => (id ? `/p/${token}/map?place=${encodeURIComponent(id)}&route=1` : null);
 
-  // 성지순례 여행: 공연장 대신 오늘 들르는 성지 목록
+  // 팬덤 스팟 여행: 공연장 대신 여행 전체 일정(지도 + 시간순 일정, 자녀 화면과 같은 흐름을 큰 글씨로)
   if (concert.pilgrim) {
-    const order = trip.plan!.items.filter((i) => i.place_id);
-    const spots = order.map((i) => ({ it: i, p: places.find((p) => p.id === i.place_id) })).filter((x) => x.p && x.p.origin === "concertrip");
+    const items = [...trip.plan!.items].sort((x, y) => absMin(x) - absMin(y));
+    const byId = new Map(places.map((p) => [p.id, p]));
+    const multi = items.some((i) => (i.day ?? 1) > 1);
     return (
       <main className="shell pv">
-        <div className="top"><Link className="back" href={`/p/${token}`} style={{ fontSize: 18 }}>← 일정으로</Link></div>
-        <h1 className="h">오늘 들르는 {concert.artist_display} 스팟</h1>
-        <p className="hello">{concert.artist_display} · {concert.city}</p>
-        {spots.map(({ it, p }, n) => (
-          <Link key={it.id} className="card" href={`/p/${token}/map?place=${encodeURIComponent(p!.id)}`} style={{ textDecoration: "none", color: "inherit", display: "flex", gap: 12, alignItems: "center" }}>
-            <b style={{ fontSize: 22, color: "var(--purpleD)", minWidth: 22 }}>{n + 1}</b>
-            <span style={{ fontSize: 19, lineHeight: 1.4 }}><b>{p!.name.replace(/\s*\(.*\)$/, "")}</b><br /><small style={{ fontSize: 16, color: "var(--sub)" }}>{shortDesc(p!.description_ko, 26)} · {it.start}</small></span>
-          </Link>
-        ))}
-        <p className="note">콘서트립 팬덤 스팟 정보예요. 영업시간·휴무일을 반영해 짰어요.</p>
+        <div className="top"><Link className="back" href={`/p/${token}`} style={{ fontSize: 18 }}>← 지금 할 일로</Link></div>
+        <h1 className="h">{concert.artist_display} 팬덤 여행 일정</h1>
+        <p className="hello">{fmtDateLongKo(concert.date)} · {concert.city}</p>
+        <RouteMapBox stops={routeStops(d)} kakaoKey={process.env.NEXT_PUBLIC_KAKAO_JS_KEY ?? ""} height="42vh" />
+        <div className="tl">
+          {items.map((it, idx) => {
+            const p = it.place_id ? byId.get(it.place_id) : undefined;
+            const day = it.day ?? 1;
+            const head = multi && (idx === 0 || (items[idx - 1].day ?? 1) !== day);
+            const fan = !!p && !!p.fan_type && p.fan_type !== "none";
+            const box = (
+              <>
+                <b>{it.title.replace(/\s*\(.*\)$/, "")}</b>
+                <small>{[it.walk_min != null ? `걸어서 ${it.walk_min}분` : null, `${it.start}~${it.end}`].filter(Boolean).join(" · ")}</small>
+                {it.parent_text && <small>{it.parent_text}</small>}
+              </>
+            );
+            return (
+              <div key={it.id} style={{ display: "contents" }}>
+                {head && <div className="lab" style={{ margin: "12px 0 2px", fontSize: 16, color: "var(--pinkD)" }}>{day === 1 ? "첫째 날" : "둘째 날"} · {fmtDateKo(addDays(concert.date, day - 1))}</div>}
+                <div className={`ti ${fan ? "pk" : ""}`}>
+                  <div className="t">{it.start}</div>
+                  <div className="dot" />
+                  {p ? <Link className="box" href={`/p/${token}/map?place=${encodeURIComponent(p.id)}`} style={{ textDecoration: "none", color: "inherit", display: "block" }}>{box}</Link> : <div className="box">{box}</div>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <p className="note">장소를 누르면 지도에서 볼 수 있어요. 영업시간·휴무일을 반영해 짰어요.</p>
         <BottomBar token={token} pilgrim current="venue" />
       </main>
     );

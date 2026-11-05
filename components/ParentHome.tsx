@@ -17,12 +17,14 @@ interface Props {
   kidLabel: string;
   done: string[];
   opened: boolean;
-  placeNames: Record<string, { name: string; walk: number | null; lat?: number | null; lng?: number | null }>;
+  placeNames: Record<string, { name: string; walk: number | null; lat?: number | null; lng?: number | null; fan?: boolean }>;
   stepsLine: string;
   kit: string[];
   concertLine: string; // "코엑스 D홀 · 오후 5시 시작"
   /** 공연 없는 성지순례 여행 */
   pilgrim?: boolean;
+  /** 가수 이름(팬덤 스팟 여행 버튼 문구) */
+  artist?: string;
   /** 공연(또는 가수) 포스터 이미지 */
   poster?: string | null;
 }
@@ -55,7 +57,7 @@ export function BottomBar({ token, pilgrim, current }: { token: string; pilgrim?
       <nav className="bbar" aria-label="부모님 메뉴">
         <Link href={`/p/${token}`} className={current === "home" ? "on" : ""}>일정</Link>
         <Link href={`/p/${token}/map`} className={current === "map" ? "on" : ""}>지도</Link>
-        <Link href={`/p/${token}/venue`} className={current === "venue" ? "on" : ""}>{pilgrim ? "팬덤 스팟" : "공연장·티켓"}</Link>
+        <Link href={`/p/${token}/venue`} className={current === "venue" ? "on" : ""}>{pilgrim ? "여행 일정" : "공연장·티켓"}</Link>
       </nav>
     </>
   );
@@ -75,6 +77,11 @@ function Actions({ it, place, token }: { it: PlanItem; place?: { name: string; l
       {it.place_id && ll && !taxi && <Link className="actbtn" href={`/p/${token}/map?place=${encodeURIComponent(it.place_id)}&route=1`}>🧭 길찾기</Link>}
     </div>
   );
+}
+
+/** 핑크 카드: 굿즈·포토존·입장, 그리고 가수가 다녀간 곳(팬덤 스팟·가수 방문 식당)이면 종류와 상관없이 */
+function isPink(it: PlanItem, places: Props["placeNames"]) {
+  return it.type === "goods" || it.type === "photo" || it.type === "enter" || it.type === "show" || (!!it.place_id && !!places[it.place_id]?.fan);
 }
 
 function mainTitle(it: PlanItem) {
@@ -172,7 +179,7 @@ export default function ParentHome(p: Props) {
           <b>🎒 챙기실 것</b><br />{p.kit.join(" · ")}
         </div>
         <div className="ai"><p style={{ marginTop: 0 }}>{DAY} 이 링크를 열면 <b>지금 할 일</b>을 하나씩 알려 드려요. 앱 설치는 필요 없어요.</p></div>
-        <Link href={`/p/${token}/venue`} className="bigbtn line">{p.pilgrim ? "📍 오늘 갈 팬덤 스팟 보기" : "🎫 내 티켓·공연장 보기"}</Link>
+        <Link href={`/p/${token}/venue`} className="bigbtn line">{p.pilgrim ? `📍 ${p.artist ?? ""} 팬덤 여행 일정 보기`.replace("  ", " ") : "🎫 내 티켓·공연장 보기"}</Link>
         <button className="bigbtn pk" style={{ fontSize: 19, padding: 14 }} onClick={() => setPreview(true)}>{DAY} 화면 미리 보기</button>
       </main>
     );
@@ -245,7 +252,7 @@ export default function ParentHome(p: Props) {
       {list.map((i) => {
         const past = done.has(i.id) || (rel === "today" && absEnd(i) <= minNow && i.type !== "return") || rel === "after";
         return (
-          <div key={i.id} className={`mi ${past ? "past" : ""} ${i.type === "goods" || i.type === "photo" || i.type === "enter" ? "pk" : ""}`}>
+          <div key={i.id} className={`mi ${past ? "past" : ""} ${isPink(i, p.placeNames) ? "pk" : ""}`}>
             <span>{mainTitle(i)}</span><b>{done.has(i.id) ? "완료" : `${dayPre(i)}${fmtShort(i.start)}`}</b>
           </div>
         );
@@ -254,7 +261,7 @@ export default function ParentHome(p: Props) {
   ) : null;
   const curPlace = cur.place_id ? p.placeNames[cur.place_id] : undefined;
   const started = rel === "today" && absMin(cur) <= minNow;
-  const pink = cur.type === "goods" || cur.type === "photo";
+  const pink = isPink(cur, p.placeNames);
 
   return (
     <main className="shell pv">

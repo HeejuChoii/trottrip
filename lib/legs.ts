@@ -132,7 +132,13 @@ export function buildDayTwo(o: DayTwoInput, nid: () => string): PlanItem[] {
   };
   if (picks[0]) visit(picks[0]);
   if (c + lunchLen <= leaveBy) {
-    const r = o.places.find((p) => p.category === "restaurant" && !o.used.has(p.id) && restaurantMatches(p, o.parent));
+    // 둘째 날 점심: 첫날 못 간 가수 단골집(숙소에서 20km 안)을 먼저, 없으면 숙소·역 근처 식당
+    const pool = o.places.filter((p) => p.category === "restaurant" && !o.used.has(p.id) && restaurantMatches(p, o.parent));
+    const here = anchor ?? baseLL;
+    const dist = (p: Place) => (here && p.lat != null && p.lng != null ? kmBetween(here, { lat: p.lat, lng: p.lng }) : 99);
+    const r = pool.filter((p) => p.fan_type && p.fan_type !== "none" && near(p, baseLL, 20)).sort((a, b) => dist(a) - dist(b))[0]
+      ?? pool.filter((p) => !p.fan_type || p.fan_type === "none").sort((a, b) => dist(a) - dist(b))[0]
+      ?? pool[0];
     if (r) o.used.add(r.id);
     const start = Math.max(c, 11 * 60 + 30);
     if (start + lunchLen <= leaveBy) {
