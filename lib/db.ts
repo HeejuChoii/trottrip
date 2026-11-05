@@ -62,7 +62,9 @@ interface LocalDB {
   community_posts?: FanPost[];
   community_comments?: FanComment[];
   community_likes?: { post_id: string; author_id: string }[];
+  community_members?: FanMember[];
 }
+export interface FanMember { id: string; name: string; provider: string; logins: number; first_at: string; last_at: string }
 
 export interface UsageRow { id: string; kind: string; model: string; input_tokens: number; output_tokens: number; cost_usd: number; created_at: string }
 
@@ -604,4 +606,56 @@ export async function votePoll(postId: string, authorId: string, i: number): Pro
     await flush();
   }
   return pollVotes(postId, authorId);
+}
+
+// ---------- 팬 라운지 가입자 ----------
+/** 로그인할 때마다 기록: 처음이면 가입, 아니면 최근 접속·이름·횟수만 바꾼다. 0010 SQL 전이면 조용히 넘어간다 */
+export async function recordFanMember(u: { id: string; name: string }): Promise<void> {
+  const now = new Date().toISOString();
+  const provider = u.id.split(":")[0] || "guest";
+  const s = supa();
+  try {
+    if (s) {
+      const r = await s.from("community_members").select("logins").eq("id", u.id).maybeSingle();
+      if (r.error) throw new Error(r.error.message);
+      if (r.data) must(await s.from("community_members").update({ name: u.name, last_at: now, logins: (r.data as { logins: number }).logins + 1 }).eq("id", u.id));
+      else must(await s.from("community_members").insert({ id: u.id, name: u.name, provider, logins: 1, first_at: now, last_at: now }));
+      return;
+    }
+    const db = await local();
+    const list = (db.community_members ??= []);
+    const m = list.find((x) => x.id === u.id);
+    if (m) { m.name = u.name; m.last_at = now; m.logins += 1; } else list.push({ id: u.id, name: u.name, provider, logins: 1, first_at: now, last_at: now });
+    await flush();
+  } catch (e) { console.warn("[members] 기록 실패(0010 SQL 실행 전일 수 있어요):", e instanceof Error ? e.message : e); }
+}
+
+export interface MemberRow extends FanMember { posts: number; comments: number; recorded: boolean }
+/** 운영자: 가입자 목록(최근 가입 순) + 글·댓글 수. 가입 기록 전(0010 SQL 전)에 글·댓글을 쓴 사람도 함께 보여 준다 */
+export async function listFanMembers(): Promise<{ rows: MemberRow[]; tableReady: boolean }> {
+  const s = supa();
+  let members: FanMember[] = [], tableReady = true;
+  let posts: { author_id: string; author_name: string; created_at: string }[] = [], comments: typeof posts = [];
+  if (s) {
+    const m = await s.from("community_members").select("*").order("first_at", { ascending: false }).limit(1000);
+    if (m.error) tableReady = false; else members = m.data as FanMember[];
+    const p = await s.from("community_posts").select("author_id, author_name, created_at").limit(5000);
+    const c = await s.from("community_comments").select("author_id, author_name, created_at").limit(5000);
+    posts = (p.data ?? []) as typeof posts; comments = (c.data ?? []) as typeof posts;
+  } else {
+    const db = await local();
+    members = db.community_members ?? [];
+    posts = db.community_posts ?? []; comments = db.community_comments ?? [];
+  }
+  const rows = new Map<string, MemberRow>(members.map((m) => [m.id, { ...m, posts: 0, comments: 0, recorded: true }]));
+  const touch = (x: { author_id: string; author_name: string; created_at: string }, k: "posts" | "comments") => {
+    if (x.author_id.startsWith("mock-")) return;
+    let r = rows.get(x.author_id);
+    if (!r) { r = { id: x.author_id, name: x.author_name, provider: x.author_id.split(":")[0] || "?", logins: 0, first_at: x.created_at, last_at: x.created_at, posts: 0, comments: 0, recorded: false }; rows.set(x.author_id, r); }
+    r[k] += 1;
+    if (!r.recorded) { if (x.created_at < r.first_at) r.first_at = x.created_at; if (x.created_at > r.last_at) r.last_at = x.created_at; }
+  };
+  posts.forEach((x) => touch(x, "posts"));
+  comments.forEach((x) => touch(x, "comments"));
+  return { rows: [...rows.values()].sort((a, b) => b.first_at.localeCompare(a.first_at)), tableReady };
 }
