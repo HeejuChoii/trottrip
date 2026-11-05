@@ -133,7 +133,9 @@ async function flush() {
   await writeChain;
 }
 
-function must<T>(r: { data: T; error: { message: string } | null }): T {
+function must<T>(r: { data: T; error: { message: string } | null }, newColumn?: string): T {
+  // 새 칸(0009 SQL: 투표·댓글 사진)을 아직 안 만든 DB면 알아볼 수 있게 알려 준다
+  if (r.error && newColumn && r.error.message.includes(newColumn)) throw new Error("이 기능은 준비 중이에요(운영자: supabase 0009 SQL을 실행해 주세요)");
   if (r.error) throw new Error(r.error.message);
   return r.data;
 }
@@ -459,7 +461,7 @@ export async function getFanPost(id: string): Promise<FanPost | null> {
 export async function createFanPost(p: Omit<FanPost, "id" | "likes" | "comments" | "created_at">): Promise<FanPost> {
   const row: FanPost = { ...p, images: p.images ?? [], id: randomUUID(), likes: 0, comments: 0, created_at: new Date().toISOString() };
   const s = supa();
-  if (s) { must(await s.from("community_posts").insert(row)); return row; }
+  if (s) { must(await s.from("community_posts").insert(row), "poll"); return row; }
   const db = await local();
   (db.community_posts ??= []).push(row);
   await flush();
@@ -474,7 +476,7 @@ export async function addFanComment(c: Omit<FanComment, "id" | "created_at">): P
   const row: FanComment = { ...c, id: randomUUID(), created_at: new Date().toISOString() };
   const s = supa();
   if (s) {
-    must(await s.from("community_comments").insert(row));
+    must(await s.from("community_comments").insert(row), "images");
     const p = await getFanPost(c.post_id);
     if (p) await s.from("community_posts").update({ comments: p.comments + 1 }).eq("id", p.id);
     return row;

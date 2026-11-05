@@ -48,23 +48,34 @@ export interface FanPost {
   poll?: PollOption[];
 }
 export interface PollOption { label: string; votes: number }
-export interface FanComment { id: string; post_id: string; author_id: string; author_name: string; body: string; created_at: string }
+export interface FanComment { id: string; post_id: string; author_id: string; author_name: string; body: string; created_at: string; images?: string[] }
+/** 우리가 올린 사진 주소만 받는다(Supabase Storage 공개 주소, 로컬 개발 주소, 시연용 public/mock) */
+export const PHOTO_URL_RE = /^(https:\/\/[\w.-]+\/storage\/v1\/object\/public\/community\/|\/api\/community\/file\?n=)/;
 
-type MockPost = Omit<FanPost, "id" | "created_at" | "author_id" | "comments" | "mock"> & { hours_ago: number; comments?: { author_name: string; body: string }[] };
+type MockPost = Omit<FanPost, "id" | "created_at" | "author_id" | "comments" | "mock"> & { hours_ago: number; comments?: { author_name: string; body: string; images?: string[] }[] };
 const M = (mock as { posts: MockPost[] }).posts;
 
 /** 목데이터 글(시연용). 시각은 지금 기준 몇 시간 전으로 */
 export function mockPosts(now = Date.now()): FanPost[] {
   return M.map((p, i) => ({
     id: `mock-${i + 1}`, artist: p.artist, category: p.category, title: p.title, body: p.body, author_id: `mock-${p.author_name}`,
-    author_name: p.author_name, likes: p.likes, comments: p.comments?.length ?? 0, created_at: new Date(now - p.hours_ago * 3600000).toISOString(), mock: true,
+    author_name: p.author_name, likes: p.likes, comments: p.comments?.length ?? 0, ...(p.images ? { images: p.images } : {}), created_at: new Date(now - p.hours_ago * 3600000).toISOString(), mock: true,
     ...(p.poll ? { poll: p.poll } : {}),
   }));
 }
 export function mockComments(postId: string, now = Date.now()): FanComment[] {
   const i = Number(postId.replace("mock-", "")) - 1;
   const p = M[i];
-  return (p?.comments ?? []).map((c, j) => ({ id: `${postId}-c${j}`, post_id: postId, author_id: `mock-${c.author_name}`, author_name: c.author_name, body: c.body, created_at: new Date(now - (p.hours_ago - 0.3 * (j + 1)) * 3600000).toISOString() }));
+  const cs = p?.comments ?? [];
+  // 댓글 시각: 글 올린 뒤부터 지금 사이에 들쭉날쭉 퍼뜨린다(전부 '방금'이면 수상해 보여서). 글마다 같은 값이 나오게 고정
+  const w = Array.from({ length: cs.length + 1 }, (_, k) => 1 + ((i * 7 + k * 13) % 10) / 6);
+  const sum = w.reduce((a, b) => a + b, 0);
+  let acc = 0;
+  return cs.map((c, j) => {
+    acc += w[j];
+    const after = p.hours_ago * 0.95 * (acc / sum);
+    return { id: `${postId}-c${j}`, post_id: postId, author_id: `mock-${c.author_name}`, author_name: c.author_name, body: c.body, created_at: new Date(now - (p.hours_ago - after) * 3600000).toISOString(), ...(c.images ? { images: c.images } : {}) };
+  });
 }
 
 export function timeAgo(iso: string, now = Date.now()): string {

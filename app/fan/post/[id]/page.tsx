@@ -38,7 +38,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           {post.poll && votes && <PollBox id={id} options={post.poll} votes={votes} loggedIn={!!user} />}
         </>
       )}
-      <PostActions id={id} likes={likes} liked={liked} comments={comments.map((c) => ({ id: c.id, author_name: c.author_name, body: c.body, ago: timeAgo(c.created_at) }))} loggedIn={!!user} kakao={kakaoLoginReady()} />
+      <PostActions id={id} likes={likes} liked={liked} comments={comments.map((c) => ({ id: c.id, author_name: c.author_name, body: c.body, ago: timeAgo(c.created_at), images: c.images ?? [] }))} loggedIn={!!user} kakao={kakaoLoginReady()} />
       <SiteFooter />
       <HomeTabs />
     </main>

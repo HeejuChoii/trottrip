@@ -3,17 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { postJSON } from "@/lib/client";
 import { POST_CATEGORIES } from "@/lib/community";
-
-/** 휴대폰 사진을 긴 변 1280px JPEG로 줄인다(부모님 휴대폰 원본 10MB도 1MB 안쪽으로) */
-async function shrink(file: File): Promise<Blob> {
-  const img = await createImageBitmap(file).catch(() => null);
-  if (!img) return file;
-  const k = Math.min(1, 1280 / Math.max(img.width, img.height));
-  const c = document.createElement("canvas");
-  c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
-  c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
-  return new Promise((res) => c.toBlob((b) => res(b ?? file), "image/jpeg", 0.82));
-}
+import { uploadPhoto } from "@/lib/photo";
 
 export default function WriteForm({ artist, defaultCategory }: { artist: string; defaultCategory: string }) {
   const router = useRouter();
@@ -25,6 +15,9 @@ export default function WriteForm({ artist, defaultCategory }: { artist: string;
   const [err, setErr] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(0);
+  // 투표 만들기(질문·투표 말머리): 보기 2~4개
+  const [poll, setPoll] = useState<string[]>(["", ""]);
+  const usePoll = category === "질문·투표" && poll.some((o) => o.trim());
 
   async function addPhotos(files: FileList | null) {
     if (!files?.length) return;
@@ -32,12 +25,8 @@ export default function WriteForm({ artist, defaultCategory }: { artist: string;
     setErr(""); setUploading((n) => n + pick.length);
     for (const f of pick) {
       try {
-        const fd = new FormData();
-        fd.append("file", new File([await shrink(f)], "photo.jpg", { type: "image/jpeg" }));
-        const r = await fetch("/api/community/upload", { method: "POST", body: fd });
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.error ?? "사진을 올리지 못했어요");
-        setImages((l) => [...l, j.url].slice(0, 4));
+        const url = await uploadPhoto(f);
+        setImages((l) => [...l, url].slice(0, 4));
       } catch (x) { setErr(x instanceof Error ? x.message : "사진을 올리지 못했어요"); }
       setUploading((n) => n - 1);
     }
@@ -47,7 +36,7 @@ export default function WriteForm({ artist, defaultCategory }: { artist: string;
     <form className="card" style={{ display: "flex", flexDirection: "column", gap: 8 }} onSubmit={async (e) => {
       e.preventDefault(); setBusy(true); setErr("");
       try {
-        const r = await postJSON<{ post: { id: string } }>("/api/community", { artist, category, title, body, images });
+        const r = await postJSON<{ post: { id: string } }>("/api/community", { artist, category, title, body, images, poll: usePoll ? poll.map((o) => o.trim()).filter(Boolean) : undefined });
         router.push(`/fan/post/${r.post.id}`);
       } catch (x) { setErr(x instanceof Error ? x.message : "올리지 못했어요"); setBusy(false); }
     }}>
@@ -70,8 +59,19 @@ export default function WriteForm({ artist, defaultCategory }: { artist: string;
         )}
         {uploading > 0 && <small style={{ color: "var(--sub)" }}>사진 올리는 중…</small>}
       </div>
+      {category === "질문·투표" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <b style={{ fontSize: 15 }}>🗳️ 투표 보기 <small style={{ fontWeight: 400, color: "var(--sub)" }}>(비워 두면 투표 없이 질문만 올라가요)</small></b>
+          {poll.map((o, i) => (
+            <div key={i} style={{ display: "flex", gap: 6 }}>
+              <input className="inp" value={o} maxLength={40} placeholder={`보기 ${i + 1}${i === 0 ? " 예) 이제 나만 믿어요" : ""}`} onChange={(e) => setPoll((l) => l.map((x, j) => (j === i ? e.target.value : x)))} />
+              {poll.length > 2 && <button type="button" className="mini-btn" aria-label="보기 빼기" onClick={() => setPoll((l) => l.filter((_, j) => j !== i))}>×</button>}
+            </div>
+          ))}
+          {poll.length < 4 && <button type="button" className="linkbtn" style={{ alignSelf: "flex-start" }} onClick={() => setPoll((l) => [...l, ""])}>+ 보기 더하기</button>}
+        </div>
+      )}
       {err && <p className="err" style={{ margin: 0 }}>{err}</p>}
-      <p className="fine" style={{ margin: 0, textAlign: "left" }}>올린 글·사진의 책임은 작성자에게 있어요. 다른 사람의 얼굴·저작물은 허락받고 올려 주세요. <a href="/terms">이용약관</a></p>
       <div className="row2"><button type="button" className="ghost" onClick={() => setOpen(false)}>취소</button><button className="cta" disabled={busy || uploading > 0}>{busy ? "올리는 중…" : "올리기"}</button></div>
     </form>
   );
