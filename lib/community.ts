@@ -76,8 +76,12 @@ export function mockKey(id: string): string | null {
 /** 저장 키 "mock-N" → 공개 주소 */
 export const mockPublicFor = (key: string) => MOCK_IDS[Number(key.replace("mock-", "")) - 1] ?? key;
 
-/** 목데이터 글(시연용). 시각은 지금 기준 몇 시간 전으로 */
-export function mockPosts(now = Date.now()): FanPost[] {
+/** 목데이터 글 시각의 기준: 2026-11-05 23:30 KST에서 hours_ago만큼 전으로 고정한다.
+ *  "지금 기준"으로 두면 날이 갈수록 'D-9' 같은 글이 계속 몇 시간 전 글로 보여 공연 날짜와 앞뒤가 안 맞는다 */
+export const MOCK_BASE = Date.parse("2026-11-05T23:30:00+09:00");
+
+/** 목데이터 글(시연용) */
+export function mockPosts(now = MOCK_BASE): FanPost[] {
   return M.map((p, i) => ({
     id: MOCK_IDS[i], artist: p.artist, category: p.category, title: p.title, body: p.body, author_id: `mock-${p.author_name}`,
     author_name: p.author_name, likes: p.likes, comments: p.comments?.length ?? 0, ...(p.images ? { images: p.images } : {}), created_at: new Date(now - p.hours_ago * 3600000).toISOString(), mock: true,
@@ -85,7 +89,7 @@ export function mockPosts(now = Date.now()): FanPost[] {
   }));
 }
 export const findMockPost = (id: string) => { const k = mockKey(id); return k ? mockPosts()[Number(k.slice(5)) - 1] ?? null : null; };
-export function mockComments(postId: string, now = Date.now()): FanComment[] {
+export function mockComments(postId: string, now = MOCK_BASE): FanComment[] {
   const key = mockKey(postId);
   const i = key ? Number(key.slice(5)) - 1 : -1;
   const p = M[i];
