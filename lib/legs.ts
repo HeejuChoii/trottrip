@@ -102,6 +102,9 @@ export function buildDayTwo(o: DayTwoInput, nid: () => string): PlanItem[] {
   const moveMin = toStation ? toStation.min : 0;
   const leaveBy = ret - (t.mode === "train" ? moveMin + 20 : 0); // 역에 20분 전 도착
   let c = 10 * 60;
+  // 아침: 체크아웃 전에 숙소 조식이나 근처에서
+  add({ start: "08:50", end: "09:40", type: "meal", title: "아침 식사", place_id: null, walk_min: null,
+    parent_text: "숙소 조식이나 근처 식당에서 아침 드세요. 서두르지 말고 천천히 준비하세요.", done_label: "다 먹었어요", kid_note: "둘째 날 · 숙소 조식 여부 확인", source: "user_input" });
   add({ start: toHHMM(c), end: toHHMM(c + 30), type: "extra", title: `체크아웃 · ${o.stayName}`, place_id: null, walk_min: null,
     parent_text: "짐 챙겨서 체크아웃하세요. 짐이 무거우면 숙소에 맡겨 두고 다녀오셔도 돼요.", done_label: "체크아웃했어요", kid_note: "둘째 날", source: "user_input",
     ...(o.stayUrl ? { link: { label: "🧭 숙소 위치 (카카오맵)", url: o.stayUrl } } : {}) });
