@@ -21,6 +21,11 @@ export function inkOn(hex: string): string {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.35 ? "#111" : "#fff";
 }
 export const artistBySlug = (slug: string) => FAN_ARTISTS.find((a) => a.slug === slug) ?? null;
+/** 가수 사진(public/artists/{slug}.jpg). 공연과 상관없는 팬덤 스팟 여행에서 포스터 대신 쓴다 */
+export function artistPhoto(name: string): string | null {
+  const a = FAN_ARTISTS.find((x) => x.name === name);
+  return a ? `/artists/${a.slug}.jpg` : null;
+}
 /** 가수 상관없이 이야기하는 트롯 수다방(라운지 홈) */
 export const ALL_SLUG = "all";
 
