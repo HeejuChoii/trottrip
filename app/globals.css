@@ -228,3 +228,6 @@ details[open] .sum-more { display: none; }
 .popt .plabel, .popt .ppct { position: relative; z-index: 1; }
 .popt .ppct { font-weight: 700; font-size: 15px; }
 .qhead { display: flex; justify-content: space-between; align-items: baseline; margin: 8px 0 -4px; }
+.cpics { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.cpics img { width: 120px; height: 120px; object-fit: cover; border-radius: 10px; display: block; }
+.cpx { position: absolute; top: -6px; right: -6px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: #111; color: #fff; font-size: 13px; }
