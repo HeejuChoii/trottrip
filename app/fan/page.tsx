@@ -7,7 +7,7 @@ import ArtistAvatar from "@/components/fan/ArtistAvatar";
 import LoginBar from "@/components/fan/LoginBar";
 import PostCard from "@/components/fan/PostCard";
 import WriteForm from "@/components/fan/WriteForm";
-import { ALL_SLUG, FAN_ARTISTS, mockPosts } from "@/lib/community";
+import { ALL_SLUG, byNewest, FAN_ARTISTS, mockPosts } from "@/lib/community";
 import { listFanPosts } from "@/lib/db";
 import { getFanUser, kakaoLoginReady } from "@/lib/fanauth";
 
@@ -18,9 +18,10 @@ export const metadata = { title: "팬 라운지 · 트롯트립" };
 export default async function Page({ searchParams }: { searchParams: Promise<{ login?: string }> }) {
   const { login } = await searchParams;
   const [user, posts] = await Promise.all([getFanUser(), listFanPosts({ limit: 30 })]);
-  const every = [...posts, ...mockPosts()].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  const every = [...posts, ...mockPosts()].sort(byNewest);
   // 가수 상관없는 트롯 수다방 글(질문·투표)은 위에 따로 모은다
-  const talk = every.filter((p) => p.artist === ALL_SLUG).slice(0, 4);
+  // 회원이 쓴 글을 먼저, 남는 자리에 시연 글
+  const talk = [...every.filter((p) => p.artist === ALL_SLUG && !p.mock), ...every.filter((p) => p.artist === ALL_SLUG && p.mock)].slice(0, 4);
   const feed = every.filter((p) => !talk.includes(p)).slice(0, 30);
   return (
     <main className="shell with-tabs">
@@ -35,7 +36,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ l
           <Link key={a.slug} href={`/fan/${a.slug}`}><ArtistAvatar a={a} size={68} />{a.name}</Link>
         ))}
       </div>
-      <div className="qhead"><span className="lab" style={{ margin: 0 }}>💬 트롯 수다방 · 댓글로 답해 주세요</span></div>
+      <div className="qhead"><span className="lab" style={{ margin: 0 }}>💬 트롯 수다방 · 댓글로 답해 주세요</span><Link href={`/fan/${ALL_SLUG}`} style={{ fontSize: 14, fontWeight: 700, color: "var(--deep)", textDecoration: "none" }}>전체 보기 ›</Link></div>
       {talk.map((p) => <PostCard key={p.id} p={p} showArtist />)}
       {user && <WriteForm artist={ALL_SLUG} defaultCategory="질문·투표" />}
       <span className="lab" style={{ margin: "8px 0 -4px" }}>지금 팬들은요</span>

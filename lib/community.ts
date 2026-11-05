@@ -26,8 +26,11 @@ export function artistPhoto(name: string): string | null {
   const a = FAN_ARTISTS.find((x) => x.name === name);
   return a ? `/artists/${a.slug}.jpg` : null;
 }
-/** 가수 상관없이 이야기하는 트롯 수다방(라운지 홈) */
+/** 가수 상관없이 이야기하는 트롯 수다방(라운지 홈 + /fan/all 게시판) */
 export const ALL_SLUG = "all";
+export const TALK_BOARD: FanArtist = { slug: ALL_SLUG, name: "트롯 수다방", fandom: "", color: "#14C1AD" };
+/** 글 시각 비교(DB·목데이터 시각 형식이 달라도 맞게) */
+export const byNewest = (a: { created_at: string }, b: { created_at: string }) => Date.parse(b.created_at) - Date.parse(a.created_at);
 
 export const POST_CATEGORIES = ["질문·투표", "공연 후기", "팬덤 스팟 여행", "스밍 인증", "사진 자랑", "같이 가요", "자유"] as const;
 export type PostCategory = (typeof POST_CATEGORIES)[number];
@@ -81,7 +84,9 @@ export const mockPublicFor = (key: string) => MOCK_IDS[Number(key.replace("mock-
 export const MOCK_BASE = Date.parse("2026-11-05T23:30:00+09:00");
 
 /** 목데이터 글(시연용) */
-export function mockPosts(now = MOCK_BASE): FanPost[] {
+/** 기준 시각이 아직 안 왔으면 지금 시각을 쓴다(목데이터가 '미래 글'이 되어 실제 글보다 위에 오지 않게) */
+const mockNow = () => Math.min(Date.now(), MOCK_BASE);
+export function mockPosts(now = mockNow()): FanPost[] {
   return M.flatMap((p, i) => p.retired ? [] : [{
     id: MOCK_IDS[i], artist: p.artist, category: p.category, title: p.title, body: p.body, author_id: `mock-${p.author_name}`,
     author_name: p.author_name, likes: p.likes, comments: p.comments?.length ?? 0, ...(p.images ? { images: p.images } : {}), created_at: new Date(now - p.hours_ago * 3600000).toISOString(), mock: true,
@@ -90,7 +95,7 @@ export function mockPosts(now = MOCK_BASE): FanPost[] {
 }
 /** 화면에서 뺀 글(retired)은 null. 주소가 바뀌지 않게 데이터 순서는 그대로 둔다 */
 export const findMockPost = (id: string) => { const k = mockKey(id); return k ? mockPosts().find((p) => p.id === MOCK_IDS[Number(k.slice(5)) - 1]) ?? null : null; };
-export function mockComments(postId: string, now = MOCK_BASE): FanComment[] {
+export function mockComments(postId: string, now = mockNow()): FanComment[] {
   const key = mockKey(postId);
   const i = key ? Number(key.slice(5)) - 1 : -1;
   const p = M[i];

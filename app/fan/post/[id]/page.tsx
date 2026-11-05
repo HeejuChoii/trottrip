@@ -51,7 +51,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const likes = post.likes + (post.mock && liked ? 1 : 0);
   return (
     <main className="shell with-tabs">
-      <div className="top"><Link className="back" href={a ? `/fan/${a.slug}` : "/fan"}>← {a ? `${a.name} 라운지` : "팬 라운지"}</Link><MeIcon /></div>
+      <div className="top"><Link className="back" href={a ? `/fan/${a.slug}` : post.artist === "all" ? "/fan/all" : "/fan"}>← {a ? `${a.name} 라운지` : post.artist === "all" ? "트롯 수다방" : "팬 라운지"}</Link><MeIcon /></div>
       <span className="tag pk" style={{ alignSelf: "flex-start" }}>{post.category}</span>
       <h1 className="h" style={{ fontSize: 22 }}>{post.title}</h1>
       <p className="lead" style={{ margin: 0 }}>{post.author_name} · {timeAgo(post.created_at)}</p>
