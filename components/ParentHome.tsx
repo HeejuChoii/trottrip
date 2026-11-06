@@ -23,6 +23,8 @@ interface Props {
   concertLine: string; // "코엑스 D홀 · 오후 5시 시작"
   /** 공연 없는 성지순례 여행 */
   pilgrim?: boolean;
+  /** 이 가수 팬 라운지(안내장에서 라운지로 이어 주는 칸): 최근 글 두어 개 미리 보기 */
+  lounge?: { slug: string; name: string; fandom: string; posts: { id: string; title: string; comments: number }[] } | null;
   /** 가수 이름(팬덤 스팟 여행 버튼 문구) */
   artist?: string;
   /** 공연(또는 가수) 포스터 이미지 */
@@ -83,6 +85,22 @@ function Actions({ it, place, token }: { it: PlanItem; place?: { name: string; l
 /** 핑크 카드: 굿즈·포토존·입장, 그리고 가수가 다녀간 곳(팬덤 스팟·가수 방문 식당)이면 종류와 상관없이 */
 function isPink(it: PlanItem, places: Props["placeNames"]) {
   return it.type === "goods" || it.type === "photo" || it.type === "enter" || it.type === "show" || (!!it.place_id && !!places[it.place_id]?.fan);
+}
+
+/** 오른쪽 위 작은 단추: 팬 라운지로 */
+function LoungePill({ lounge }: { lounge: NonNullable<Props["lounge"]> }) {
+  return <Link href={`/fan/${lounge.slug}`} className="lounge-pill">💖 {lounge.fandom || lounge.name} 라운지</Link>;
+}
+/** 안내장 표지 아래: 같은 가수 팬들이 지금 나누는 이야기 미리 보기 → 둘러보기는 그냥, 글·댓글은 가입 */
+function LoungeCard({ lounge }: { lounge: NonNullable<Props["lounge"]> }) {
+  return (
+    <Link href={`/fan/${lounge.slug}`} className="card lounge-card">
+      <b style={{ fontSize: 19 }}>💖 {lounge.name} 팬 라운지</b>
+      <span style={{ fontSize: 16, color: "var(--sub)" }}>{lounge.fandom ? `${lounge.fandom} 분들이` : "다른 팬들이"} 지금 이런 이야기 나눠요</span>
+      {lounge.posts.map((x) => <span key={x.id} className="lc-post">“{x.title}”{x.comments ? <small> 💬 {x.comments}</small> : null}</span>)}
+      <span className="lc-go">구경하러 가기 ›</span>
+    </Link>
+  );
 }
 
 function mainTitle(it: PlanItem) {
@@ -153,7 +171,7 @@ export default function ParentHome(p: Props) {
       <div className="top"><Brand href={null} /><span style={{ fontSize: 16, color: "var(--sub)" }}>{fmtDateLongKo(p.concertDate)}</span></div>
       <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "space-between" }}>
         <span style={{ fontSize: 16, color: "var(--sub)" }}>👟 {p.stepsLine.split(" · ")[0]}</span>
-
+        {p.lounge && <LoungePill lounge={p.lounge} />}
       </div>
     </>
   );
@@ -163,7 +181,7 @@ export default function ParentHome(p: Props) {
     const glance = items.filter((i) => (p.pilgrim ? ["arrive", "meal", "photo", "return"] : ["arrive", "meal", "goods", "enter", "return"]).includes(i.type)).slice(0, p.pilgrim ? 6 : 5);
     return (
       <main className="shell pv">
-        <div className="top"><Brand href={null} /></div>
+        <div className="top"><Brand href={null} />{p.lounge && <LoungePill lounge={p.lounge} />}</div>
         <p className="hello">{p.honorific}, {kidH}이 보낸 {p.pilgrim ? "팬덤 스팟 여행" : "공연 날"} 안내장이에요</p>
         {p.poster && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -186,6 +204,7 @@ export default function ParentHome(p: Props) {
         <div className="card" style={{ fontSize: 18, lineHeight: 1.6 }}>
           <b>🎒 챙기실 것</b><br />{p.kit.join(" · ")}
         </div>
+        {p.lounge && p.lounge.posts.length > 0 && <LoungeCard lounge={p.lounge} />}
         <div className="ai"><p style={{ marginTop: 0 }}>{DAY} 이 링크를 열면 <b>지금 할 일</b>을 하나씩 알려 드려요. 앱 설치는 필요 없어요.</p></div>
         <Link href={`/p/${token}/venue`} className="bigbtn line">{p.pilgrim ? `📍 ${p.artist ?? ""} 팬덤 여행 일정 보기`.replace("  ", " ") : "🎫 내 티켓·공연장 보기"}</Link>
         <button className="bigbtn pk" style={{ fontSize: 19, padding: 14 }} onClick={() => setPreview(true)}>{DAY} 화면 미리 보기</button>
