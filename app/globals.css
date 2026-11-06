@@ -236,3 +236,9 @@ details[open] .sum-more { display: none; }
 .pv .ti .t { font-size: 16px; }
 .pv .ti .box b { font-size: 18px; }
 .pv .ti .box small { font-size: 15.5px; line-height: 1.5; }
+/* 안내장 → 팬 라운지 */
+.lounge-pill { display: inline-flex; align-items: center; gap: 4px; padding: 7px 12px; border-radius: 999px; background: var(--pinkS); color: var(--pinkD); font-size: 15px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.lounge-card { display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: inherit; border: 1.5px solid #ffc9e2; background: linear-gradient(180deg, #fff 0%, #fff5f9 100%); }
+.lounge-card .lc-post { font-size: 17px; line-height: 1.45; color: var(--ink); }
+.lounge-card .lc-post small { color: var(--sub); font-size: 14px; }
+.lounge-card .lc-go { align-self: flex-end; font-size: 16px; font-weight: 700; color: var(--pinkD); }
