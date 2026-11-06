@@ -26,7 +26,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
   const [events, chats] = await Promise.all([listEvents(trip.id), listChats(trip.id)]);
   const doneAt = new Map<string, TripEvent>();
   for (const e of events) if ((e.type === "done" || e.type === "boarded") && e.item_id && !doneAt.has(e.item_id)) doneAt.set(e.item_id, e);
-  const opened = events.find((e) => e.type === "parent_open");
+  const opened = events.find((e) => e.type === "parent_open" && e.payload?.owner !== true); // 자녀 본인이 미리 연 건 빼고
   const changes = events.filter((e) => e.type === "change");
   const fb = events.find((e) => e.type === "feedback");
   const who = parentShort(trip.parent_profile.honorific);

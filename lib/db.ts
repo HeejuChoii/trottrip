@@ -685,3 +685,40 @@ export async function listMyFanPosts(authorId: string): Promise<FanPost[]> {
   }
   return ((await local()).community_posts ?? []).filter((p) => p.author_id === authorId).sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
+
+// ---------- 안내장 링크 방문(운영자) ----------
+export interface LinkVisit { at: string; vid: string; first: boolean; owner: boolean; from: string; dev: string }
+export interface LinkVisitRow { trip_id: string; title: string; created_at: string; kid_label: string; visitors: number; visits: number; owner_visits: number; last_at: string; sources: { name: string; n: number }[]; recent: LinkVisit[] }
+/** 부모님 안내장 링크(/p/…)를 연 기록을 일정별로 묶는다. 방문자는 기기 임의 번호(vid)로 센다. 개인정보(IP·이름)는 없다 */
+export async function linkVisits(): Promise<LinkVisitRow[]> {
+  const s = supa();
+  type T = Pick<Trip, "id" | "created_at" | "concert_id" | "kid_label" | "custom_concert">;
+  const [events, trips, concerts] = await Promise.all([
+    listAllEvents(),
+    s ? (must(await s.from("trips").select("id,created_at,concert_id,kid_label,custom_concert")) as T[]) : (await local()).trips as T[],
+    listConcerts(false),
+  ]);
+  const byTrip = new Map<string, typeof events>();
+  for (const e of events) if (e.type === "parent_open" && e.trip_id) (byTrip.get(e.trip_id) ?? byTrip.set(e.trip_id, []).get(e.trip_id)!).push(e);
+  const rows: LinkVisitRow[] = [];
+  for (const [id, evs] of byTrip) {
+    const t = trips.find((x) => x.id === id);
+    if (!t) continue;
+    const c = t.concert_id ? concerts.find((x) => x.id === t.concert_id) : null;
+    const title = c?.title ?? (t.custom_concert as { title?: string } | null)?.title ?? "(일정)";
+    const list: LinkVisit[] = evs.map((e) => {
+      const p = (e.payload ?? {}) as Record<string, unknown>;
+      const from = [p.app, p.ref, p.src ? `src=${p.src}` : ""].filter(Boolean).join(" · ") || "직접·알 수 없음";
+      return { at: e.created_at, vid: String(p.vid ?? ""), first: p.first !== false, owner: p.owner === true, from, dev: String(p.dev ?? "") };
+    }).sort((a, b) => b.at.localeCompare(a.at));
+    const others = list.filter((v) => !v.owner);
+    const srcCount = new Map<string, number>();
+    for (const v of others) srcCount.set(v.from, (srcCount.get(v.from) ?? 0) + 1);
+    rows.push({
+      trip_id: id, title, created_at: t.created_at, kid_label: t.kid_label ?? "",
+      visitors: new Set(others.map((v) => v.vid || v.at)).size, visits: others.length, owner_visits: list.length - others.length,
+      last_at: list[0]?.at ?? "", sources: [...srcCount.entries()].map(([name, n]) => ({ name, n })).sort((a, b) => b.n - a.n), recent: list.slice(0, 30),
+    });
+  }
+  return rows.sort((a, b) => b.visitors - a.visitors || b.last_at.localeCompare(a.last_at));
+}

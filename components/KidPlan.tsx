@@ -67,6 +67,8 @@ export default function KidPlan(props: Props) {
   const [checks, setChecks] = useState<Record<string, boolean>>(props.checklist ?? {});
 
   useEffect(() => { setOrigin(process.env.NEXT_PUBLIC_SITE_URL || location.origin); }, []);
+  // 이 기기는 안내장을 만든 자녀 본인: 부모님 링크를 미리 열어 봐도 운영자 방문 통계에서 '자녀 본인'으로 구분한다
+  useEffect(() => { ls.set(`tt_owner_${parentToken}`, "1"); }, [parentToken]);
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(""), 2400); return () => clearTimeout(t); }, [toast]);
 
   const byId = useMemo(() => new Map(places.map((p) => [p.id, p])), [places]);

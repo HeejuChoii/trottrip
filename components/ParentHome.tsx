@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Brand from "./Brand";
-import { clientNow, ls, track } from "@/lib/client";
+import { clientNow, ls, ss, track, visitInfo } from "@/lib/client";
 import { absEnd, absMin, addDays, daysBetween, fmtDateLongKo, fmtShort, fmtTimeKo, toMin, isHHMM } from "@/lib/time";
 import { kidHonorific } from "@/lib/text";
 import type { Plan, PlanItem } from "@/lib/types";
@@ -110,7 +110,14 @@ export default function ParentHome(p: Props) {
     const t = setInterval(tick, 30000);
     const key = `tt_open_${token}`;
     if (!p.opened && !ls.get(key)) setFirstOpen(true);
-    if (!ls.get(key)) { ls.set(key, "1"); track("parent_open", token); }
+    // 방문 기록: 처음 연 기기는 first, 같은 기기에서 다시 열어도 30분 넘게 지나면 한 번 더(공유된 링크를 몇 명이 봤는지 운영자 화면에서 본다)
+    const first = !ls.get(key);
+    const last = Number(ss.get(`tt_seen_${token}`) ?? 0);
+    if (first || Date.now() - last > 30 * 60000) {
+      ss.set(`tt_seen_${token}`, String(Date.now()));
+      track("parent_open", token, undefined, { ...visitInfo(), first, owner: !!ls.get(`tt_owner_${token}`) });
+    }
+    if (first) ls.set(key, "1");
     return () => clearInterval(t);
   }, [token, p.opened]);
 

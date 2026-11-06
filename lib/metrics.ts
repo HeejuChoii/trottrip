@@ -52,7 +52,7 @@ export async function computeMetrics(): Promise<Metrics> {
     const cid = String(e.payload?.cid ?? "") || `anon-${e.created_at}`;
     if (!starters.has(cid)) starters.set(cid, { src: String(e.payload?.src || "direct"), day: kstDay(e.created_at) });
   }
-  const opened = tripsWith("parent_open");
+  const opened = tripsWith("parent_open", (p) => p.owner !== true);
   const active = tripsWith("done");
   const chatted = tripsWith("chat");
   const intentYes = tripsWith("intent", (p) => p.answer === "yes");

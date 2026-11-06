@@ -67,3 +67,17 @@ export function hhmmNow(): string {
 export function track(type: string, token?: string, item_id?: string, payload?: Record<string, unknown>) {
   return postJSON("/api/events", { type, token, item_id, payload }).catch(() => undefined);
 }
+
+/** 안내장 링크 방문 기록용 정보(개인정보 없음): 이 기기의 임의 번호, 어디서 왔는지(사이트 이름만), 앱·기기 종류 */
+export function visitInfo(): { vid: string; ref: string; app: string; dev: string; src: string } {
+  let vid = ls.get("tt_vid");
+  if (!vid) { vid = Math.random().toString(36).slice(2, 10); ls.set("tt_vid", vid); }
+  let ref = "";
+  try { ref = document.referrer ? new URL(document.referrer).hostname : ""; } catch { ref = ""; }
+  if (ref === location.hostname) ref = "";
+  const ua = navigator.userAgent;
+  const app = /KAKAOTALK/i.test(ua) ? "카카오톡" : /DaumApps|DaumDevice/i.test(ua) ? "다음 앱" : /NAVER\(inapp|NAVER/i.test(ua) ? "네이버 앱" : /Instagram/i.test(ua) ? "인스타그램" : /FBAN|FBAV/i.test(ua) ? "페이스북" : /Line\//i.test(ua) ? "라인" : "";
+  const dev = /iPhone|Android.+Mobile|Mobile/i.test(ua) ? "휴대폰" : /iPad|Tablet|Android/i.test(ua) ? "태블릿" : "PC";
+  const src = (new URLSearchParams(location.search).get("src") ?? "").slice(0, 40);
+  return { vid, ref, app, dev, src };
+}
