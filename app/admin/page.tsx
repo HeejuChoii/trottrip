@@ -3,8 +3,9 @@ import { ensureSeedConcerts, listConcerts, listPosters, placeCounts, storageHeal
 import AdminPosters from "@/components/admin/AdminPosters";
 import AdminCommunity from "@/components/admin/AdminCommunity";
 import AdminMembers from "@/components/admin/AdminMembers";
+import AdminVisits from "@/components/admin/AdminVisits";
 import { computeMetrics } from "@/lib/metrics";
-import { listFanMembers, listUsage } from "@/lib/db";
+import { linkVisits, listFanMembers, listUsage } from "@/lib/db";
 import { budgetUsd } from "@/lib/usage";
 import { aiEnabled, MODEL } from "@/lib/ai";
 import { concertripConfigured } from "@/lib/concertrip";
@@ -82,6 +83,7 @@ export default async function Page() {
         </div>
       </div>
 
+      <AdminVisits rows={await linkVisits()} />
       <AdminMembers {...await listFanMembers()} />
       <AdminCommunity />
       <AdminPosters concerts={concerts.filter((c) => c.active).map((c) => ({ id: c.id, title: c.title, date: c.date, artist: c.artist_display, ticket_url: c.ticket_url ?? null }))} initial={await listPosters()} />
